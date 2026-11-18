@@ -1,5 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Automatic linking (Redirección hub). Declared here too, so it exists whichever app is installed
+         first; "signature" means only apps signed with the same key ever get it. -->
+    <permission android:name="com.zirakusa.gatewayhub.permission.LINK" android:protectionLevel="signature"
+        android:label="@string/link_permission" />
+    <uses-permission android:name="com.zirakusa.gatewayhub.permission.LINK" />
     <!-- Package visibility limited to apps that declare Gateway Hub support (no QUERY_ALL_PACKAGES). -->
     <queries>
         <intent><action android:name="com.zirakusa.gatewayhub.action.APP" /></intent>

@@ -34,8 +34,8 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.2**, la app nativa del propietario:
-agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.2.apk`. Usa la API JSON
+[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.3**, la app nativa del propietario:
+agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.3.apk`. Próximas fases: [`ROADMAP.md`](ROADMAP.md). Usa la API JSON
 `/api/admin/*`, que solo acepta el token del propietario en la cabecera y no responde a navegadores
 (sin CORS).
 

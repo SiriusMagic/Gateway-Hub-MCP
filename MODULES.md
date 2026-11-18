@@ -49,6 +49,13 @@ declara esto en una Activity exportada:
   conexión**: no puede leer extras ni activar nada por sí sola (ver `HubDiscovery.kt` en Stone).
 - En el hub, el módulo declara `androidPackage` y un `status(ctx)` de solo lectura. El escáner lo llama
   sin cambiar nada.
+- **Vinculación automática (opcional):**
+  - Declara `<meta-data android:name="com.zirakusa.gatewayhub.link" android:value="${applicationId}.hublink"/>`
+    y un `ContentProvider` exportado con `android:permission="com.zirakusa.gatewayhub.permission.LINK"`.
+    Ese permiso se declara también en la app, con `protectionLevel="signature"`.
+  - Su método `call("link")` devuelve `link`, o `error` + `message`.
+  - Antes de responder, la app comprueba la firma de quien llama **y** un interruptor del usuario. Ver
+    `HubLink.kt` en Stone.
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».
 

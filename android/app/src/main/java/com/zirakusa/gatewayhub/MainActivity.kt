@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zirakusa.gatewayhub.data.KeystoreSessionStore
 import com.zirakusa.gatewayhub.data.PackageScanner
+import com.zirakusa.gatewayhub.data.ProviderLinker
 import com.zirakusa.gatewayhub.ui.HomeScreen
 import com.zirakusa.gatewayhub.ui.HubTheme
 import com.zirakusa.gatewayhub.ui.HubViewModel
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext)) as T
+                HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext), ProviderLinker(applicationContext)) as T
         }
     }
 

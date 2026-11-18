@@ -3,7 +3,11 @@ package com.zirakusa.gatewayhub.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zirakusa.gatewayhub.data.AccessParser
+import com.zirakusa.gatewayhub.data.AppLinker
+import com.zirakusa.gatewayhub.data.LocalApp
+import com.zirakusa.gatewayhub.data.RemoteStatus
 import com.zirakusa.gatewayhub.data.CreatedAgent
+import com.zirakusa.gatewayhub.data.LinkAnswer
 import com.zirakusa.gatewayhub.data.LocalAppSource
 import com.zirakusa.gatewayhub.data.ScanMerge
 import com.zirakusa.gatewayhub.data.ScannedApp
@@ -27,6 +31,8 @@ data class UiState(
     val created: CreatedAgent? = null,
     /** Last scan of compatible apps (phone + hub); null until the first scan. */
     val scan: List<ScannedApp>? = null,
+    /** Scan also links compatible apps by themselves (they must have "Redirección hub" on). */
+    val autoSync: Boolean = true,
 )
 
 /** The single owner of the app's state; screens only read [state] and call these actions. */
@@ -34,6 +40,7 @@ class HubViewModel(
     private val sessions: SessionStore,
     defaultUrl: String,
     private val localApps: LocalAppSource = LocalAppSource { emptyList() },
+    private val linker: AppLinker = AppLinker { LinkAnswer(null, "NOT_SUPPORTED", null) },
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
 ) : ViewModel(), HubActions {
     private val defaultUrl = defaultUrl
@@ -42,6 +49,7 @@ class HubViewModel(
     private var api: HubApi? = null
 
     init {
+        mutable.update { it.copy(autoSync = sessions.flag("autoSync", true)) }
         sessions.load()?.let { (url, token) ->
             api = newApi(url, token)
             mutable.update { it.copy(hubUrl = url, connected = true) }
@@ -76,11 +84,37 @@ class HubViewModel(
     override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); note }
     override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); "Stone desvinculado." }
 
-    /** Read-only: lists compatible apps on this phone and asks the hub for each one's status. */
+    /**
+     * Lists compatible apps and asks the hub for their state (read-only). With [UiState.autoSync], an app
+     * of the same developer that is installed but not linked (or whose token was revoked) is asked for its
+     * link and linked; the app answers only if the user turned "Redirección hub" on in it.
+     */
     override fun scan() = run {
-        val remote = requireApi().scan()
-        mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), remote)) }
-        null
+        val local = localApps.installed()
+        var remote = requireApi().scan()
+        val notes = if (mutable.value.autoSync) ScanMerge.merge(local, remote).mapNotNull { link(it.local, it.remote) } else emptyList()
+        if (notes.isNotEmpty()) remote = requireApi().scan()
+        mutable.update { it.copy(scan = ScanMerge.merge(local, remote)) }
+        notes.joinToString("\n").ifBlank { null }
+    }
+
+    /** Links one app now (button "Vincular automáticamente"). */
+    override fun autoLink(packageName: String) = run {
+        val row = mutable.value.scan?.firstOrNull { it.local?.packageName == packageName }
+        val note = link(row?.local, row?.remote, force = true)
+        mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }
+        note
+    }
+
+    override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }
+
+    private suspend fun link(app: LocalApp?, remote: RemoteStatus?, force: Boolean = false): String? {
+        if (app == null || remote == null || !remote.remote || !app.sameDeveloper || app.linkAuthority == null) return null
+        val revoked = remote.linked && !remote.online && remote.detail.contains("rejected")
+        if (!force && remote.linked && !revoked) return null
+        if (remote.prefix != "music_") return null // the hub links Stone today; other apps will follow the same path
+        val answer = linker.requestLink(app)
+        return answer.link?.let { requireApi().linkStone(it) } ?: "${app.label}: ${answer.message ?: answer.error}"
     }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }

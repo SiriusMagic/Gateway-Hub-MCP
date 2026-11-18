@@ -1,3 +1,16 @@
+# Gateway Hub app 0.0.3
+
+- **Sincronización automática** en el Escáner (activada por defecto, se puede apagar):
+  - Al escanear, vincula solas las apps del mismo desarrollador que tengan **Redirección hub** activada
+    (Stone 1.7.13).
+  - También vuelve a vincular una app si su token fue revocado.
+  - Botón **Vincular automáticamente** en cada app.
+- Seguridad:
+  - Permiso `com.zirakusa.gatewayhub.permission.LINK` de nivel `signature`.
+  - Solo se pregunta a apps con la misma firma.
+  - La dirección del canal (`authority`) debe pertenecer al mismo paquete que la declara.
+  - Si la app responde que no, se muestra su motivo y no se envía nada al hub.
+
 # Gateway Hub MCP 0.0.2
 
 - **Acceso en un solo pegado:** la app y el panel web aceptan `https://<hub>#hub_…` (o solo el token). Si
