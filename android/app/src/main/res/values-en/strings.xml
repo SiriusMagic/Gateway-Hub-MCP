@@ -183,29 +183,17 @@
     <string name="err_cf_inactive">That Cloudflare token is not active (expired or disabled). Create a new one.</string>
     <string name="err_cf_forbidden">The Cloudflare token lacks the permission it needs: Account › Workers Scripts › Edit.</string>
     <string name="err_cf_empty">Paste the Cloudflare token.</string>
-    <string name="err_cf_missing">Save your Cloudflare token first.</string>
     <string name="err_cf_network">Could not reach Cloudflare. Check your connection.</string>
-    <string name="err_no_hub">I cannot find your hub in that Cloudflare account (stone-hub). It must be published once.</string>
+    <string name="err_no_hub">I cannot find your hub in that Cloudflare account and this app version does not carry the Worker to publish it.</string>
     <string name="cf_title">Cloudflare</string>
-    <string name="cf_hint">Your Cloudflare API token: with it the app creates the owner token (hub_) in your account. It is stored encrypted and shared with Stone: update it here or in Stone and it works for both.</string>
+    <string name="cf_hint">Paste a Cloudflare API token (Workers Scripts › Edit). It is used only for this action and forgotten: it is not stored on this phone or in Stone.</string>
     <string name="cf_token">Cloudflare API token</string>
-    <string name="cf_update">Update token</string>
     <string name="cf_create_token">Create token in Cloudflare</string>
     <string name="cf_rotate_owner">Make a new owner token</string>
     <string name="cf_rotate_confirm">The app makes a new hub_ token, stores it in your Cloudflare hub and logs in with it. The previous one stops working. The AI links keep working.</string>
-    <string name="cf_forget">Forget Cloudflare token</string>
-    <string name="cf_saved">Cloudflare token saved and shared with Stone.</string>
     <string name="cf_owner_done">Owner token created and stored in your hub. You are logged in.</string>
-    <string name="cf_none">No Cloudflare token saved.</string>
-    <string name="cf_no_expiry">Cloudflare token valid, no expiry date.</string>
-    <string name="cf_expired">The Cloudflare token expired. Create a new one and update it.</string>
-    <plurals name="cf_expires_in">
-        <item quantity="one">Cloudflare token valid: expires in %1$d day (%2$s).</item>
-        <item quantity="other">Cloudflare token valid: expires in %1$d days (%2$s).</item>
-    </plurals>
-    <string name="cf_banner">Update it in Settings › Cloudflare so everything keeps working.</string>
     <string name="cf_login_title">No hub_ token?</string>
-    <string name="cf_login_hint">The app makes it for you with your Cloudflare account: 1) Create a token in Cloudflare (it comes with the Workers Scripts › Edit permission) and copy it. 2) Paste it here and tap Create my access.</string>
+    <string name="cf_login_hint">The app makes it for you in your Cloudflare account: 1) Create a token in Cloudflare (it comes with the Workers Scripts › Edit permission). 2) Paste it here and tap Create my access. With no hub, it is published; with one, it is updated. The Cloudflare token is not stored.</string>
     <string name="cf_create_access">Create my access</string>
     <string name="bridge_test">Test local bridge</string>
     <string name="bridge_ok">Local bridge with %1$s: %2$s · read tools: %3$d, test \"%4$s\" passed.</string>
@@ -252,4 +240,7 @@
     <string name="act_revert">revert</string>
     <string name="channel_online">Phone channel: connected to the hub (Stone goes through it).</string>
     <string name="channel_offline">Phone channel: not connected (Stone keeps using the previous link).</string>
+    <string name="cf_deploy">Update my hub</string>
+    <string name="cf_updated">Hub updated to this app\'s version: %1$s. Its token, agents and data are kept.</string>
+    <string name="err_no_subdomain">Your Cloudflare account has no workers.dev subdomain yet. Open dash.cloudflare.com › Workers, pick one and try again.</string>
 </resources>

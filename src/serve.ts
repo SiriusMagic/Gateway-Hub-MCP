@@ -12,7 +12,7 @@ import { handleAdminApi } from "./admin/api.ts";
 import type { Channel } from "./channel/core.ts";
 import { deviceFor } from "./channel/devices.ts";
 
-export const VERSION = "0.0.3";
+export const VERSION = "0.0.4";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",

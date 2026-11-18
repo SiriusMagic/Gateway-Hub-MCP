@@ -56,7 +56,6 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = HubColors.Gold)
-            CloudflareExpiryBanner(state.cloudflare)
             val hub = state.hub
             if (hub == null) { if (!state.loading) Text(state.error?.text() ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
             when (tab) {

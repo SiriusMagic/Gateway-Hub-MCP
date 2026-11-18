@@ -19,8 +19,8 @@ class HubViewModel(
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
     private val settingsStore: SettingsStore = MemorySettingsStore(),
     private val modeSender: ModeSender = ModeSender { _, _ -> false },
-    share: CloudflareShare = CloudflareShare.None,
     newCloudflare: (String) -> CloudflareApi = { CloudflareApi(it) },
+    workerBundle: () -> WorkerBundle? = { null },
     bridge: BridgeConnector = BridgeConnector.None,
     signer: () -> PackageSigner = SoftwareSigner().let { key -> { key } },
     ledger: PackageLedger = MemoryLedger(),
@@ -31,12 +31,11 @@ class HubViewModel(
     private var api: HubApi? = null
     private val sync = AppSync(localApps, linker) { requireApi() }
     private val providers = ProviderFlow(bridge, signer, ledger, localApps)
-    private val cloudflare = CloudflareFlow(sessions, localApps, share, newCloudflare)
+    private val cloudflare = CloudflareFlow(newCloudflare, workerBundle)
 
     init {
         mutable.update { it.copy(autoSync = sessions.flag("autoSync", true), packages = ledger.packages()) }
         sendMode()
-        viewModelScope.launch(Dispatchers.IO) { val info = cloudflare.pullNewer(); mutable.update { it.copy(cloudflare = info) } }
         sessions.load()?.let { (url, token) ->
             api = newApi(url, token)
             mutable.update { it.copy(hubUrl = url, connected = true) }
@@ -56,13 +55,10 @@ class HubViewModel(
         mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = hub) }
     }
 
-    /** No hub_ token? The app makes one with the person's Cloudflare token ([cfToken], or the saved one). */
-    override fun createAccess(cfToken: String) = run {
-        if (cfToken.isNotBlank()) mutable.update { it.copy(cloudflare = cloudflare.save(cfToken)) }
-        open(cloudflare.issueOwner(), tries = 6); UiText.Res(R.string.cf_owner_done)
-    }
-    override fun saveCloudflare(token: String) = run { mutable.update { it.copy(cloudflare = cloudflare.save(token)) }; UiText.Res(R.string.cf_saved) }
-    override fun forgetCloudflare() { cloudflare.forget(); mutable.update { it.copy(cloudflare = null) } }
+    /** No hub_ token? With the Cloudflare token (used once, never kept) the app deploys or updates the hub and logs in. */
+    override fun createAccess(cfToken: String) = run { open(cloudflare.createAccess(cfToken), tries = 8); UiText.Res(R.string.cf_owner_done) }
+    override fun updateHub(cfToken: String) = run { UiText.Res(R.string.cf_updated, listOf(cloudflare.updateHub(cfToken).removePrefix("https://"))) }
+    override fun rotateOwner(cfToken: String) = run { open(cloudflare.rotateOwner(cfToken), tries = 8); UiText.Res(R.string.cf_owner_done) }
 
     override fun refresh() = run { reload(); null }
 
@@ -124,7 +120,7 @@ class HubViewModel(
 
     override fun logout() {
         sessions.clear(); api = null
-        mutable.update { UiState(hubUrl = it.hubUrl, autoSync = it.autoSync, settings = it.settings, cloudflare = it.cloudflare) }
+        mutable.update { UiState(hubUrl = it.hubUrl, autoSync = it.autoSync, settings = it.settings) }
     }
 
     private suspend fun reload() = mutable.update { it.copy(hub = requireApi().state()) }

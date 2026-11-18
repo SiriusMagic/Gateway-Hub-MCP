@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "wrangler dev --local --port 8790",
     "deploy": "wrangler deploy",
-    "test": "node --test test/*.test.ts"
+    "test": "node --test test/*.test.ts",
+    "bundle:android": "node scripts/bundle-android.mjs"
   },
   "devDependencies": {
     "wrangler": "4.162.0"

@@ -45,7 +45,7 @@ import com.zirakusa.gatewayhub.R
             else Text(stringResource(R.string.login_connect), fontWeight = FontWeight.Bold)
         }
         Text(stringResource(R.string.login_token_hint), Modifier.fillMaxWidth().padding(top = 16.dp), color = HubColors.Muted, fontSize = 12.sp)
-        CreateAccessCard(state.cloudflare, state.loading, createAccess)
+        CreateAccessCard(state.loading, createAccess)
     }
     }
 }

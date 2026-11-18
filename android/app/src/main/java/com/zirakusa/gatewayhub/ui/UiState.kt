@@ -20,8 +20,6 @@ data class UiState(
     /** Scan also links compatible apps by themselves (they must have "Redirección hub" on). */
     val autoSync: Boolean = true,
     val settings: AppSettings = AppSettings(),
-    /** The saved Cloudflare token's dates (never the token); null when none is saved. */
-    val cloudflare: CloudflareInfo? = null,
     /** Execution packages this Gateway issued (status as the provider app last reported). */
     val packages: List<IssuedPackage> = emptyList(),
 )
@@ -36,9 +34,8 @@ interface HubActions {
     /** "active", "paused" or "disconnected". */
     fun setEnvironment(target: String)
     fun updateSettings(change: (AppSettings) -> AppSettings)
-    /** Makes a new hub_ token with the Cloudflare token (blank = the saved one) and logs in with it. */
-    fun createAccess(cfToken: String)
-    fun saveCloudflare(token: String); fun forgetCloudflare()
+    /** With a Cloudflare token used once: deploy or update the hub and log in / update it / new owner token. */
+    fun createAccess(cfToken: String); fun updateHub(cfToken: String); fun rotateOwner(cfToken: String)
     /** Phase 1 of the hub migration: checks the local MCP bridge with one app (read-only). */
     fun testBridge(packageName: String)
     /** Phase 2: provider apps and their execution packages (approved in the app). */

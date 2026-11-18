@@ -1,3 +1,16 @@
+# Sin publicar (fase 4: Cloudflare por usuario)
+
+- **La app publica o actualiza tu hub** con un token de Cloudflare que se usa una vez y se olvida:
+  - Entrada › «¿No tienes el token hub_?»: si la cuenta no tiene hub, se publica (`gateway-hub`, con su Durable Object,
+    su subdominio workers.dev y un `hub_` nuevo); si ya lo tiene (`stone-hub`…), se actualiza y se entra con un `hub_` nuevo.
+  - Ajustes › Cloudflare: **Actualizar mi hub** (sube la versión que trae la app; conserva el token, los agentes y los
+    datos con `keep_bindings`, sin migraciones) y **Generar nuevo token del propietario**.
+- El Worker va dentro del APK (`assets/hub-worker.js`, `npm run bundle:android`; una prueba comprueba que es el de esta
+  versión y que no lleva secretos). APK universal: nada del desarrollador dentro.
+- **Se elimina** el token de Cloudflare guardado (0.0.6), su aviso de caducidad y el intercambio con Stone. El que estaba
+  guardado se borra al abrir esta versión.
+- Hub 0.0.4.
+
 # Sin publicar (fase 3: canal central)
 
 - **Hub (Worker `stone-hub`):** nuevo canal `wss://<hub>/channel`. Cada teléfono entra con su propia credencial

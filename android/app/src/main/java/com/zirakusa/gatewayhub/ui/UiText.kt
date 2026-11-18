@@ -35,7 +35,8 @@ private val CODES = mapOf(
     "NOT_GATEWAY" to R.string.bridge_denied, "NOT_SAME_DEVELOPER" to R.string.bridge_denied, "BUSY" to R.string.bridge_busy,
     "NOT_LINKED" to R.string.provider_not_linked, "DISCONNECTED_BY_USER" to R.string.provider_cut,
     "PACKAGE_PENDING" to R.string.package_pending_error, "PACKAGE_TOO_MANY" to R.string.package_too_many,
-    "CF_EMPTY" to R.string.err_cf_empty, "CF_MISSING" to R.string.err_cf_missing, "NO_HUB" to R.string.err_no_hub,
+    "CF_EMPTY" to R.string.err_cf_empty, "NO_SUBDOMAIN" to R.string.err_no_subdomain, "NO_HUB" to R.string.err_no_hub,
+    "NO_BUNDLE" to R.string.err_no_hub,
 )
 private val LINK_CODES = mapOf(
     "NOT_SUPPORTED" to R.string.link_not_supported, "NO_ANSWER" to R.string.link_no_answer,

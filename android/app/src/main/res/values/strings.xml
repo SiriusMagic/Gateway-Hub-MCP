@@ -183,29 +183,17 @@
     <string name="err_cf_inactive">Ese token de Cloudflare no está activo (caducado o desactivado). Crea uno nuevo.</string>
     <string name="err_cf_forbidden">El token de Cloudflare no tiene el permiso necesario: Cuenta › Workers Scripts › Editar.</string>
     <string name="err_cf_empty">Pega el token de Cloudflare.</string>
-    <string name="err_cf_missing">Primero guarda tu token de Cloudflare.</string>
     <string name="err_cf_network">No se pudo conectar con Cloudflare. Revisa tu conexión.</string>
-    <string name="err_no_hub">No encuentro tu hub en esa cuenta de Cloudflare (stone-hub). Hay que publicarlo una vez.</string>
+    <string name="err_no_hub">No encuentro tu hub en esa cuenta de Cloudflare y esta versión de la app no trae el Worker para publicarlo.</string>
     <string name="cf_title">Cloudflare</string>
-    <string name="cf_hint">Tu token de la API de Cloudflare: con él la app crea el token del propietario (hub_) en tu cuenta. Se guarda cifrado y se comparte con Stone: si lo actualizas aquí o en Stone, vale para las dos.</string>
+    <string name="cf_hint">Pega un token de la API de Cloudflare (Workers Scripts › Editar). Se usa solo para esta acción y se olvida: no se guarda en este teléfono ni en Stone.</string>
     <string name="cf_token">Token de la API de Cloudflare</string>
-    <string name="cf_update">Actualizar token</string>
     <string name="cf_create_token">Crear token en Cloudflare</string>
     <string name="cf_rotate_owner">Generar nuevo token del propietario</string>
     <string name="cf_rotate_confirm">La app crea un token hub_ nuevo, lo guarda en tu hub de Cloudflare y entra con él. El anterior deja de funcionar. Los enlaces de las IA siguen funcionando.</string>
-    <string name="cf_forget">Olvidar token de Cloudflare</string>
-    <string name="cf_saved">Token de Cloudflare guardado y compartido con Stone.</string>
     <string name="cf_owner_done">Token del propietario creado y guardado en tu hub. Ya has entrado.</string>
-    <string name="cf_none">No hay token de Cloudflare guardado.</string>
-    <string name="cf_no_expiry">Token de Cloudflare válido, sin fecha de caducidad.</string>
-    <string name="cf_expired">El token de Cloudflare caducó. Crea uno nuevo y actualízalo.</string>
-    <plurals name="cf_expires_in">
-        <item quantity="one">Token de Cloudflare válido: caduca en %1$d día (%2$s).</item>
-        <item quantity="other">Token de Cloudflare válido: caduca en %1$d días (%2$s).</item>
-    </plurals>
-    <string name="cf_banner">Actualízalo en Ajustes › Cloudflare para que todo siga funcionando.</string>
     <string name="cf_login_title">¿No tienes el token hub_?</string>
-    <string name="cf_login_hint">La app lo crea por ti con tu cuenta de Cloudflare: 1) Crea un token en Cloudflare (ya viene con el permiso Workers Scripts › Editar) y cópialo. 2) Pégalo aquí y pulsa Generar mi acceso.</string>
+    <string name="cf_login_hint">La app lo crea por ti en tu cuenta de Cloudflare: 1) Crea un token en Cloudflare (ya viene con el permiso Workers Scripts › Editar). 2) Pégalo aquí y pulsa Generar mi acceso. Si no tienes hub, se publica; si ya lo tienes, se actualiza. El token de Cloudflare no se guarda.</string>
     <string name="cf_create_access">Generar mi acceso</string>
     <string name="bridge_test">Probar puente local</string>
     <string name="bridge_ok">Puente local con %1$s: %2$s · herramientas de lectura: %3$d, prueba «%4$s» correcta.</string>
@@ -252,4 +240,7 @@
     <string name="act_revert">revertir</string>
     <string name="channel_online">Canal del teléfono: conectado al hub (Stone va por aquí).</string>
     <string name="channel_offline">Canal del teléfono: sin conectar (Stone sigue por el enlace anterior).</string>
+    <string name="cf_deploy">Actualizar mi hub</string>
+    <string name="cf_updated">Hub actualizado a la versión de esta app: %1$s. Se conservan el token, los agentes y los datos.</string>
+    <string name="err_no_subdomain">Tu cuenta de Cloudflare aún no tiene subdominio workers.dev. Ábrela en dash.cloudflare.com › Workers, elige uno y vuelve a intentarlo.</string>
 </resources>

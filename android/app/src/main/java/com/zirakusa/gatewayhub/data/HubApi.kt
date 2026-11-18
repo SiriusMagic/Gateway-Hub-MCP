@@ -14,6 +14,9 @@ class HubException(val code: String, message: String) : Exception(message)
 /** Sends one request; replaceable in tests. Returns the HTTP status and the body. */
 fun interface HubTransport {
     fun send(method: String, url: String, token: String, body: String?): Pair<Int, String>
+    /** A body that is not JSON (the Worker upload, multipart). Tests may keep the default. */
+    fun upload(method: String, url: String, token: String, contentType: String, body: ByteArray): Pair<Int, String> =
+        send(method, url, token, String(body))
 }
 
 /** Client of the hub's owner API (/api/admin/…). The owner token travels only in the Authorization header. */
@@ -64,7 +67,13 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
 
 /** HttpURLConnection, HTTPS only (also enforced by network_security_config.xml). */
 object HttpTransport : HubTransport {
-    override fun send(method: String, url: String, token: String, body: String?): Pair<Int, String> {
+    override fun send(method: String, url: String, token: String, body: String?): Pair<Int, String> =
+        upload(method, url, token, "application/json", body?.toByteArray() ?: ByteArray(0), hasBody = body != null)
+
+    override fun upload(method: String, url: String, token: String, contentType: String, body: ByteArray): Pair<Int, String> =
+        upload(method, url, token, contentType, body, hasBody = true)
+
+    private fun upload(method: String, url: String, token: String, contentType: String, body: ByteArray, hasBody: Boolean): Pair<Int, String> {
         val connection = URL(url).openConnection() as HttpURLConnection
         try {
             connection.requestMethod = method
@@ -73,10 +82,10 @@ object HttpTransport : HubTransport {
             connection.instanceFollowRedirects = false
             connection.setRequestProperty("Authorization", "Bearer $token")
             connection.setRequestProperty("Accept", "application/json")
-            if (body != null) {
+            if (hasBody) {
                 connection.doOutput = true
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.outputStream.use { it.write(body.toByteArray()) }
+                connection.setRequestProperty("Content-Type", contentType)
+                connection.outputStream.use { it.write(body) }
             }
             val status = connection.responseCode
             val stream = if (status >= 400) connection.errorStream else connection.inputStream

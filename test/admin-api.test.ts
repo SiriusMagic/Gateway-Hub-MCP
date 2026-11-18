@@ -21,7 +21,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
   const h = hub();
   await h.api("POST", "/agents", { name: "Claude", apps: ["demo_"], readOnly: true, days: 30 });
   const { body } = await h.api("GET", "/state");
-  assert.equal(body.version, "0.0.3");
+  assert.equal(body.version, "0.0.4");
   assert.equal(body.environment, "active");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
   assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "demo_"]);

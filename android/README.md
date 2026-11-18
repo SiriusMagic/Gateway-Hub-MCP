@@ -5,8 +5,8 @@ web `/admin`, pero en el teléfono:
 
 - **Agentes:** crear un enlace por IA (apps permitidas, solo lectura, duración), copiarlo una sola
   vez, y pausar, reanudar o revocar.
-- **Sin token `hub_`:** la app lo genera con tu token de Cloudflare y lo guarda en tu hub (Ajustes › Cloudflare para
-  actualizar el token de Cloudflare cuando caduque).
+- **Sin token `hub_`:** la app publica o actualiza tu hub con un token de Cloudflare que se usa una vez y no se guarda, y
+  genera el `hub_` en el teléfono (Ajustes › Cloudflare para actualizar el hub o cambiar el `hub_`).
 - **Puente local (fase 1):** Escáner › Probar puente local comprueba la conexión MCP directa con Stone en el teléfono
   (solo lectura). Contrato en `../MODULES.md`.
 - **Acceso en un solo pegado:** `https://<hub>#hub_…` o solo el token. Si pegas algo de Stone o de un

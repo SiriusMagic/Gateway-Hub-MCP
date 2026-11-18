@@ -33,7 +33,7 @@ class ScreenshotsTest {
         override fun linkStone(link: String) {}; override fun unlinkStone() {}; override fun scan() {}
         override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}
         override fun setEnvironment(target: String) {}; override fun updateSettings(change: (AppSettings) -> AppSettings) {}
-        override fun createAccess(cfToken: String) {}; override fun saveCloudflare(token: String) {}; override fun forgetCloudflare() {}
+        override fun createAccess(cfToken: String) {}; override fun updateHub(cfToken: String) {}; override fun rotateOwner(cfToken: String) {}
         override fun testBridge(packageName: String) {}
         override fun linkProvider(packageName: String) {}; override fun refreshPackages(packageName: String) {}
         override fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int) {}
@@ -66,9 +66,7 @@ class ScreenshotsTest {
         HomeScreen(connected.copy(settings = AppSettings("en", ThemeChoice.FOREST)), NoActions, HubTab.SETTINGS)
     }
     @Test fun loginWithCloudflare() = shot("login-cloudflare") {
-        LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev", cloudflare = CloudflareInfo(System.currentTimeMillis() + 6 * 86_400_000L, 1)), { })
+        LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev"), { })
     }
-    @Test fun cloudflareExpiring() = shot("cloudflare-expiring") {
-        HomeScreen(connected.copy(settings = AppSettings("es"), cloudflare = CloudflareInfo(System.currentTimeMillis() + 36 * 3_600_000L, 1)), NoActions, HubTab.SETTINGS)
-    }
+
 }

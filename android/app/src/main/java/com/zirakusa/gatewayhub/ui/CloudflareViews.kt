@@ -7,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -17,18 +16,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.data.CloudflareApi
-
-/** One line on the saved Cloudflare token: none, its end date and days left, expired, or no end date. */
-@Composable fun CloudflareStatus(info: CloudflareInfo?) {
-    val days = info?.daysLeft()
-    val (text, color) = when {
-        info == null -> stringResource(R.string.cf_none) to HubColors.Muted
-        days == null -> stringResource(R.string.cf_no_expiry) to HubColors.Good
-        days < 0 -> stringResource(R.string.cf_expired) to HubColors.Bad
-        else -> pluralStringResource(R.plurals.cf_expires_in, days.toInt(), days.toInt(), formatDate(info.expiresAt, "")) to if (days <= 2) HubColors.Gold else HubColors.Good
-    }
-    Text(text, color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-}
 
 @Composable fun CreateCloudflareTokenButton() {
     val context = LocalContext.current
@@ -44,49 +31,37 @@ import com.zirakusa.gatewayhub.data.CloudflareApi
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false))
 }
 
-/** Login: no hub_ token? Make one with the person's Cloudflare token. */
-@Composable fun CreateAccessCard(info: CloudflareInfo?, loading: Boolean, createAccess: (String) -> Unit) {
+/** Login: no hub_ token? The app deploys or updates the hub with the Cloudflare token (used once, never kept). */
+@Composable fun CreateAccessCard(loading: Boolean, createAccess: (String) -> Unit) {
     var token by remember { mutableStateOf("") }
     HubCard(Modifier.padding(top = 24.dp)) {
         Text(stringResource(R.string.cf_login_title), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Text(stringResource(R.string.cf_login_hint), Modifier.padding(vertical = 6.dp), color = HubColors.Muted, fontSize = 13.sp)
         CreateCloudflareTokenButton()
-        if (info != null) CloudflareStatus(info)
         Spacer(Modifier.height(8.dp))
         CloudflareField(token) { token = it }
-        Button({ createAccess(token) }, Modifier.fillMaxWidth().padding(top = 10.dp), enabled = !loading && (token.isNotBlank() || info != null)) {
+        Button({ createAccess(token); token = "" }, Modifier.fillMaxWidth().padding(top = 10.dp), enabled = !loading && token.isNotBlank()) {
             Text(stringResource(R.string.cf_create_access), fontWeight = FontWeight.Bold)
         }
     }
 }
 
-/** Settings › Cloudflare: update the token (it is shared with Stone), make a new owner token, forget. */
-@Composable fun CloudflareSection(info: CloudflareInfo?, loading: Boolean, vm: HubActions) {
+/** Settings › Cloudflare: update the hub to this app's version, or make a new owner token. Nothing is stored. */
+@Composable fun CloudflareSection(loading: Boolean, vm: HubActions) {
     var token by remember { mutableStateOf("") }
     var rotate by remember { mutableStateOf(false) }
     SectionTitle(stringResource(R.string.cf_title))
     HubCard {
-        CloudflareStatus(info)
-        Text(stringResource(R.string.cf_hint), Modifier.padding(vertical = 6.dp), color = HubColors.Muted, fontSize = 13.sp)
+        Text(stringResource(R.string.cf_hint), Modifier.padding(bottom = 6.dp), color = HubColors.Muted, fontSize = 13.sp)
         CloudflareField(token) { token = it }
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button({ vm.saveCloudflare(token); token = "" }, enabled = !loading && token.isNotBlank()) { Text(stringResource(R.string.cf_update)) }
+            Button({ vm.updateHub(token); token = "" }, enabled = !loading && token.isNotBlank()) { Text(stringResource(R.string.cf_deploy)) }
             CreateCloudflareTokenButton()
         }
-        if (info != null) {
-            TextButton({ rotate = true }, enabled = !loading) { Text(stringResource(R.string.cf_rotate_owner)) }
-            TextButton(vm::forgetCloudflare) { Text(stringResource(R.string.cf_forget), color = HubColors.Bad) }
-        }
+        TextButton({ rotate = true }, enabled = !loading && token.isNotBlank()) { Text(stringResource(R.string.cf_rotate_owner)) }
     }
     if (rotate) AlertDialog(onDismissRequest = { rotate = false }, title = { Text(stringResource(R.string.cf_rotate_owner)) },
         text = { Text(stringResource(R.string.cf_rotate_confirm)) },
-        confirmButton = { TextButton({ rotate = false; vm.createAccess("") }) { Text(stringResource(R.string.cf_rotate_owner)) } },
+        confirmButton = { TextButton({ rotate = false; vm.rotateOwner(token); token = "" }) { Text(stringResource(R.string.cf_rotate_owner)) } },
         dismissButton = { TextButton({ rotate = false }) { Text(stringResource(R.string.cancel)) } })
-}
-
-/** Shown on every tab when the Cloudflare token ends in 2 days or less. */
-@Composable fun CloudflareExpiryBanner(info: CloudflareInfo?) {
-    val days = info?.daysLeft() ?: return
-    if (days > 2) return
-    HubCard { CloudflareStatus(info); Text(stringResource(R.string.cf_banner), color = HubColors.Text, fontSize = 13.sp) }
 }
