@@ -21,16 +21,19 @@ class HubViewModel(
     private val modeSender: ModeSender = ModeSender { _, _ -> false },
     share: CloudflareShare = CloudflareShare.None,
     newCloudflare: (String) -> CloudflareApi = { CloudflareApi(it) },
-    private val bridge: BridgeConnector = BridgeConnector.None,
+    bridge: BridgeConnector = BridgeConnector.None,
+    signer: () -> PackageSigner = SoftwareSigner().let { key -> { key } },
+    ledger: PackageLedger = MemoryLedger(),
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
     private var api: HubApi? = null
     private val sync = AppSync(localApps, linker) { requireApi() }
+    private val providers = ProviderFlow(bridge, signer, ledger, localApps)
     private val cloudflare = CloudflareFlow(sessions, localApps, share, newCloudflare)
 
     init {
-        mutable.update { it.copy(autoSync = sessions.flag("autoSync", true)) }
+        mutable.update { it.copy(autoSync = sessions.flag("autoSync", true), packages = ledger.packages()) }
         sendMode()
         viewModelScope.launch(Dispatchers.IO) { val info = cloudflare.pullNewer(); mutable.update { it.copy(cloudflare = info) } }
         sessions.load()?.let { (url, token) ->
@@ -94,17 +97,15 @@ class HubViewModel(
     /** Links one app now (button "Vincular automáticamente"). */
     override fun autoLink(packageName: String) = run {
         val row = mutable.value.scan?.firstOrNull { it.local?.packageName == packageName }
-        val note = sync.link(row?.local, row?.remote, force = true)
-        mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }
-        note
+        sync.link(row?.local, row?.remote, force = true).also { mutable.update { s -> s.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) } }
     }
 
-    override fun testBridge(packageName: String) = run {
-        val app = localApps.installed().firstOrNull { it.packageName == packageName } ?: throw HubException("BRIDGE_UNSUPPORTED", "")
-        val r = bridge.withApp(app) { BridgeProbe.run(it) }
-        UiText.Res(when (r.probeOk) { true -> R.string.bridge_ok; false -> R.string.bridge_probe_failed; null -> R.string.bridge_no_probe },
-            listOf(app.label, r.server, r.tools, r.probe.orEmpty()))
-    }
+    override fun testBridge(packageName: String) = providers(packageName) { providers.test(it) }
+    override fun linkProvider(packageName: String) = providers(packageName) { providers.link(it, mutable.value.hub?.environment ?: ENV_ACTIVE, mutable.value.settings.mode.name.lowercase()) }
+    override fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int) = providers(packageName) { providers.offer(it, agent, label, acts, days) }
+    override fun revokePackage(packageName: String, id: String) = providers(packageName) { providers.revoke(it, id) }
+    override fun refreshPackages(packageName: String) = providers(packageName) { providers.refresh(it) }
+    private fun providers(name: String, block: suspend (String) -> UiText?) = run { block(name).also { mutable.update { s -> s.copy(packages = providers.packages()) } } }
 
     override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }
 

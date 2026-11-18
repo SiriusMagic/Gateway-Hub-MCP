@@ -61,7 +61,8 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
             if (hub == null) { if (!state.loading) Text(state.error?.text() ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
             when (tab) {
                 HubTab.AGENTS -> AgentsList(hub.agents, hub.modules, vm::setPaused, vm::revoke)
-                HubTab.SCANNER -> ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink, vm::testBridge)
+                HubTab.SCANNER -> ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink,
+                    ProvidersUi(state.packages, hub.agents, vm))
                 HubTab.APPS -> AppsList(hub, state.loading, vm::linkStone, vm::unlinkStone)
                 HubTab.METRICS -> MetricsList(hub)
                 HubTab.SETTINGS -> SettingsList(state, hub, vm)

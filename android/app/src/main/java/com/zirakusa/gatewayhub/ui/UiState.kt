@@ -3,6 +3,7 @@ package com.zirakusa.gatewayhub.ui
 import com.zirakusa.gatewayhub.data.AppSettings
 import com.zirakusa.gatewayhub.data.CreatedAgent
 import com.zirakusa.gatewayhub.data.HubState
+import com.zirakusa.gatewayhub.data.IssuedPackage
 import com.zirakusa.gatewayhub.data.ScannedApp
 
 data class UiState(
@@ -21,6 +22,8 @@ data class UiState(
     val settings: AppSettings = AppSettings(),
     /** The saved Cloudflare token's dates (never the token); null when none is saved. */
     val cloudflare: CloudflareInfo? = null,
+    /** Execution packages this Gateway issued (status as the provider app last reported). */
+    val packages: List<IssuedPackage> = emptyList(),
 )
 
 /** The actions the screens may trigger (the ViewModel in the app, a fake in tests). */
@@ -38,4 +41,8 @@ interface HubActions {
     fun saveCloudflare(token: String); fun forgetCloudflare()
     /** Phase 1 of the hub migration: checks the local MCP bridge with one app (read-only). */
     fun testBridge(packageName: String)
+    /** Phase 2: provider apps and their execution packages (approved in the app). */
+    fun linkProvider(packageName: String); fun refreshPackages(packageName: String)
+    fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int)
+    fun revokePackage(packageName: String, id: String)
 }

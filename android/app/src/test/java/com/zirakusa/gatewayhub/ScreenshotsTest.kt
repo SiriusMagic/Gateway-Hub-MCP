@@ -35,6 +35,9 @@ class ScreenshotsTest {
         override fun setEnvironment(target: String) {}; override fun updateSettings(change: (AppSettings) -> AppSettings) {}
         override fun createAccess(cfToken: String) {}; override fun saveCloudflare(token: String) {}; override fun forgetCloudflare() {}
         override fun testBridge(packageName: String) {}
+        override fun linkProvider(packageName: String) {}; override fun refreshPackages(packageName: String) {}
+        override fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int) {}
+        override fun revokePackage(packageName: String, id: String) {}
     }
 
     private fun shot(name: String, theme: ThemeChoice = ThemeChoice.NIGHT, content: @androidx.compose.runtime.Composable () -> Unit) {

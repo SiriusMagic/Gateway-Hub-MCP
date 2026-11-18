@@ -33,6 +33,8 @@ private val CODES = mapOf(
     "BRIDGE_TIMEOUT" to R.string.bridge_timeout, "BRIDGE_TOO_LARGE" to R.string.bridge_too_large, "RESPONSE_TOO_LARGE" to R.string.bridge_too_large,
     "BRIDGE_BAD_ANSWER" to R.string.bridge_bad_answer, "REDIRECT_OFF" to R.string.bridge_redirect_off, "API_OFF" to R.string.bridge_api_off,
     "NOT_GATEWAY" to R.string.bridge_denied, "NOT_SAME_DEVELOPER" to R.string.bridge_denied, "BUSY" to R.string.bridge_busy,
+    "NOT_LINKED" to R.string.provider_not_linked, "DISCONNECTED_BY_USER" to R.string.provider_cut,
+    "PACKAGE_PENDING" to R.string.package_pending_error, "PACKAGE_TOO_MANY" to R.string.package_too_many,
     "CF_EMPTY" to R.string.err_cf_empty, "CF_MISSING" to R.string.err_cf_missing, "NO_HUB" to R.string.err_no_hub,
 )
 private val LINK_CODES = mapOf(

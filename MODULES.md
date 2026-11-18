@@ -74,6 +74,15 @@ declara esto en una Activity exportada:
     `_meta["com.zirakusa.gatewayhub/probe"] = true`. Si no marca ninguna, Gateway solo prueba `initialize` y `tools/list`.
   - Errores con el código al principio de `error.message` (`REDIRECT_OFF`, `NOT_SAME_DEVELOPER`, `BUSY`,
     `RESPONSE_TOO_LARGE`…). Implementación de referencia: `automation/provider/` en Stone (`ProviderService`, `ProviderBridge`, `GatewayGrant`, `McpDispatcher`).
+- **Proveedor con paquetes de ejecución (fase 2):** sobre el mismo canal, métodos propios con prefijo:
+  - `gatewayhub/link {env, publicKey, contract}` → `{instance, contract, prefix, packages}`. `publicKey` es la clave
+    ECDSA P-256 (X.509, Base64) del entorno; su privada vive en el Keystore de Gateway y nunca sale de él.
+  - `gatewayhub/packages/offer {packages:[{pkg, sig}]}`, `…/revoke {id}`, `…/list`, y `gatewayhub/state {environment, mode}`.
+  - Paquete: bytes JSON firmados (`v`, `id`, `env`, `aud = <paquete>#<instancia>`, `agent`, `label`, `acts`, `tools`,
+    `nbf`, `exp`). Acciones: `leer`, `revisar`, `escribir`, `modificar`, `revertir`; la app las aplica sobre el riesgo
+    que declara cada herramienta y pide confirmación en pantalla para lo irreversible.
+  - Cada llamada nombra su paquete en `_meta["com.zirakusa.gatewayhub/grant"].package`; la app aprueba en su pantalla
+    todo paquete que no sea solo de lectura. Referencia: `automation/provider/` en Stone.
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».
 

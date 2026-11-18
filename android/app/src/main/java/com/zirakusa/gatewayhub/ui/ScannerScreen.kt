@@ -22,7 +22,7 @@ import com.zirakusa.gatewayhub.data.ScannedApp
 /** Finds compatible apps and their state without turning anything on (the hub only sends tools/list). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable fun ScannerList(apps: List<ScannedApp>?, busy: Boolean, autoSync: Boolean, scan: () -> Unit,
-    setAutoSync: (Boolean) -> Unit, autoLink: (String) -> Unit, testBridge: (String) -> Unit = {}) {
+    setAutoSync: (Boolean) -> Unit, autoLink: (String) -> Unit, providers: ProvidersUi = ProvidersUi()) {
     HubCard {
         Text(stringResource(R.string.scanner_title), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         Text(stringResource(R.string.scanner_hint), Modifier.padding(top = 4.dp), color = HubColors.Muted, fontSize = 13.sp)
@@ -37,12 +37,12 @@ import com.zirakusa.gatewayhub.data.ScannedApp
             Icon(Icons.Default.Radar, null, Modifier.size(18.dp)); Text(stringResource(R.string.scanner_run), Modifier.padding(start = 6.dp))
         }
     }
-    apps?.forEach { ScannedCard(it, busy, autoLink, testBridge) }
+    apps?.forEach { ScannedCard(it, busy, autoLink, providers) }
     if (apps?.isEmpty() == true) Text(stringResource(R.string.scanner_none), Modifier.padding(16.dp), color = HubColors.Muted)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun ScannedCard(app: ScannedApp, busy: Boolean, autoLink: (String) -> Unit, testBridge: (String) -> Unit) {
+@Composable private fun ScannedCard(app: ScannedApp, busy: Boolean, autoLink: (String) -> Unit, providers: ProvidersUi) {
     val context = LocalContext.current
     val local = app.local; val remote = app.remote
     HubCard {
@@ -74,9 +74,7 @@ import com.zirakusa.gatewayhub.data.ScannedApp
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: ActivityNotFoundException) {}
             }) { Text(stringResource(R.string.scan_open)) }
         }
-        // Phase 1 of the hub migration: the local MCP bridge, read-only (only shown when the app offers it).
-        if (local != null && local.bridge && local.sameDeveloper) TextButton({ testBridge(local.packageName) }, enabled = !busy) {
-            Text(stringResource(R.string.bridge_test))
-        }
+        // Provider apps (local MCP bridge): link, execution packages and a test (only when the app offers the bridge).
+        if (local != null && local.bridge && local.sameDeveloper && providers.actions != null) ProviderButtons(local, busy, providers)
     }
 }

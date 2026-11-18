@@ -1,3 +1,12 @@
+# Sin publicar (fase 2: proveedores y paquetes de ejecución)
+
+- Escáner › Stone: **Vincular** (entrega la clave pública del entorno y recibe el id de la instalación; Stone recibe al
+  momento un paquete de solo lectura) y **Paquetes**: ofrecer un paquete (para todos los agentes o uno, con leer,
+  revisar, escribir, modificar o revertir, 7/30/90 días), ver si está activo o pendiente de aprobar en Stone, y revocar.
+- Clave del entorno ECDSA P-256 en el Android Keystore, sin exportar; los paquetes se firman en el teléfono.
+- «Probar puente local» usa el paquete de lectura cuando existe.
+- Sin cambios en el hub (Worker), el relay ni Cloudflare. Sin APK todavía.
+
 # Gateway Hub 0.0.7 (app)
 
 - **Puente local con Stone** (fase 1 de la migración a un solo endpoint MCP por usuario): el Escáner detecta si una

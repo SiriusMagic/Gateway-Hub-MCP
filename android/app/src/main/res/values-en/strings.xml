@@ -220,4 +220,34 @@
     <string name="bridge_redirect_off">Turn on \"Hub redirect\" in Stone › Settings › API mode › Gateway Hub.</string>
     <string name="bridge_api_off">Turn on MCP in Stone › Settings › API mode (the bridge needs it in this phase).</string>
     <string name="bridge_busy">The app is busy with other requests. Try again.</string>
+    <string name="provider_link">Link</string>
+    <string name="provider_linked">%1$s linked as a provider. It has an active reading package.</string>
+    <string name="provider_not_linked">First tap \"Link\" on this app.</string>
+    <string name="provider_cut">The user disconnected this app from Gateway Hub inside the app. They must allow it again there.</string>
+    <string name="packages_open">Packages (%1$d)</string>
+    <string name="packages_title">Packages of %1$s</string>
+    <string name="packages_none">No packages yet.</string>
+    <string name="packages_new">New package</string>
+    <string name="packages_label">Name (e.g. Claude · tidy the library)</string>
+    <string name="packages_agent">For</string>
+    <string name="packages_acts">May</string>
+    <string name="packages_hint">Read-only is active at once. Anything else waits until you approve it in the app. Deleting always asks on the app\'s screen.</string>
+    <string name="packages_offer">Offer package</string>
+    <plurals name="package_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="package_active">Package active in %1$s.</string>
+    <string name="package_pending">Package sent: approve it in %1$s.</string>
+    <string name="package_revoked">Package revoked.</string>
+    <string name="package_pending_error">That package is not approved in the app yet.</string>
+    <string name="package_too_many">The app already has too many packages: revoke some.</string>
+    <string name="package_status_active">Active</string>
+    <string name="package_status_pending">Pending</string>
+    <string name="agent_all_agents">All agents</string>
+    <string name="act_read">read</string>
+    <string name="act_review">review</string>
+    <string name="act_write">write</string>
+    <string name="act_modify">modify</string>
+    <string name="act_revert">revert</string>
 </resources>

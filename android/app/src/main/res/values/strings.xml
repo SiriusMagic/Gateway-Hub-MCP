@@ -220,4 +220,34 @@
     <string name="bridge_redirect_off">Activa «Redirección hub» en Stone › Ajustes › Modo API › Gateway Hub.</string>
     <string name="bridge_api_off">Activa MCP en Stone › Ajustes › Modo API (en esta fase el puente lo necesita).</string>
     <string name="bridge_busy">La app está ocupada con otras peticiones. Vuelve a probar.</string>
+    <string name="provider_link">Vincular</string>
+    <string name="provider_linked">%1$s vinculada como proveedor. Tiene un paquete de lectura activo.</string>
+    <string name="provider_not_linked">Primero pulsa «Vincular» en esta app.</string>
+    <string name="provider_cut">El usuario desconectó esta app de Gateway Hub desde la propia app. Debe permitirlo de nuevo allí.</string>
+    <string name="packages_open">Paquetes (%1$d)</string>
+    <string name="packages_title">Paquetes de %1$s</string>
+    <string name="packages_none">Aún no hay paquetes.</string>
+    <string name="packages_new">Nuevo paquete</string>
+    <string name="packages_label">Nombre (p. ej. Claude · ordenar la biblioteca)</string>
+    <string name="packages_agent">Para</string>
+    <string name="packages_acts">Puede</string>
+    <string name="packages_hint">Solo lectura se activa enseguida. Lo demás queda pendiente hasta que lo apruebes en la app. Borrar siempre pide confirmación en la pantalla de la app.</string>
+    <string name="packages_offer">Ofrecer paquete</string>
+    <plurals name="package_days">
+        <item quantity="one">%1$d día</item>
+        <item quantity="other">%1$d días</item>
+    </plurals>
+    <string name="package_active">Paquete activo en %1$s.</string>
+    <string name="package_pending">Paquete enviado: apruébalo en %1$s.</string>
+    <string name="package_revoked">Paquete revocado.</string>
+    <string name="package_pending_error">Ese paquete todavía no está aprobado en la app.</string>
+    <string name="package_too_many">La app ya tiene demasiados paquetes: revoca alguno.</string>
+    <string name="package_status_active">Activo</string>
+    <string name="package_status_pending">Pendiente</string>
+    <string name="agent_all_agents">Todos los agentes</string>
+    <string name="act_read">leer</string>
+    <string name="act_review">revisar</string>
+    <string name="act_write">escribir</string>
+    <string name="act_modify">modificar</string>
+    <string name="act_revert">revertir</string>
 </resources>

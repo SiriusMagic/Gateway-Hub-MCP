@@ -105,15 +105,17 @@ data class ProbeResult(val server: String, val tools: Int, val probe: String?, v
  * that tool with no arguments. No other tool is ever run.
  */
 object BridgeProbe {
-    suspend fun run(pipe: McpPipe): ProbeResult {
+    /** [grant] (optional) is the `_meta` naming the agent and package to test with. */
+    suspend fun run(pipe: McpPipe, grant: JSONObject? = null): ProbeResult {
         val init = pipe.request("initialize", JSONObject().put("protocolVersion", "2025-06-18")
             .put("capabilities", JSONObject()).put("clientInfo", JSONObject().put("name", "gateway-hub").put("version", "local-bridge")))
         val server = init.optJSONObject("serverInfo")?.let { "${it.optString("name")} ${it.optString("version")}".trim() }.orEmpty()
-        val tools = pipe.request("tools/list", JSONObject()).optJSONArray("tools") ?: throw HubException("BRIDGE_BAD_ANSWER", "")
+        fun params() = JSONObject().apply { grant?.let { put("_meta", JSONObject(it.toString())) } }
+        val tools = pipe.request("tools/list", params()).optJSONArray("tools") ?: throw HubException("BRIDGE_BAD_ANSWER", "")
         val probe = (0 until tools.length()).map { tools.getJSONObject(it) }.firstOrNull {
             it.optJSONObject("_meta")?.optBoolean(LocalBridge.PROBE_META) == true && it.optJSONObject("annotations")?.optBoolean("readOnlyHint") == true
         }?.optString("name")
-        val ok = probe?.let { !pipe.request("tools/call", JSONObject().put("name", it).put("arguments", JSONObject())).optBoolean("isError", false) }
+        val ok = probe?.let { !pipe.request("tools/call", params().put("name", it).put("arguments", JSONObject())).optBoolean("isError", false) }
         return ProbeResult(server, tools.length(), probe, ok)
     }
 }
