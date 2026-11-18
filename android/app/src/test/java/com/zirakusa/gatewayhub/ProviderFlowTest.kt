@@ -104,6 +104,15 @@ class ProviderFlowTest {
         assertEquals("PACKAGE_BAD_SIGNATURE", e.code)
     }
 
+    @Test fun theModeReachesEveryLinkedApp() = runBlocking {
+        val fake = FakeStone(); val f = flow(fake)
+        f.pushState("active", "safe")
+        assertFalse("gatewayhub/state" in fake.calls)                       // not linked yet: nothing sent
+        f.link(stone.packageName, "active", "background"); fake.calls.clear()
+        f.pushState("paused", "safe")
+        assertEquals(listOf("gatewayhub/state"), fake.calls)
+    }
+
     @Test fun theTestUsesTheReadingPackage() = runBlocking {
         val fake = FakeStone(); val f = flow(fake)
         f.link(stone.packageName, "active", "safe")

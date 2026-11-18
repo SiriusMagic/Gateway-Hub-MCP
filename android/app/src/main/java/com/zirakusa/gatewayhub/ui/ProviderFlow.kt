@@ -55,6 +55,12 @@ class ProviderFlow(
         sync(app.packageName, pipe.request("gatewayhub/packages/list", JSONObject()).optJSONArray("packages")); null
     }
 
+    /** Tells every linked app the environment state and mode (safe mode: the app serves only while on screen). */
+    suspend fun pushState(environment: String, mode: String) {
+        for (app in localApps.installed().filter { ledger.instance(it.packageName) != null })
+            runCatching { bridge.withApp(app) { it.request("gatewayhub/state", JSONObject().put("environment", environment).put("mode", mode)) } }
+    }
+
     /** initialize + tools/list + the marked probe, with the reading package when there is one. */
     suspend fun test(packageName: String): UiText = withApp(packageName) { app, pipe ->
         val readPackage = ledger.packages().firstOrNull { it.app == app.packageName && it.agent == "*" && it.status == "active" }

@@ -75,7 +75,7 @@ class HubViewModel(
     /** Connect, pause or disconnect the MCP environment (the hub enforces it); reconnecting relinks Stone. */
     override fun setEnvironment(target: String) = run {
         val wasDisconnected = mutable.value.hub?.environment == ENV_DISCONNECTED
-        requireApi().setEnvironment(target)
+        requireApi().setEnvironment(target); providers.pushState(target, mutable.value.settings.mode.name.lowercase())
         val relinked = if (target == ENV_ACTIVE && wasDisconnected && mutable.value.autoSync) sync.scanAndLink { scan -> mutable.update { it.copy(scan = scan) } } else emptyList()
         reload()
         val note = UiText.Res(when (target) { ENV_PAUSED -> R.string.env_note_paused; ENV_DISCONNECTED -> R.string.env_note_disconnected; else -> R.string.env_note_active })
@@ -117,7 +117,8 @@ class HubViewModel(
     }
 
     /** Tells Stone (same developer) the chosen mode, at start and on every change. */
-    private fun sendMode() = mutable.value.settings.mode.let { mode -> viewModelScope.launch(Dispatchers.IO) { sync.sendMode(modeSender, mode) } }
+    private fun sendMode() = mutable.value.let { s -> viewModelScope.launch(Dispatchers.IO) {
+        sync.sendMode(modeSender, s.settings.mode); providers.pushState(s.hub?.environment ?: ENV_ACTIVE, s.settings.mode.name.lowercase()) } }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }
     override fun dismissMessage() = mutable.update { it.copy(error = null, notice = null) }

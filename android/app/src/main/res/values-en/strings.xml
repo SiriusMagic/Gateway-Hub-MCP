@@ -239,7 +239,7 @@
     <string name="act_modify">modify</string>
     <string name="act_revert">revert</string>
     <string name="channel_online">Phone channel: connected to the hub (Stone goes through it).</string>
-    <string name="channel_offline">Phone channel: not connected (Stone keeps using the previous link).</string>
+    <string name="channel_offline">Phone channel: not connected.</string>
     <string name="cf_deploy">Update my hub</string>
     <string name="cf_updated">Hub updated to this app\'s version: %1$s. Its token, agents and data are kept.</string>
     <string name="err_no_subdomain">Your Cloudflare account has no workers.dev subdomain yet. Open dash.cloudflare.com › Workers, pick one and try again.</string>

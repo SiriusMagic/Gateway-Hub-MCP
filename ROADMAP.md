@@ -27,6 +27,13 @@ pegar y sin depender de la cuenta de Cloudflare de otra persona**.
   persistente y resúmenes.
 - Stone 1.7.14 recibe el modo desde Gateway 0.0.5: en Modo seguro deja de atender MCP cuando no está en pantalla.
 
+## Gateway centralizado (fases 1–6) ✅ sin publicar
+
+Un solo endpoint MCP por usuario (`stone-hub`), canal por teléfono, paquetes de ejecución firmados en el teléfono,
+despliegue con un token de Cloudflare temporal, teléfonos satélite y Stone solo proveedor. Pendiente: herramientas de
+Stone sin la interfaz abierta (2b, medir en teléfono real) y retirar el Worker `stone-relay` y el camino del relay en
+`modules/music` (7).
+
 ## Fase 2: «Mi Cloudflare» (instalación en un toque)
 
 Hecho (Hub app 0.0.6 · Stone 1.7.15): pegar y actualizar el token de Cloudflare en las dos apps (compartido), y la app

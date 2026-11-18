@@ -1,3 +1,10 @@
+# Sin publicar (fase 6: Stone solo proveedor)
+
+- Gateway envía el estado del entorno y el modo (seguro / segundo plano) a cada app vinculada por el puente
+  (`gatewayhub/state`), al vincular, al cambiar el modo y al conectar, pausar o desconectar. Stone 1.7.18 ya no tiene
+  HubLink: aplica el modo seguro sola (solo responde con Stone en pantalla).
+- El hub conserva el camino por el relay solo para Stone anteriores; se retirará con el Worker `stone-relay`.
+
 # Sin publicar (fase 5: varios teléfonos)
 
 - **Añadir otro teléfono:** Ajustes › Teléfonos › «Añadir otro teléfono» crea un código de un solo uso (10 caracteres,

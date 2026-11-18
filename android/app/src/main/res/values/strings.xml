@@ -239,7 +239,7 @@
     <string name="act_modify">modificar</string>
     <string name="act_revert">revertir</string>
     <string name="channel_online">Canal del teléfono: conectado al hub (Stone va por aquí).</string>
-    <string name="channel_offline">Canal del teléfono: sin conectar (Stone sigue por el enlace anterior).</string>
+    <string name="channel_offline">Canal del teléfono: sin conectar.</string>
     <string name="cf_deploy">Actualizar mi hub</string>
     <string name="cf_updated">Hub actualizado a la versión de esta app: %1$s. Se conservan el token, los agentes y los datos.</string>
     <string name="err_no_subdomain">Tu cuenta de Cloudflare aún no tiene subdominio workers.dev. Ábrela en dash.cloudflare.com › Workers, elige uno y vuelve a intentarlo.</string>
