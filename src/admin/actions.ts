@@ -3,7 +3,8 @@
 import type { HubContext, HubModule } from "../modules/types.ts";
 import { ADMIN_HEADERS } from "./layout.ts";
 import { type PanelData, loginPage, panelPage } from "./views.ts";
-import { type AdminStore, DAY, createAgent, linkStone, setPaused, unlinkStone } from "./service.ts";
+import { type AdminStore, DAY, changeEnvironment, createAgent, linkStone, setPaused, unlinkStone } from "./service.ts";
+import { environmentState } from "../environment.ts";
 import { savedLink } from "../modules/music/index.ts";
 
 /** Accepts the access as people paste it: "https://hub#hub_…", "…?token=hub_…" or only the token. */
@@ -34,7 +35,7 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
 
   const view = async (extra: Partial<PanelData> = {}, status = 200) => {
     const now = Date.now();
-    const data: PanelData = { token, origin: url.origin, modules, stoneLinked: !!await savedLink(ctx),
+    const data: PanelData = { token, origin: url.origin, modules, stoneLinked: !!await savedLink(ctx), environment: await environmentState(store),
       agents: await store.agentsList(), day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY), ...extra };
     return html(status, panelPage(data), security);
   };
@@ -45,6 +46,7 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
     switch (field("action")) {
       case "login": return view();
       case "link_stone": return view({ notice: { text: await linkStone(store, ctx, field("link")) } });
+      case "environment": return view({ notice: { text: (await changeEnvironment(store, field("state"))).message } });
       case "unlink_stone": await unlinkStone(store); return view({ notice: { text: "Stone desvinculado." } });
       case "agent_create": {
         const made = await createAgent(store, modules, url.origin,

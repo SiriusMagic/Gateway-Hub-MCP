@@ -25,8 +25,8 @@ class HubApiTest {
 
     @Test fun readsTheStateTheHubSends() = runBlocking {
         val state = HubApi("https://hub.example", "owner", FakeTransport()).state()
-        assertEquals("0.0.1", state.version)
-        assertEquals(4, state.modules.size)
+        assertEquals("0.0.3", state.version)
+        assertEquals(listOf("music_"), state.modules.map { it.prefix })
         assertTrue(state.stoneLinked)
         assertTrue(state.agents[0].allApps)
         assertTrue(state.agents[1].readOnly && state.agents[1].paused)
@@ -35,11 +35,11 @@ class HubApiTest {
     }
 
     @Test fun theTokenGoesInTheHeaderNeverInTheUrl() = runBlocking {
-        val transport = FakeTransport { if (it.method == "POST") 200 to """{"agent":{"id":"a1b2c3d4e5f6","name":"X","modules":["calc_"],"readOnly":true,
+        val transport = FakeTransport { if (it.method == "POST") 200 to """{"agent":{"id":"a1b2c3d4e5f6","name":"X","modules":["music_"],"readOnly":true,
             "paused":false,"status":"active","expiresAt":0,"created":1,"lastUsed":0},"url":"https://hub.example/mcp?token=gw_abc","token":"gw_abc"}"""
             else 200 to STATE_JSON }
         val api = HubApi("https://hub.example", "owner-secret", transport)
-        val created = api.createAgent("X", listOf("calc_"), readOnly = true, days = 30)
+        val created = api.createAgent("X", listOf("music_"), readOnly = true, days = 30)
         assertEquals("gw_abc", created.token)
         val sent = transport.sent.single()
         assertEquals("https://hub.example/api/admin/agents", sent.url)

@@ -9,7 +9,7 @@ objeto `HubModule` (contrato en `src/modules/types.ts`). El enrutador (`src/rout
 
 1. Elige un prefijo único: letras minúsculas o cifras terminadas en `_` (`gallery_`, `weather_`).
    No puede empezar por otro prefijo ya usado (`music_` y `musicx_` chocan, y el hub no arranca).
-2. Copia `src/modules/calculator/index.ts` como plantilla en `src/modules/<app>/index.ts`.
+2. Copia la **plantilla mínima** de abajo en `src/modules/<app>/index.ts` (o mira `src/modules/music/` para una app remota).
 3. Añade el módulo a la lista de `src/modules/index.ts`. Nada más cambia.
 4. Escribe una prueba en `test/` y ejecuta `npm test`.
 

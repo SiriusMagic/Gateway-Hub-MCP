@@ -4,6 +4,7 @@ import { type Agent, type HubAdminStore, type HubContext, type HubModule, type H
 import { MAX_AGENTS, agentStatus, newAgentToken, newId, sha256Hex } from "../agents.ts";
 import { parseStoneLink, stoneRpc } from "../modules/music/stone.ts";
 import { savedLink } from "../modules/music/index.ts";
+import { environmentState, setEnvironmentState } from "../environment.ts";
 
 export type AdminStore = HubStoreApi & HubAdminStore;
 export const DAY = 86_400_000;
@@ -18,6 +19,7 @@ export async function overview(store: AdminStore, ctx: HubContext, modules: HubM
     version,
     modules: modules.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary, androidPackage: m.androidPackage ?? null })),
     stoneLinked: !!await savedLink(ctx),
+    environment: await environmentState(store),
     agents: (await store.agentsList()).map(publicAgent),
     metrics: { day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY) },
   };
@@ -74,4 +76,16 @@ export async function setPaused(store: AdminStore, id: string, paused: boolean):
   if (!(await store.agentsList()).some((a) => a.id === id)) return false;
   await store.agentsSet(id, { paused });
   return true;
+}
+
+const ENVIRONMENT_NOTES = {
+  active: "Entorno MCP conectado: las apps vuelven a ejecutar herramientas.",
+  paused: "Entorno MCP en pausa: se conservan enlaces y ajustes, pero no se ejecuta nada.",
+  disconnected: "Entorno MCP desconectado: Stone se desvinculó y no se ejecuta nada.",
+};
+
+/** Connect, pause or disconnect the whole MCP environment. Returns the new state and a note. */
+export async function changeEnvironment(store: AdminStore, raw: string) {
+  const state = await setEnvironmentState(store, raw);
+  return { state, message: ENVIRONMENT_NOTES[state] };
 }

@@ -1,4 +1,4 @@
-# Gateway Hub para Android (0.0.3)
+# Gateway Hub para Android (0.0.4)
 
 App nativa (Kotlin, Jetpack Compose) del **propietario** del Gateway Hub. Hace lo mismo que el panel
 web `/admin`, pero en el teléfono:
@@ -13,10 +13,13 @@ web `/admin`, pero en el teléfono:
   activada (Stone 1.7.13 o posterior). Usa un permiso `signature` y la app comprueba la firma otra vez.
 - **Apps:** ver el estado de cada app y vincular o desvincular Stone (pegando el enlace de Stone ›
   Modo API › Gateway Hub › Vincular).
+- **Ajustes:** entorno MCP (Conectar, Pausar, Desconectar), Modo seguro o MCP en segundo plano,
+  notificaciones de actividad, bloqueo de capturas, tema (Noche dorada, Océano, Bosque, Rubí, Claro),
+  idioma (español o inglés, se elige al abrir la app por primera vez), permisos y ayuda.
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.3.apk`](GatewayHub-0.0.3.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.4.apk`](GatewayHub-0.0.4.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 
@@ -27,11 +30,14 @@ APK listo para instalar: [`GatewayHub-0.0.3.apk`](GatewayHub-0.0.3.apk) (`com.zi
   Si el hub lo rechaza más tarde, la sesión se cierra sola.
 - Sin copias de seguridad (`allowBackup=false` y reglas de extracción vacías): el token no sale del
   teléfono.
-- `FLAG_SECURE`: no se pueden hacer capturas y no aparece la vista previa en Recientes.
+- Capturas **permitidas por defecto**. Ajustes › Privacidad › «Bloquear capturas» activa `FLAG_SECURE` (sin capturas ni
+  vista previa en Recientes). Solo se cambia a mano dentro de la app.
 - Los enlaces nuevos se muestran **una vez** y no se guardan. Al copiarlos se marcan como sensibles,
   así que Android 13+ no los muestra en la vista previa del portapapeles.
-- Único permiso: `INTERNET`. Para el escáner, la visibilidad de paquetes se limita a las apps que
-  declaran `com.zirakusa.gatewayhub.action.APP` (`<queries>`), sin `QUERY_ALL_PACKAGES`.
+- Permisos: `INTERNET` (solo HTTPS), `POST_NOTIFICATIONS` y `FOREGROUND_SERVICE(_SPECIAL_USE)` (solo para el
+  modo «MCP en segundo plano»). Los archivos se escriben con el selector de Android (exportar informe), sin
+  permiso de almacenamiento. Para el escáner, la visibilidad de paquetes se limita a las apps que declaran
+  `com.zirakusa.gatewayhub.action.APP` (`<queries>`), sin `QUERY_ALL_PACKAGES`.
 
 ## Compilar y probar
 

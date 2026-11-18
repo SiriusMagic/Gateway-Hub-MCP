@@ -7,7 +7,7 @@ test("only the owner token, and only in the header", async () => {
   const h = hub();
   assert.equal((await h.api("GET", "/state", undefined, null)).status, 401);
   assert.equal((await h.api("GET", "/state", undefined, "nope")).status, 401);
-  const { body } = await h.api("POST", "/agents", { name: "A", apps: ["calc_"], days: 1 });
+  const { body } = await h.api("POST", "/agents", { name: "A", apps: ["demo_"], days: 1 });
   assert.equal((await h.api("GET", "/state", undefined, body.token)).status, 401);   // agent links never administer
   const viaQuery = await h.api("GET", `/state?token=${TOKEN}`, undefined, null);
   assert.equal(viaQuery.status, 401);
@@ -19,11 +19,12 @@ test("only the owner token, and only in the header", async () => {
 
 test("state lists modules, agents without hashes and metrics", async () => {
   const h = hub();
-  await h.api("POST", "/agents", { name: "Claude", apps: ["calc_", "notes_"], readOnly: true, days: 30 });
+  await h.api("POST", "/agents", { name: "Claude", apps: ["demo_"], readOnly: true, days: 30 });
   const { body } = await h.api("GET", "/state");
-  assert.equal(body.version, "0.0.2");
+  assert.equal(body.version, "0.0.3");
+  assert.equal(body.environment, "active");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
-  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "notes_", "calc_", "utils_"]);
+  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "demo_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
   assert.equal(body.agents[0].tokenHash, undefined);
@@ -32,7 +33,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
 
 test("create returns the link once; it works on /mcp; pause, resume and revoke", async () => {
   const h = hub();
-  const made = await h.api("POST", "/agents", { name: "ChatGPT", apps: ["calc_"], days: 0 });
+  const made = await h.api("POST", "/agents", { name: "ChatGPT", apps: ["demo_"], days: 0 });
   assert.match(made.body.url, /^https:\/\/hub\.example\/mcp\?token=gw_/);
   assert.equal(made.body.agent.expiresAt, 0);
   const id = made.body.agent.id;
@@ -48,7 +49,7 @@ test("create returns the link once; it works on /mcp; pause, resume and revoke",
 
 test("validation: no name, no apps, unknown apps, bad JSON, unknown route", async () => {
   const h = hub();
-  assert.equal((await h.api("POST", "/agents", { name: "", apps: ["calc_"] })).body.error.code, "INVALID_ARGUMENT");
+  assert.equal((await h.api("POST", "/agents", { name: "", apps: ["demo_"] })).body.error.code, "INVALID_ARGUMENT");
   assert.equal((await h.api("POST", "/agents", { name: "X", apps: ["evil_"] })).body.error.code, "INVALID_ARGUMENT");
   assert.equal((await h.api("POST", "/agents", ["x"])).status, 400);
   assert.equal((await h.api("GET", "/nothing")).status, 404);
@@ -69,7 +70,7 @@ test("scan: built-in apps ready, Stone unlinked / online / offline, read-only", 
   const stone = fakeStone();
   const h = hub(new MemoryStore(), stone.fetcher);
   let apps = (await h.api("GET", "/scan")).body.apps;
-  assert.equal(apps.find((a: any) => a.prefix === "calc_").online, true);
+  assert.equal(apps.find((a: any) => a.prefix === "demo_").online, true);
   assert.deepEqual(apps.find((a: any) => a.prefix === "music_").linked, false);
   await h.api("POST", "/stone", { link: STONE_LINK });
   apps = (await h.api("GET", "/scan")).body.apps;
@@ -80,4 +81,38 @@ test("scan: built-in apps ready, Stone unlinked / online / offline, read-only", 
   const down = (await offline.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
   assert.ok(down.linked && !down.online);
   assert.match(down.detail, /not open/);
+});
+
+test("environment: pause and disconnect stop every tool call; connect brings them back", async () => {
+  const h = hub();
+  await h.api("POST", "/stone", { link: STONE_LINK });
+  const save = () => h.rpc("tools/call", { name: "demo_save", arguments: { key: "k", value: "v" } });
+  assert.equal((await save()).body.result.isError, undefined);
+  const paused = await h.api("POST", "/environment", { state: "paused" });
+  assert.equal(paused.body.state, "paused");
+  assert.equal((await h.api("GET", "/state")).body.environment, "paused");
+  assert.equal((await save()).body.result.structuredContent.error.code, "PAUSED");
+  assert.equal((await h.api("GET", "/state")).body.stoneLinked, true);               // pause keeps the links
+  assert.equal((await h.rpc("ping")).status, 200);                                    // the link itself still answers
+  await h.api("POST", "/environment", { state: "disconnected" });
+  assert.equal((await save()).body.result.structuredContent.error.code, "DISCONNECTED");
+  assert.equal((await h.api("GET", "/state")).body.stoneLinked, false);              // disconnect ends Stone's session
+  await h.api("POST", "/environment", { state: "active" });
+  assert.equal((await save()).body.result.isError, undefined);
+  assert.equal((await h.api("POST", "/environment", { state: "off" })).body.error.code, "INVALID_ARGUMENT");
+  assert.equal((await h.api("GET", "/state")).body.environment, "active");
+});
+
+test("activity since a moment, for the app's notifications", async () => {
+  const h = hub();
+  const start = Date.now();
+  await h.rpc("tools/call", { name: "demo_save", arguments: { key: "k", value: "v" } });
+  await h.rpc("tools/call", { name: "demo_get", arguments: { key: "missing" } });
+  const { body } = await h.api("GET", `/activity?since=${start - 1}`);
+  assert.equal(body.environment, "active");
+  assert.equal(body.calls, 2); assert.equal(body.errors, 1);
+  assert.equal(body.byTool.length, 2);
+  assert.equal((await h.api("GET", `/activity?since=${Date.now() + 60_000}`)).body.calls, 0);
+  assert.equal((await h.api("GET", "/activity?since=x")).status, 200);               // bad input = last 7 days
+  assert.equal((await h.api("GET", "/activity", undefined, null)).status, 401);
 });

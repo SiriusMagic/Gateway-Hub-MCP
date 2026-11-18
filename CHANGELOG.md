@@ -1,3 +1,26 @@
+# Gateway Hub 0.0.4 (app) · hub 0.0.3
+
+- **Ajustes** (nueva pestaña):
+  - **Entorno MCP:** *Conectar*, *Pausar* y *Desconectar del entorno*. Los aplica el hub (`POST /api/admin/environment`
+    y el panel `/admin`). Pausar conserva vinculación y ajustes, pero rechaza toda llamada (`PAUSED`). Desconectar
+    además invalida la sesión de Stone (la desvincula) y bloquea las llamadas (`DISCONNECTED`). Al volver a conectar,
+    Stone se vincula sola si tiene «Redirección hub».
+  - **Modo seguro** (por defecto: nada en segundo plano) o **MCP en segundo plano**: servicio con la notificación
+    persistente «MCP activo — Gateway Hub» y botones *Pausar* y *Desconectar*. Solo funciona con la sesión iniciada
+    y el entorno conectado.
+  - **Notificaciones de actividad:** resumen cada 15 min, 30 min, 1 h o 3 h (herramientas, errores y agentes), solo si
+    hubo actividad. Alerta inmediata si hay llamadas con error o rechazadas por permisos. Nuevo `GET /api/admin/activity?since=`.
+  - **Capturas permitidas por defecto**; se bloquean solo a mano en Ajustes › Privacidad.
+  - **Temas:** Noche dorada, Océano, Bosque, Rubí y Claro.
+  - **Idioma:** español o inglés, elegido en la primera pantalla de la primera instalación y modificable en Ajustes.
+  - **Permisos:** estado de Internet, Notificaciones y Archivos (exportar un informe de actividad sin tokens, con el
+    selector de Android), y acceso a los ajustes de Android.
+  - **Ayuda:** conectar una IA, conectar una app de un tercero, hacer una app compatible y qué hace cada estado.
+- **Hub:** se quitan Calculadora, Notas y Utilidades. Solo queda Stone (`music_`). Los datos antiguos de notas siguen
+  guardados en el Durable Object, pero ya no se usan ni se borran.
+- **Pendiente (Stone):** que el *Modo seguro* corte el relay de Stone cuando Stone no esté visible. Hace falta una
+  versión de Stone que reciba el modo desde Gateway (canal `signature` de «Redirección hub»).
+
 # Gateway Hub app 0.0.3
 
 - **Sincronización automática** en el Escáner (activada por defecto, se puede apagar):

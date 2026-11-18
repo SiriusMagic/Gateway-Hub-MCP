@@ -4,12 +4,13 @@
 gateway-hub-mcp/
 ├── src/
 │   ├── index.ts            # Worker: solo HTTPS → Durable Object único ("main")
-│   ├── store.ts            # Durable Object: SQLite (notas, config, agentes, métricas) + límites
+│   ├── store.ts            # Durable Object: SQLite (config, agentes, métricas) + límites
 │   ├── serve.ts            # Límites, tamaño, quién llama → /mcp o /admin
 │   ├── agents.ts           # Propietario y agentes: tokens, apps permitidas, solo lectura
 │   ├── auth.ts             # Comparación en tiempo constante, lectura del token, limitador
 │   ├── mcp.ts              # MCP / JSON-RPC 2.0: filtra herramientas por agente y registra métricas
 │   ├── router.ts           # Discriminador: prefijo → módulo; aísla fallos de cada módulo
+│   ├── environment.ts      # Entorno MCP: conectado, en pausa o desconectado
 │   ├── validate.ts         # Validación de argumentos con el esquema de la herramienta
 │   ├── admin/              # Lo que puede hacer el propietario
 │   │   ├── service.ts      # Lógica compartida (validación una sola vez)
@@ -18,8 +19,7 @@ gateway-hub-mcp/
 │   └── modules/            # UNA CARPETA POR APP
 │       ├── types.ts        # Contrato HubModule (lo único que un módulo necesita conocer)
 │       ├── index.ts        # Lista de apps: añadir una = una línea
-│       ├── music/          # Stone a través de su relay
-│       ├── notes/ · calculator/ · utils/
+│       └── music/          # Stone a través de su relay (la única app hoy)
 ├── test/                   # node --test (sin dependencias)
 ├── android/                # App Android del propietario (Kotlin + Compose) → android/README.md
 │   └── app/src/main/java/com/zirakusa/gatewayhub/

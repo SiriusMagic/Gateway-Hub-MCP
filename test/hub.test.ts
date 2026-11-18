@@ -1,4 +1,4 @@
-// End to end through serve(): auth, limits, MCP protocol, every module, Stone link and /setup.
+// End to end through serve(): auth, limits, MCP protocol, the modules, Stone link and /setup.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RELAY, STONE_LINK, TOKEN, MemoryStore, fakeStone, hub } from "./helpers.ts";
@@ -24,41 +24,35 @@ test("initialize names every module; notifications get 202", async () => {
   const h = hub();
   const init = await h.rpc("initialize", { protocolVersion: "2025-06-18" });
   assert.equal(init.body.result.protocolVersion, "2025-06-18");
-  for (const p of ["music_", "notes_", "calc_", "utils_"]) assert.match(init.body.result.instructions, new RegExp(p));
+  for (const p of ["music_", "demo_"]) assert.match(init.body.result.instructions, new RegExp(p));
   assert.ok(init.response.headers.get("mcp-session-id"));
   assert.equal(init.response.headers.get("x-content-type-options"), "nosniff");
 });
 
-test("calculator and utils through MCP, with server-side validation", async () => {
+test("built-in app through MCP: list, a good call, bad arguments, not found", async () => {
   const h = hub();
-  const ok = await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "(150 * 0.15) + 20" } });
-  assert.equal(ok.body.result.structuredContent.result, 42.5);
-  const bad = await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: 5 } });
-  assert.equal(bad.body.result.isError, true);
+  const listed = (await h.rpc("tools/list")).body.result.tools.map((t: any) => t.name);
+  assert.ok(["demo_get", "demo_save", "demo_delete"].every((n) => listed.includes(n)));
+  assert.ok(!listed.some((n: string) => /^(calc|notes|utils)_/.test(n)));          // removed apps are gone
+  const saved = await h.rpc("tools/call", { name: "demo_save", arguments: { key: "compras", value: "leche y pan" } });
+  assert.equal(saved.body.result.isError, undefined);
+  assert.equal((await h.rpc("tools/call", { name: "demo_get", arguments: { key: "compras" } })).body.result.structuredContent.value, "leche y pan");
+  const bad = await h.rpc("tools/call", { name: "demo_save", arguments: { key: 5, value: "x" } });
   assert.equal(bad.body.result.structuredContent.error.code, "INVALID_ARGUMENT");
-  const extra = await h.rpc("tools/call", { name: "calc_percentage", arguments: { percent: 15, value: 80, evil: 1 } });
+  const extra = await h.rpc("tools/call", { name: "demo_get", arguments: { key: "compras", evil: 1 } });
   assert.equal(extra.body.result.structuredContent.error.code, "INVALID_ARGUMENT");
-  const pct = await h.rpc("tools/call", { name: "calc_percentage", arguments: { percent: 15, value: 80 } });
-  assert.equal(pct.body.result.structuredContent.result, 12);
-  const tz = await h.rpc("tools/call", { name: "utils_time", arguments: { timezone: "Not/AZone" } });
-  assert.equal(tz.body.result.isError, true);
-  const r = await h.rpc("tools/call", { name: "utils_random", arguments: { min: 1, max: 6 } });
-  assert.ok(r.body.result.structuredContent.value >= 1 && r.body.result.structuredContent.value <= 6);
+  const long = await h.rpc("tools/call", { name: "demo_save", arguments: { key: "x".repeat(21), value: "x" } });
+  assert.equal(long.body.result.structuredContent.error.code, "INVALID_ARGUMENT");
+  await h.rpc("tools/call", { name: "demo_delete", arguments: { key: "compras" } });
+  const gone = await h.rpc("tools/call", { name: "demo_get", arguments: { key: "compras" } });
+  assert.equal(gone.body.result.structuredContent.error.code, "NOT_FOUND");
+  const unknown = await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "1+1" } });
+  assert.equal(unknown.body.result.structuredContent.error.code, "UNKNOWN_TOOL");
 });
 
-test("notes: create, search, update, delete", async () => {
-  const h = hub();
-  const made = await h.rpc("tools/call", { name: "notes_create", arguments: { title: "Compras", body: "leche y pan" } });
-  const id = made.body.result.structuredContent.id;
-  const found = await h.rpc("tools/call", { name: "notes_list", arguments: { query: "pan" } });
-  assert.equal(found.body.result.structuredContent.notes[0].id, id);
-  await h.rpc("tools/call", { name: "notes_update", arguments: { id, body: "leche" } });
-  assert.equal((await h.rpc("tools/call", { name: "notes_get", arguments: { id } })).body.result.structuredContent.body, "leche");
-  assert.equal((await h.rpc("tools/call", { name: "notes_delete", arguments: { id } })).body.result.isError, undefined);
-  const gone = await h.rpc("tools/call", { name: "notes_get", arguments: { id } });
-  assert.equal(gone.body.result.structuredContent.error.code, "NOT_FOUND");
-  const long = await h.rpc("tools/call", { name: "notes_create", arguments: { title: "x".repeat(201) } });
-  assert.equal(long.body.result.structuredContent.error.code, "INVALID_ARGUMENT");
+test("the hub ships with Stone only", async () => {
+  const { modules } = await import("../src/modules/index.ts");
+  assert.deepEqual(modules.map((m) => m.prefix), ["music_"]);
 });
 
 test("music: Stone tools appear as music_* and calls go to Stone with the token in the header", async () => {
@@ -91,6 +85,6 @@ test("admin: needs the hub token, accepts only links of the relay, refuses token
 
 test("admin panel escapes what it shows", async () => {
   const h = hub();
-  const page = await h.admin({ token: TOKEN, action: "agent_create", name: "<script>alert(1)</script>", apps: "calc_", days: "1" });
+  const page = await h.admin({ token: TOKEN, action: "agent_create", name: "<script>alert(1)</script>", apps: "demo_", days: "1" });
   assert.doesNotMatch(page.html, /<script>alert/);
 });

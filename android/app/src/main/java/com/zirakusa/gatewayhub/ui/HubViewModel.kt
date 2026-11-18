@@ -2,51 +2,39 @@ package com.zirakusa.gatewayhub.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.data.AccessParser
 import com.zirakusa.gatewayhub.data.AppLinker
-import com.zirakusa.gatewayhub.data.LocalApp
-import com.zirakusa.gatewayhub.data.RemoteStatus
-import com.zirakusa.gatewayhub.data.CreatedAgent
-import com.zirakusa.gatewayhub.data.LinkAnswer
-import com.zirakusa.gatewayhub.data.LocalAppSource
-import com.zirakusa.gatewayhub.data.ScanMerge
-import com.zirakusa.gatewayhub.data.ScannedApp
+import com.zirakusa.gatewayhub.data.AppSettings
+import com.zirakusa.gatewayhub.data.ENV_ACTIVE
+import com.zirakusa.gatewayhub.data.ENV_DISCONNECTED
+import com.zirakusa.gatewayhub.data.ENV_PAUSED
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.data.HubException
-import com.zirakusa.gatewayhub.data.HubState
+import com.zirakusa.gatewayhub.data.LinkAnswer
+import com.zirakusa.gatewayhub.data.LocalAppSource
+import com.zirakusa.gatewayhub.data.MemorySettingsStore
+import com.zirakusa.gatewayhub.data.ScanMerge
 import com.zirakusa.gatewayhub.data.SessionStore
+import com.zirakusa.gatewayhub.data.SettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class UiState(
-    val hubUrl: String = "",
-    val connected: Boolean = false,
-    val loading: Boolean = false,
-    val hub: HubState? = null,
-    val error: String? = null,
-    val notice: String? = null,
-    /** Shown once in a dialog right after creation; never stored. */
-    val created: CreatedAgent? = null,
-    /** Last scan of compatible apps (phone + hub); null until the first scan. */
-    val scan: List<ScannedApp>? = null,
-    /** Scan also links compatible apps by themselves (they must have "Redirección hub" on). */
-    val autoSync: Boolean = true,
-)
-
 /** The single owner of the app's state; screens only read [state] and call these actions. */
 class HubViewModel(
     private val sessions: SessionStore,
-    defaultUrl: String,
+    private val defaultUrl: String,
     private val localApps: LocalAppSource = LocalAppSource { emptyList() },
     private val linker: AppLinker = AppLinker { LinkAnswer(null, "NOT_SUPPORTED", null) },
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
+    private val settingsStore: SettingsStore = MemorySettingsStore(),
 ) : ViewModel(), HubActions {
-    private val defaultUrl = defaultUrl
-    private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl))
+    private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
     private var api: HubApi? = null
+    private val sync = AppSync(localApps, linker) { requireApi() }
 
     init {
         mutable.update { it.copy(autoSync = sessions.flag("autoSync", true)) }
@@ -69,7 +57,7 @@ class HubViewModel(
         null
     }
 
-    override fun refresh() = run { mutable.update { s -> s.copy(hub = requireApi().state()) }; null }
+    override fun refresh() = run { reload(); null }
 
     override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) = run {
         val created = requireApi().createAgent(name, apps, readOnly, days)
@@ -78,11 +66,24 @@ class HubViewModel(
     }
 
     override fun setPaused(id: String, paused: Boolean) = run {
-        requireApi().setPaused(id, paused); reload(); if (paused) "Enlace pausado." else "Enlace reanudado."
+        requireApi().setPaused(id, paused); reload(); UiText.Res(if (paused) R.string.note_paused else R.string.note_resumed)
     }
-    override fun revoke(id: String) = run { requireApi().revoke(id); reload(); "Enlace revocado: deja de funcionar ya." }
-    override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); note }
-    override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); "Stone desvinculado." }
+    override fun revoke(id: String) = run { requireApi().revoke(id); reload(); UiText.Res(R.string.note_revoked) }
+    override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); UiText.Raw(note) }
+    override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); UiText.Res(R.string.note_unlinked) }
+
+    /**
+     * Connect, pause or disconnect the whole MCP environment (the hub enforces it). Connecting after a
+     * disconnection links again, by themselves, the apps that allow it (with automatic sync on).
+     */
+    override fun setEnvironment(target: String) = run {
+        val wasDisconnected = mutable.value.hub?.environment == ENV_DISCONNECTED
+        requireApi().setEnvironment(target)
+        val relinked = if (target == ENV_ACTIVE && wasDisconnected && mutable.value.autoSync) sync.scanAndLink { scan -> mutable.update { it.copy(scan = scan) } } else emptyList()
+        reload()
+        val note = UiText.Res(when (target) { ENV_PAUSED -> R.string.env_note_paused; ENV_DISCONNECTED -> R.string.env_note_disconnected; else -> R.string.env_note_active })
+        if (relinked.isEmpty()) note else UiText.Lines(listOf(note) + relinked)
+    }
 
     /**
      * Lists compatible apps and asks the hub for their state (read-only). With [UiState.autoSync], an app
@@ -90,31 +91,23 @@ class HubViewModel(
      * link and linked; the app answers only if the user turned "Redirección hub" on in it.
      */
     override fun scan() = run {
-        val local = localApps.installed()
-        var remote = requireApi().scan()
-        val notes = if (mutable.value.autoSync) ScanMerge.merge(local, remote).mapNotNull { link(it.local, it.remote) } else emptyList()
-        if (notes.isNotEmpty()) remote = requireApi().scan()
-        mutable.update { it.copy(scan = ScanMerge.merge(local, remote)) }
-        notes.joinToString("\n").ifBlank { null }
+        val notes = if (mutable.value.autoSync) sync.scanAndLink { scan -> mutable.update { it.copy(scan = scan) } } else { mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }; emptyList() }
+        notes.takeIf { it.isNotEmpty() }?.let { UiText.Lines(it) }
     }
 
     /** Links one app now (button "Vincular automáticamente"). */
     override fun autoLink(packageName: String) = run {
         val row = mutable.value.scan?.firstOrNull { it.local?.packageName == packageName }
-        val note = link(row?.local, row?.remote, force = true)
+        val note = sync.link(row?.local, row?.remote, force = true)
         mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }
         note
     }
 
     override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }
 
-    private suspend fun link(app: LocalApp?, remote: RemoteStatus?, force: Boolean = false): String? {
-        if (app == null || remote == null || !remote.remote || !app.sameDeveloper || app.linkAuthority == null) return null
-        val revoked = remote.linked && !remote.online && remote.detail.contains("rejected")
-        if (!force && remote.linked && !revoked) return null
-        if (remote.prefix != "music_") return null // the hub links Stone today; other apps will follow the same path
-        val answer = linker.requestLink(app)
-        return answer.link?.let { requireApi().linkStone(it) } ?: "${app.label}: ${answer.message ?: answer.error}"
+    override fun updateSettings(change: (AppSettings) -> AppSettings) {
+        val next = change(mutable.value.settings)
+        settingsStore.save(next); mutable.update { it.copy(settings = next) }
     }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }
@@ -122,14 +115,14 @@ class HubViewModel(
 
     override fun logout() {
         sessions.clear(); api = null
-        mutable.update { UiState(hubUrl = it.hubUrl) }
+        mutable.update { UiState(hubUrl = it.hubUrl, autoSync = it.autoSync, settings = it.settings) }
     }
 
     private suspend fun reload() = mutable.update { it.copy(hub = requireApi().state()) }
-    private fun requireApi() = api ?: throw HubException("UNAUTHORIZED", "Conéctate de nuevo.")
+    private fun requireApi() = api ?: throw HubException("UNAUTHORIZED", "")
 
     /** Runs [block] with a loading flag; its text (if any) becomes a notice, a failure becomes an error. */
-    private fun run(block: suspend () -> String?) {
+    private fun run(block: suspend () -> UiText?) {
         mutable.update { it.copy(loading = true, error = null, notice = null) }
         viewModelScope.launch {
             try {
@@ -138,9 +131,9 @@ class HubViewModel(
             } catch (e: HubException) {
                 // A token the hub no longer accepts means the session is over.
                 if (e.code == "UNAUTHORIZED" && mutable.value.connected) logout()
-                mutable.update { it.copy(loading = false, error = e.message) }
+                mutable.update { it.copy(loading = false, error = e.toUiText()) }
             } catch (e: Exception) {
-                mutable.update { it.copy(loading = false, error = "El hub respondió algo inesperado.") }
+                mutable.update { it.copy(loading = false, error = UiText.Res(R.string.err_unexpected)) }
             }
         }
     }

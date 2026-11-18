@@ -1,4 +1,4 @@
-// Contract every hub module follows. A module owns one prefix ("calc_") and every tool it lists
+// Contract every hub module follows. A module owns one prefix ("music_") and every tool it lists
 // starts with it; the router (../router.ts) uses that prefix to send each call to its module.
 
 export interface Tool {
@@ -14,12 +14,10 @@ export interface ToolResult {
   isError?: boolean;
 }
 
-export interface Note { id: string; title: string; body: string; created: number; updated: number }
-
 /** An AI client with its own link: which apps it may use, read-only or not, until when. */
 export interface Agent {
   id: string; name: string; tokenHash: string;
-  /** Module prefixes it may use ("calc_"…), or ["*"] for every app. */
+  /** Module prefixes it may use ("music_"…), or ["*"] for every app. */
   modules: string[];
   readOnly: boolean; paused: boolean;
   /** 0 = never expires. */
@@ -33,12 +31,6 @@ export interface MetricsSummary { since: number; calls: number; errors: number; 
 export interface HubStoreApi {
   getConfig(key: string): Promise<string | null>;
   setConfig(key: string, value: string | null): Promise<void>;
-  notesCreate(title: string, body: string): Promise<Note>;
-  notesList(query: string, limit: number): Promise<Note[]>;
-  notesGet(id: string): Promise<Note | null>;
-  notesUpdate(id: string, title: string | null, body: string | null): Promise<Note | null>;
-  notesDelete(id: string): Promise<boolean>;
-  notesCount(): Promise<number>;
 }
 
 /** Hub-level storage: agents and metrics (not given to modules). */
@@ -62,7 +54,7 @@ export interface HubContext {
 }
 
 export interface HubModule {
-  /** Lowercase letters/digits ending in "_": "music_", "notes_". */
+  /** Lowercase letters/digits ending in "_": "music_", "weather_". */
   prefix: string;
   title: string;
   /** One line for the LLM: what this module is for. */

@@ -3,6 +3,7 @@ package com.zirakusa.gatewayhub
 import android.os.Looper
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.ui.HubViewModel
+import com.zirakusa.gatewayhub.ui.UiText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -29,7 +30,7 @@ class HubViewModelTest {
         vm.connect("https://hub.example#hub_wrongwrongwrongwrongwrong"); vm.settle()
         assertFalse(vm.state.value.connected)
         assertNull(sessions.saved)
-        assertEquals("Token del propietario incorrecto.", vm.state.value.error)
+        assertEquals(UiText.Res(R.string.err_unauthorized), vm.state.value.error)
     }
 
     @Test fun theRightTokenIsSavedAndTheHubLoaded() {
@@ -57,7 +58,7 @@ class HubViewModelTest {
             "paused":false,"status":"active","expiresAt":0,"created":1,"lastUsed":0},"url":"https://hub.example/mcp?token=gw_once","token":"gw_once"}"""
             else 200 to STATE_JSON }
         val vm = vm(MemorySessions("https://hub.example" to "owner"), transport); vm.settle()
-        vm.createAgent("X", listOf("calc_"), false, 7); vm.settle()
+        vm.createAgent("X", listOf("music_"), false, 7); vm.settle()
         assertNotNull(vm.state.value.created)
         vm.dismissCreated()
         assertNull(vm.state.value.created)
@@ -68,7 +69,7 @@ class HubViewModelTest {
         val transport = FakeTransport()
         val vm = vm(MemorySessions(), transport)
         vm.connect("https://stone-relay.example.workers.dev/d/3e6076f88b2ae131ea6e/mcp?token=stn_abcdefghijklmnopqrstuv"); vm.settle()
-        assertTrue(vm.state.value.error!!.contains("Stone"))
+        assertEquals(UiText.Res(R.string.err_stone_link), vm.state.value.error)
         assertTrue(transport.sent.isEmpty())
     }
 }

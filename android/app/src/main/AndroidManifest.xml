@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- "MCP en segundo plano": a service with a persistent notification, only when the person picks that mode. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Automatic linking (Redirección hub). Declared here too, so it exists whichever app is installed
          first; "signature" means only apps signed with the same key ever get it. -->
     <permission android:name="com.zirakusa.gatewayhub.permission.LINK" android:protectionLevel="signature"
@@ -20,5 +24,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".watch.HubWatchService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Shows that the owner's MCP environment is active and lets the owner pause or disconnect it from the notification." />
+        </service>
     </application>
 </manifest>

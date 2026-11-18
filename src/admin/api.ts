@@ -2,7 +2,8 @@
 // travels only in the Authorization header (never in the URL), and these answers carry no CORS
 // headers, so no web page can call them from a browser.
 import { type HubContext, type HubModule, ToolError } from "../modules/types.ts";
-import { type AdminStore, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
+import { environmentState } from "../environment.ts";
+import { type AdminStore, DAY, changeEnvironment, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
 
 export interface ApiDeps { store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string }
 
@@ -22,9 +23,15 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
   }
   try {
     if (path === "/state" && method === "GET") return ok(await overview(store, ctx, modules, deps.version));
+    if (path === "/activity" && method === "GET") {
+      // For the app's activity notifications: what ran since [since] (at most 7 days back).
+      const since = Math.max(Date.now() - 7 * DAY, Math.floor(Number(url.searchParams.get("since")) || 0));
+      return ok({ environment: await environmentState(store), ...await store.metricsSummary(since) });
+    }
     if (path === "/scan" && method === "GET") return ok(await scan(ctx, modules));
     if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
     if (path === "/stone" && method === "DELETE") { await unlinkStone(store); return ok({ message: "Stone desvinculado." }); }
+    if (path === "/environment" && method === "POST") return ok(await changeEnvironment(store, String(body.state ?? "")));
     if (path === "/agents" && method === "POST") return ok(await createAgent(store, modules, url.origin,
       { name: String(body.name ?? ""), apps: body.apps as string[], readOnly: body.readOnly === true, days: Number(body.days) }));
     const agent = /^\/agents\/([0-9a-f]{12})(\/pause|\/resume)?$/.exec(path);

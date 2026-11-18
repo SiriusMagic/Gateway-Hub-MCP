@@ -5,6 +5,8 @@ import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.data.LinkAnswer
 import com.zirakusa.gatewayhub.data.LocalApp
 import com.zirakusa.gatewayhub.ui.HubViewModel
+import com.zirakusa.gatewayhub.ui.UiText
+import org.robolectric.RuntimeEnvironment
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -20,15 +22,16 @@ class AutoLinkTest {
     private val stoneLink = "https://relay.example/d/abcdefghijkl12/mcp?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
     private fun scanJson(linked: Boolean) = SCAN_JSON.replace(""""linked":true,"online":false""", """"linked":$linked,"online":$linked""")
 
-    private class Hub(var linked: Boolean = false) { val sent = mutableListOf<String>() }
+    private class Hub(var linked: Boolean = false, var environment: String = "active") { val sent = mutableListOf<String>() }
 
     private fun vm(hub: Hub, sessions: MemorySessions, local: List<LocalApp>, answer: (LocalApp) -> LinkAnswer, asked: MutableList<String>): HubViewModel {
         val transport = FakeTransport { r ->
             hub.sent += "${r.method} ${r.url.substringAfter("/api/admin")}"
             when {
                 r.url.endsWith("/scan") -> 200 to scanJson(hub.linked)
+                r.url.endsWith("/environment") -> { hub.environment = JSONObject(r.body!!).getString("state"); if (hub.environment == "disconnected") hub.linked = false; 200 to "{}" }
                 r.url.endsWith("/stone") -> { assertEquals(stoneLink, JSONObject(r.body!!).getString("link")); hub.linked = true; 200 to """{"message":"Stone vinculado y en línea."}""" }
-                else -> 200 to STATE_JSON
+                else -> 200 to STATE_JSON.replace(""""environment":"active"""", """"environment":"${hub.environment}"""")
             }
         }
         return HubViewModel(sessions, "https://hub.example", { local }, { app -> asked += app.packageName; answer(app) },
@@ -43,7 +46,7 @@ class AutoLinkTest {
         assertEquals(listOf(stone.packageName), asked)
         assertTrue(hub.sent.contains("POST /stone"))
         assertTrue(vm.state.value.scan!!.first { it.prefix == "music_" }.remote!!.linked)
-        assertEquals("Stone vinculado y en línea.", vm.state.value.notice)
+        assertEquals("Stone vinculado y en línea.", vm.state.value.notice!!.resolve(RuntimeEnvironment.getApplication()))
     }
 
     @Test fun nothingIsAskedFromStrangersOrWithSyncOff() {
@@ -66,6 +69,28 @@ class AutoLinkTest {
         vm.scan(); vm.settle()
         assertEquals(1, asked.size)
         assertTrue("POST /stone" !in hub.sent)
-        assertTrue(vm.state.value.notice!!.contains("Redirección hub"))
+        assertTrue(vm.state.value.notice!!.resolve(RuntimeEnvironment.getApplication()).contains("Stone: Activa «Redirección hub»"))
+    }
+
+    @Test fun connectingAfterADisconnectionLinksStoneAgain() {
+        val hub = Hub(linked = true); val asked = mutableListOf<String>()
+        val vm = vm(hub, MemorySessions("https://hub.example" to "owner"), listOf(stone), { LinkAnswer(stoneLink, null, null) }, asked); vm.settle()
+        vm.setEnvironment("disconnected"); vm.settle()
+        assertEquals("disconnected", vm.state.value.hub!!.environment)
+        assertEquals(UiText.Res(R.string.env_note_disconnected), vm.state.value.notice)
+        assertTrue(asked.isEmpty())
+        vm.setEnvironment("active"); vm.settle()
+        assertEquals("active", vm.state.value.hub!!.environment)
+        assertEquals(listOf(stone.packageName), asked)            // relinked by itself (Redirección hub on)
+        assertTrue(hub.linked && hub.sent.contains("POST /stone"))
+    }
+
+    @Test fun pausingDoesNotRelinkAnything() {
+        val hub = Hub(linked = true); val asked = mutableListOf<String>()
+        val vm = vm(hub, MemorySessions("https://hub.example" to "owner"), listOf(stone), { LinkAnswer(stoneLink, null, null) }, asked); vm.settle()
+        vm.setEnvironment("paused"); vm.settle()
+        vm.setEnvironment("active"); vm.settle()
+        assertTrue(asked.isEmpty())
+        assertTrue("POST /stone" !in hub.sent)
     }
 }

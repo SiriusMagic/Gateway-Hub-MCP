@@ -4,12 +4,13 @@ import type { HubAdminStore, HubContext, HubEnv, HubStoreApi } from "./modules/t
 import { type Limiter, givenToken, sameSecret } from "./auth.ts";
 import { type Principal, principalFor } from "./agents.ts";
 import { handleRpc } from "./mcp.ts";
-import { createRouter } from "./router.ts";
-import { modules } from "./modules/index.ts";
+import { type Router, createRouter } from "./router.ts";
+import { modules as builtIn } from "./modules/index.ts";
+import type { HubModule } from "./modules/types.ts";
 import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
 
-export const VERSION = "0.0.2";
+export const VERSION = "0.0.3";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",
@@ -20,7 +21,12 @@ export const CORS = {
   "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version, X-Api-Key",
   "Access-Control-Expose-Headers": "Mcp-Session-Id",
 };
-const router = createRouter(modules);
+const routers = new WeakMap<HubModule[], Router>();
+function routerFor(list: HubModule[]): Router {
+  let router = routers.get(list);
+  if (!router) { router = createRouter(list); routers.set(list, router); }
+  return router;
+}
 
 export function json(status: number, body: unknown, extra: Record<string, string> = {}): Response {
   return new Response(body === null ? null : JSON.stringify(body),
@@ -37,7 +43,9 @@ function rejected(store: ServeStore, caller: string, missing: boolean) {
   console.warn(JSON.stringify({ event: "auth_rejected", caller, missing })); // never the token itself
 }
 
-export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch): Promise<Response> {
+/** [modules] is the hub's app list; tests pass their own. */
+export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch,
+  modules: HubModule[] = builtIn): Promise<Response> {
   const url = new URL(request.url);
   const caller = request.headers.get("CF-Connecting-IP") || "local";
   if (store.requests.hit(caller)) {
@@ -61,7 +69,7 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
     }
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
-    const reply = await handleRpc(body, router, ctx, VERSION,
+    const reply = await handleRpc(body, routerFor(modules), ctx, VERSION,
       { principal, record: (tool, ok, ms) => store.metricsRecord(principal.id, tool, ok, ms) });
     const session = body.includes('"initialize"') ? { "Mcp-Session-Id": crypto.randomUUID() } : {};
     return reply === null ? json(202, null, session) : json(200, reply, session);

@@ -1,10 +1,11 @@
 // Sections of the admin panel. Every value shown goes through esc().
 import type { Agent, CallStat, HubModule, MetricsSummary } from "../modules/types.ts";
 import { agentStatus } from "../agents.ts";
+import type { EnvironmentState } from "../environment.ts";
 import { esc, form, page } from "./layout.ts";
 
 export interface PanelData {
-  token: string; origin: string; modules: HubModule[]; stoneLinked: boolean;
+  token: string; origin: string; modules: HubModule[]; stoneLinked: boolean; environment: EnvironmentState;
   agents: Agent[]; day: MetricsSummary; week: MetricsSummary;
   notice?: { text: string; error?: boolean }; newLink?: { name: string; url: string; token: string };
 }
@@ -25,6 +26,17 @@ function appsCard(d: PanelData): string {
 <small>Stone › Ajustes › Modo API › Gateway Hub › Vincular (copia un enlace solo para el hub).</small><br><button>Vincular Stone</button>`);
   const unlink = d.stoneLinked ? form(d.token, "unlink_stone", `<button class="ghost">Desvincular Stone</button>`) : "";
   return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}</div>`;
+}
+
+const ENV_LABEL = { active: '<span class="good">conectado</span>', paused: '<span class="bad">en pausa</span>',
+  disconnected: '<span class="bad">desconectado</span>' };
+
+function environmentCard(d: PanelData): string {
+  const button = (state: EnvironmentState, label: string) => d.environment === state ? "" :
+    form(d.token, "environment", `<input type="hidden" name="state" value="${state}"><button class="ghost">${label}</button>`);
+  return `<div class="card"><h2>Entorno MCP</h2><p>Estado: ${ENV_LABEL[d.environment]}</p>
+<small>Pausar conserva enlaces y ajustes; Desconectar además desvincula Stone. En ambos casos no se ejecuta ninguna herramienta.</small>
+<div class="row">${button("active", "Conectar")}${button("paused", "Pausar")}${button("disconnected", "Desconectar del entorno")}</div></div>`;
 }
 
 function agentRow(d: PanelData, a: Agent): string {
@@ -61,6 +73,6 @@ ${table("Por agente (7 días)", byAgent)}${table("Por app (7 días)", d.week.byA
 
 export function panelPage(d: PanelData): string {
   const notice = d.notice ? `<p class="${d.notice.error ? "bad" : "good"}">${esc(d.notice.text)}</p>` : "";
-  return page(`<h1>Gateway Hub</h1><p class="muted">${esc(d.origin)}/mcp</p>${notice}${agentsCard(d)}${appsCard(d)}${metricsCard(d)}
+  return page(`<h1>Gateway Hub</h1><p class="muted">${esc(d.origin)}/mcp</p>${notice}${environmentCard(d)}${agentsCard(d)}${appsCard(d)}${metricsCard(d)}
 ${form(d.token, "login", `<button class="ghost">Actualizar</button>`)}`);
 }

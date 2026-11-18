@@ -39,7 +39,7 @@ import com.zirakusa.gatewayhub.R
             }) { Text(stringResource(R.string.paste)) } })
         Text(stringResource(R.string.login_access_hint, state.hubUrl.removePrefix("https://")), Modifier.fillMaxWidth().padding(top = 6.dp),
             color = HubColors.Muted, fontSize = 13.sp)
-        state.error?.let { Text(it, Modifier.fillMaxWidth().padding(top = 12.dp), color = HubColors.Bad) }
+        state.error?.let { Text(it.text(), Modifier.fillMaxWidth().padding(top = 12.dp), color = HubColors.Bad) }
         Button({ connect(access) }, Modifier.fillMaxWidth().padding(top = 20.dp).height(50.dp), enabled = !state.loading && access.isNotBlank()) {
             if (state.loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
             else Text(stringResource(R.string.login_connect), fontWeight = FontWeight.Bold)

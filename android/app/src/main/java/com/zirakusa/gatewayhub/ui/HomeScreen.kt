@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,7 +19,8 @@ import com.zirakusa.gatewayhub.R
 /** Everything the owner does once connected; [vm] actions are passed down as callbacks. */
 enum class HubTab(val label: Int, val icon: ImageVector) {
     AGENTS(R.string.tab_agents, Icons.Default.Key), SCANNER(R.string.tab_scanner, Icons.Default.Radar),
-    APPS(R.string.tab_apps, Icons.Default.Apps), METRICS(R.string.tab_metrics, Icons.Default.Insights)
+    APPS(R.string.tab_apps, Icons.Default.Apps), METRICS(R.string.tab_metrics, Icons.Default.Insights),
+    SETTINGS(R.string.tab_settings, Icons.Default.Settings)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,8 +29,9 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
     var creating by remember { mutableStateOf(false) }
     var leaving by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
+    val context = LocalContext.current
     LaunchedEffect(state.notice, state.error) {
-        (state.error ?: state.notice)?.let { snackbar.showSnackbar(it); vm.dismissMessage() }
+        (state.error ?: state.notice)?.let { snackbar.showSnackbar(it.resolve(context)); vm.dismissMessage() }
     }
     Scaffold(
         topBar = { TopAppBar(
@@ -42,9 +45,11 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = HubColors.Background)) },
         bottomBar = { NavigationBar(containerColor = HubColors.Card) {
-            HubTab.entries.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, null) }, label = { Text(stringResource(t.label)) }) }
+            HubTab.entries.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, null) },
+                label = { Text(stringResource(t.label), maxLines = 1, fontSize = 11.sp) },
+                colors = NavigationBarItemDefaults.colors(indicatorColor = HubColors.Gold.copy(alpha = 0.25f))) }
         } },
-        floatingActionButton = { if (tab == HubTab.AGENTS && state.hub != null) ExtendedFloatingActionButton(onClick = { creating = true }, containerColor = HubColors.Gold, contentColor = HubColors.Background,
+        floatingActionButton = { if (tab == HubTab.AGENTS && state.hub != null) ExtendedFloatingActionButton(onClick = { creating = true }, containerColor = HubColors.Gold, contentColor = HubColors.OnGold,
             icon = { Icon(Icons.Default.Add, null) }, text = { Text(stringResource(R.string.agent_new)) }) },
         snackbarHost = { SnackbarHost(snackbar) },
         containerColor = HubColors.Background,
@@ -52,12 +57,13 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = HubColors.Gold)
             val hub = state.hub
-            if (hub == null) { if (!state.loading) Text(state.error ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
+            if (hub == null) { if (!state.loading) Text(state.error?.text() ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
             when (tab) {
                 HubTab.AGENTS -> AgentsList(hub.agents, hub.modules, vm::setPaused, vm::revoke)
                 HubTab.SCANNER -> ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink)
                 HubTab.APPS -> AppsList(hub, state.loading, vm::linkStone, vm::unlinkStone)
                 HubTab.METRICS -> MetricsList(hub)
+                HubTab.SETTINGS -> SettingsList(state, hub, vm)
             }
             Text(stringResource(R.string.hub_version, hub.version), Modifier.padding(vertical = 16.dp), color = HubColors.Muted, fontSize = 12.sp)
             Spacer(Modifier.height(72.dp))
@@ -70,13 +76,4 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
         text = { Text(stringResource(R.string.logout_confirm)) },
         confirmButton = { TextButton({ leaving = false; vm.logout() }) { Text(stringResource(R.string.logout), color = HubColors.Bad) } },
         dismissButton = { TextButton({ leaving = false }) { Text(stringResource(R.string.cancel)) } })
-}
-
-/** The actions the screens may trigger (the ViewModel in the app, a fake in tests). */
-interface HubActions {
-    fun refresh(); fun logout(); fun dismissMessage(); fun dismissCreated()
-    fun setPaused(id: String, paused: Boolean); fun revoke(id: String)
-    fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int)
-    fun linkStone(link: String); fun unlinkStone()
-    fun scan(); fun autoLink(packageName: String); fun setAutoSync(on: Boolean)
 }

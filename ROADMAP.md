@@ -21,6 +21,13 @@ pegar y sin depender de la cuenta de Cloudflare de otra persona**.
 - El enlace viaja de Stone a la app del hub y de ahí al hub por HTTPS. No pasa por el portapapeles ni por
   ningún chat.
 
+## Entorno MCP ✅ (Hub app 0.0.4 · hub 0.0.3)
+
+- Conectar, Pausar y Desconectar, aplicados por el hub. Modo seguro / MCP en segundo plano con notificación
+  persistente y resúmenes.
+- **Falta en Stone:** recibir el modo desde Gateway y, en Modo seguro, dejar de atender MCP cuando Stone no esté
+  visible.
+
 ## Fase 2: «Mi Cloudflare» (instalación en un toque)
 
 1. En la app del hub, el botón **Crear mi clave de Cloudflare** abre `dash.cloudflare.com` con la plantilla
