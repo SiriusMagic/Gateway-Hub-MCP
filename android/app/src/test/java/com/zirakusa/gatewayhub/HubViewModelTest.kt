@@ -16,7 +16,7 @@ import org.robolectric.Shadows.shadowOf
 @RunWith(RobolectricTestRunner::class)
 class HubViewModelTest {
     private fun vm(sessions: MemorySessions, transport: FakeTransport) =
-        HubViewModel(sessions, "https://hub.example", { url, token -> HubApi(url, token, transport) })
+        HubViewModel(sessions, "https://hub.example", newApi = { url, token -> HubApi(url, token, transport) })
 
     /** Lets the IO work finish and the main thread apply it. */
     private fun HubViewModel.settle() {
@@ -26,7 +26,7 @@ class HubViewModelTest {
     @Test fun aWrongTokenIsNeverSaved() {
         val sessions = MemorySessions()
         val vm = vm(sessions, FakeTransport { 401 to "{}" })
-        vm.connect("https://hub.example", "wrong"); vm.settle()
+        vm.connect("https://hub.example#hub_wrongwrongwrongwrongwrong"); vm.settle()
         assertFalse(vm.state.value.connected)
         assertNull(sessions.saved)
         assertEquals("Token del propietario incorrecto.", vm.state.value.error)
@@ -35,9 +35,9 @@ class HubViewModelTest {
     @Test fun theRightTokenIsSavedAndTheHubLoaded() {
         val sessions = MemorySessions()
         val vm = vm(sessions, FakeTransport())
-        vm.connect("hub.example/admin", " owner "); vm.settle()
+        vm.connect("  https://hub.example/admin#hub_OWNERownerOWNERowner12  "); vm.settle()
         assertTrue(vm.state.value.connected)
-        assertEquals("https://hub.example" to "owner", sessions.saved)
+        assertEquals("https://hub.example" to "hub_OWNERownerOWNERowner12", sessions.saved)
         assertEquals(2, vm.state.value.hub!!.agents.size)
     }
 
@@ -62,5 +62,13 @@ class HubViewModelTest {
         vm.dismissCreated()
         assertNull(vm.state.value.created)
         assertFalse(vm.state.value.toString().contains("gw_once"))
+    }
+
+    @Test fun aStoneTokenIsExplainedAndNeverSent() {
+        val transport = FakeTransport()
+        val vm = vm(MemorySessions(), transport)
+        vm.connect("https://stone-relay.example.workers.dev/d/3e6076f88b2ae131ea6e/mcp?token=stn_abcdefghijklmnopqrstuv"); vm.settle()
+        assertTrue(vm.state.value.error!!.contains("Stone"))
+        assertTrue(transport.sent.isEmpty())
     }
 }

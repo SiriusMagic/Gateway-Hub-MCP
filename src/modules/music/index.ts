@@ -35,6 +35,17 @@ export const musicModule: HubModule = {
   title: "Música (Stone)",
   summary: "Stone on the phone: play, search the library, queue, lyrics, tags, playlists, equalizer, video.",
   validatesOwnArgs: true, // Stone validates every argument itself
+  androidPackage: "com.zirakusa.stone.kotlin.preview",
+  async status(ctx) {
+    const link = await savedLink(ctx);
+    if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Stone, Modo API › Gateway Hub › Vincular." };
+    try {
+      const tools = (await stoneRpc(ctx, link, "tools/list", {}, 6_000) as { tools?: unknown[] }).tools?.length ?? 0;
+      return { linked: true, online: true, tools, detail: "Vinculado y en línea." };
+    } catch (error) {
+      return { linked: true, online: false, tools: 0, detail: (error as Error).message };
+    }
+  },
   async tools(ctx) {
     const link = await savedLink(ctx);
     if (!link) return [statusTool];

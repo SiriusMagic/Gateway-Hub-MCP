@@ -20,6 +20,11 @@ const val STATE_JSON = """{"version":"0.0.1","modules":[
    "byApp":[{"name":"music_","calls":130,"errors":4,"avgMs":400},{"name":"calc_","calls":50,"errors":1,"avgMs":3}],
    "byTool":[{"name":"music_player_state","calls":90,"errors":0,"avgMs":300},{"name":"calc_evaluate","calls":50,"errors":1,"avgMs":3},{"name":"music_library_search","calls":40,"errors":4,"avgMs":620}]}}}"""
 
+const val SCAN_JSON = """{"scannedAt":1,"apps":[
+ {"prefix":"music_","title":"Música (Stone)","androidPackage":"com.zirakusa.stone.kotlin.preview","remote":true,"linked":true,"online":false,"tools":0,"detail":"Stone is not open on the phone, or API mode is off."},
+ {"prefix":"notes_","title":"Notas","androidPackage":null,"remote":false,"linked":true,"online":true,"tools":5,"detail":"Integrada en el hub."},
+ {"prefix":"calc_","title":"Calculadora","androidPackage":null,"remote":false,"linked":true,"online":true,"tools":2,"detail":"Integrada en el hub."}]}"""
+
 class Recorded(val method: String, val url: String, val token: String, val body: String?)
 
 /** Answers like the hub and records what the app sent. */

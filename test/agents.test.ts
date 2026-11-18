@@ -75,3 +75,15 @@ test("metrics count every call per agent, app and tool", async () => {
   const page = await h.admin({ token: TOKEN, action: "login" });
   assert.match(page.html, /Medido/); assert.match(page.html, /calc_evaluate/);
 });
+
+test("the panel accepts the combined access and explains Stone links", async () => {
+  const h = hub();
+  assert.equal((await h.admin({ token: `https://hub.example/admin#${TOKEN}`, action: "login" })).status, 200); // address + token in one paste
+  const { ownerTokenFrom } = await import("../src/admin/actions.ts");
+  assert.equal(ownerTokenFrom("https://x.example#hub_AAAAAAAAAAAAAAAAAAAAAAAA"), "hub_AAAAAAAAAAAAAAAAAAAAAAAA");
+  assert.equal(ownerTokenFrom("  plain  "), "plain");
+  const stone = await h.admin({ token: "https://relay.example/d/3e6076f88b2ae131ea6e/mcp?token=stn_abcdefghijklmnop", action: "login" });
+  assert.equal(stone.status, 400);
+  assert.match(stone.html, /enlace de Stone/);
+  assert.equal(h.store.failures.blocked("1.1.1.1"), false);
+});

@@ -28,6 +28,8 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     suspend fun revoke(id: String) { call("DELETE", "/agents/$id") }
     suspend fun linkStone(link: String): String = JSONObject(call("POST", "/stone", JSONObject().put("link", link.trim()))).getString("message")
     suspend fun unlinkStone() { call("DELETE", "/stone") }
+    /** Read-only: the hub asks each remote app whether it is linked and online. */
+    suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 
     private suspend fun call(method: String, path: String, body: JSONObject? = null): String = withContext(Dispatchers.IO) {
         val (status, text) = try { transport.send(method, "$base/api/admin$path", token, body?.toString()) }

@@ -34,14 +34,15 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.1**, la app nativa del propietario:
-agentes, apps y métricas. El APK está en `android/GatewayHub-0.0.1.apk`. Usa la API JSON
+[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.2**, la app nativa del propietario:
+agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.2.apk`. Usa la API JSON
 `/api/admin/*`, que solo acepta el token del propietario en la cabecera y no responde a navegadores
 (sin CORS).
 
 ## Uso (desde el teléfono, sin pegar tokens en ningún chat)
 
-1. Abre **`https://<hub>/admin`** y entra con el **token del propietario**.
+1. Abre **`https://<hub>/admin`** (o la app) y pega tu **acceso**: `https://<hub>#hub_…`, o solo el token del
+   propietario. Los tokens de Stone (`stn_…`) y de agente (`gw_…`) no sirven para entrar.
 2. **Vincula Stone:** en Stone › Ajustes › Modo API › Gateway Hub, toca **Vincular**. Eso copia un
    enlace solo para el hub. Pégalo en *Apps*.
 3. **Crea un enlace por IA:** pon un nombre, elige las apps, si es solo lectura y cuántos días
@@ -73,7 +74,7 @@ agentes, apps y métricas. El APK está en `android/GatewayHub-0.0.1.apk`. Usa l
 
 ```sh
 npm ci
-npm test                 # 25 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
+npm test                 # 27 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
 npm run dev              # http://127.0.0.1:8790 (secretos locales en .dev.vars, ignorado por Git)
 npx wrangler secret put HUB_TOKEN
 npx wrangler deploy

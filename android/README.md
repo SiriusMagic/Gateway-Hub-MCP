@@ -1,16 +1,20 @@
-# Gateway Hub para Android (0.0.1)
+# Gateway Hub para Android (0.0.2)
 
 App nativa (Kotlin, Jetpack Compose) del **propietario** del Gateway Hub. Hace lo mismo que el panel
 web `/admin`, pero en el teléfono:
 
 - **Agentes:** crear un enlace por IA (apps permitidas, solo lectura, duración), copiarlo una sola
   vez, y pausar, reanudar o revocar.
+- **Acceso en un solo pegado:** `https://<hub>#hub_…` o solo el token. Si pegas algo de Stone o de un
+  agente, la app explica qué es.
+- **Escáner:** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
+  muestra su estado en el hub (sin vincular, apagada, en línea). Solo lee, no activa nada.
 - **Apps:** ver el estado de cada app y vincular o desvincular Stone (pegando el enlace de Stone ›
   Modo API › Gateway Hub › Vincular).
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.1.apk`](GatewayHub-0.0.1.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.2.apk`](GatewayHub-0.0.2.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 
@@ -24,7 +28,8 @@ APK listo para instalar: [`GatewayHub-0.0.1.apk`](GatewayHub-0.0.1.apk) (`com.zi
 - `FLAG_SECURE`: no se pueden hacer capturas y no aparece la vista previa en Recientes.
 - Los enlaces nuevos se muestran **una vez** y no se guardan. Al copiarlos se marcan como sensibles,
   así que Android 13+ no los muestra en la vista previa del portapapeles.
-- Único permiso: `INTERNET`.
+- Único permiso: `INTERNET`. Para el escáner, la visibilidad de paquetes se limita a las apps que
+  declaran `com.zirakusa.gatewayhub.action.APP` (`<queries>`), sin `QUERY_ALL_PACKAGES`.
 
 ## Compilar y probar
 

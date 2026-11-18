@@ -32,6 +32,26 @@ objeto `HubModule` (contrato en `src/modules/types.ts`). El enrutador (`src/rout
   borra.
 - **Tamaño:** un archivo cerca de 100 líneas; divídelo antes de pasar de 150.
 
+## App Android compatible (para el escáner)
+
+Si la app vive en el teléfono, como Stone, la app Gateway Hub la encuentra con su escáner cuando la app
+declara esto en una Activity exportada:
+
+```xml
+<intent-filter>
+    <action android:name="com.zirakusa.gatewayhub.action.APP" />
+    <category android:name="android.intent.category.DEFAULT" />
+</intent-filter>
+<meta-data android:name="com.zirakusa.gatewayhub.module" android:value="weather_" />
+```
+
+- Cuando el usuario toca «Abrir y vincular», la app recibe esa acción. **Solo debe mostrar su pantalla de
+  conexión**: no puede leer extras ni activar nada por sí sola (ver `HubDiscovery.kt` en Stone).
+- En el hub, el módulo declara `androidPackage` y un `status(ctx)` de solo lectura. El escáner lo llama
+  sin cambiar nada.
+- La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
+  otro desarrollador aparece con «Firma desconocida».
+
 ## Plantilla mínima
 
 ```ts

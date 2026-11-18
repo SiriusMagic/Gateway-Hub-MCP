@@ -5,6 +5,8 @@ import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.zirakusa.gatewayhub.data.CreatedAgent
 import com.zirakusa.gatewayhub.data.HubJson
+import com.zirakusa.gatewayhub.data.LocalApp
+import com.zirakusa.gatewayhub.data.ScanMerge
 import com.zirakusa.gatewayhub.ui.*
 import org.junit.Rule
 import org.junit.Test
@@ -25,7 +27,7 @@ class ScreenshotsTest {
         override fun refresh() {}; override fun logout() {}; override fun dismissMessage() {}; override fun dismissCreated() {}
         override fun setPaused(id: String, paused: Boolean) {}; override fun revoke(id: String) {}
         override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) {}
-        override fun linkStone(link: String) {}; override fun unlinkStone() {}
+        override fun linkStone(link: String) {}; override fun unlinkStone() {}; override fun scan() {}
     }
 
     private fun shot(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
@@ -33,8 +35,12 @@ class ScreenshotsTest {
         compose.onRoot().captureRoboImage("build/screenshots/hub-$name.png")
     }
 
-    @Test fun login() = shot("login") { LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev")) { _, _ -> } }
+    @Test fun login() = shot("login") { LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev")) { } }
     @Test fun agents() = shot("agents") { HomeScreen(connected, NoActions, HubTab.AGENTS) }
+    @Test fun scanner() = shot("scanner") { HomeScreen(connected.copy(scan = ScanMerge.merge(
+        listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.12", "music_", true),
+            LocalApp("com.example.lookalike", "Stone Pro", "9.9", "music_", false)),
+        HubJson.scan(SCAN_JSON))), NoActions, HubTab.SCANNER) }
     @Test fun apps() = shot("apps") { HomeScreen(connected, NoActions, HubTab.APPS) }
     @Test fun metrics() = shot("metrics") { HomeScreen(connected, NoActions, HubTab.METRICS) }
     @Test fun createdLink() = shot("created") {

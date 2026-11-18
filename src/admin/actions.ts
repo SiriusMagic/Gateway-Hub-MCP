@@ -6,6 +6,11 @@ import { type PanelData, loginPage, panelPage } from "./views.ts";
 import { type AdminStore, DAY, createAgent, linkStone, setPaused, unlinkStone } from "./service.ts";
 import { savedLink } from "../modules/music/index.ts";
 
+/** Accepts the access as people paste it: "https://hub#hub_…", "…?token=hub_…" or only the token. */
+export function ownerTokenFrom(pasted: string): string {
+  return /hub_[A-Za-z0-9_-]{20,}/.exec(pasted)?.[0] ?? pasted.trim();
+}
+
 const html = (status: number, body: string, security: Record<string, string>) =>
   new Response(body, { status, headers: { ...security, ...ADMIN_HEADERS } });
 
@@ -20,7 +25,11 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
   if (request.method === "GET") return html(200, loginPage(), security);
   if (request.method !== "POST") return html(405, loginPage("Método no permitido."), security);
   const form = await request.formData();
-  const token = String(form.get("token") ?? "");
+  const pasted = String(form.get("token") ?? "");
+  // A Stone link/token opens Stone, not the hub: say so instead of counting a wrong token.
+  if (/stn_[A-Za-z0-9_-]{10,}|\/d\/[a-z0-9]{12,40}\/mcp/.test(pasted))
+    return html(400, loginPage("Eso es un enlace de Stone. Aquí va el token del propietario (hub_…); el enlace de Stone se pega luego en Apps."), security);
+  const token = ownerTokenFrom(pasted);
   if (!await deps.isOwner(token)) return html(401, loginPage("Token del propietario incorrecto."), security);
 
   const view = async (extra: Partial<PanelData> = {}, status = 200) => {

@@ -44,5 +44,10 @@ internal object HubJson {
             o.getBoolean("stoneLinked"), o.getJSONArray("agents").map(::agent), metrics(m.getJSONObject("day")), metrics(m.getJSONObject("week")))
     }
 
+    fun scan(text: String) = JSONObject(text).getJSONArray("apps").map {
+        RemoteStatus(it.getString("prefix"), it.getString("title"), it.optString("androidPackage").takeIf { p -> p.isNotBlank() && p != "null" },
+            it.getBoolean("remote"), it.getBoolean("linked"), it.getBoolean("online"), it.getInt("tools"), it.getString("detail"))
+    }
+
     fun created(text: String) = JSONObject(text).let { CreatedAgent(agent(it.getJSONObject("agent")), it.getString("url"), it.getString("token")) }
 }

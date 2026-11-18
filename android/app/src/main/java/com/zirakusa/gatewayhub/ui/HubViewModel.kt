@@ -2,7 +2,11 @@ package com.zirakusa.gatewayhub.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zirakusa.gatewayhub.data.AccessParser
 import com.zirakusa.gatewayhub.data.CreatedAgent
+import com.zirakusa.gatewayhub.data.LocalAppSource
+import com.zirakusa.gatewayhub.data.ScanMerge
+import com.zirakusa.gatewayhub.data.ScannedApp
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.data.HubException
 import com.zirakusa.gatewayhub.data.HubState
@@ -21,14 +25,18 @@ data class UiState(
     val notice: String? = null,
     /** Shown once in a dialog right after creation; never stored. */
     val created: CreatedAgent? = null,
+    /** Last scan of compatible apps (phone + hub); null until the first scan. */
+    val scan: List<ScannedApp>? = null,
 )
 
 /** The single owner of the app's state; screens only read [state] and call these actions. */
 class HubViewModel(
     private val sessions: SessionStore,
     defaultUrl: String,
+    private val localApps: LocalAppSource = LocalAppSource { emptyList() },
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
 ) : ViewModel(), HubActions {
+    private val defaultUrl = defaultUrl
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl))
     val state: StateFlow<UiState> = mutable
     private var api: HubApi? = null
@@ -41,12 +49,13 @@ class HubViewModel(
         }
     }
 
-    /** Checks the token against the hub before saving it. */
-    fun connect(url: String, token: String) = run {
-        val candidate = newApi(url, token.trim())
+    /** One paste (address + token, or only the token); checked against the hub before it is saved. */
+    fun connect(pasted: String) = run {
+        val access = AccessParser.parse(pasted, defaultUrl)
+        val candidate = newApi(access.url, access.token)
         candidate.state().also {
             api = candidate
-            sessions.save(candidate.base, token.trim())
+            sessions.save(candidate.base, access.token)
             mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = it) }
         }
         null
@@ -66,6 +75,13 @@ class HubViewModel(
     override fun revoke(id: String) = run { requireApi().revoke(id); reload(); "Enlace revocado: deja de funcionar ya." }
     override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); note }
     override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); "Stone desvinculado." }
+
+    /** Read-only: lists compatible apps on this phone and asks the hub for each one's status. */
+    override fun scan() = run {
+        val remote = requireApi().scan()
+        mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), remote)) }
+        null
+    }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }
     override fun dismissMessage() = mutable.update { it.copy(error = null, notice = null) }

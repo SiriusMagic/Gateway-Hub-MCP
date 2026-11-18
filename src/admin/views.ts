@@ -12,7 +12,7 @@ export interface PanelData {
 export const loginPage = (message = "") => page(`<h1>Gateway Hub</h1><p class="muted">Un solo enlace MCP para varias apps.</p>
 ${message ? `<p class="bad">${esc(message)}</p>` : ""}
 <div class="card"><form method="post" action="/admin" autocomplete="off"><input type="hidden" name="action" value="login">
-<label for="t">Token del propietario</label><input id="t" name="token" type="password" required>
+<label for="t">Acceso (dirección + token) o solo el token del propietario</label><input id="t" name="token" type="password" required>
 <button>Entrar</button></form></div>`);
 
 const date = (ms: number) => ms ? new Date(ms).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "nunca";

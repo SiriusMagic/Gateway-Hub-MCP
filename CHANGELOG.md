@@ -1,3 +1,15 @@
+# Gateway Hub MCP 0.0.2
+
+- **Acceso en un solo pegado:** la app y el panel web aceptan `https://<hub>#hub_…` (o solo el token). Si
+  pegas un enlace o token de Stone, o el enlace de un agente, te dicen qué es y dónde va.
+- **Escáner de apps compatibles** (pestaña Escáner de la app Android):
+  - Encuentra las apps del teléfono que declaran `com.zirakusa.gatewayhub.action.APP`, sin el permiso de
+    ver todas las apps.
+  - Marca «Mismo desarrollador» solo si la firma coincide.
+  - Pregunta al hub el estado de cada una (`GET /api/admin/scan`, que solo hace `tools/list`): sin vincular,
+    vinculada y apagada, o en línea. **No activa nada.**
+- App Android 0.0.2 (versionCode 2).
+
 # Gateway Hub MCP 0.0.1
 
 Primera versión, separada de Stone.

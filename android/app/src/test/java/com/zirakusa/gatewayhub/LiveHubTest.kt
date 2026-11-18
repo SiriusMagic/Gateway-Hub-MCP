@@ -20,7 +20,9 @@ class LiveHubTest {
         val url = System.getenv("GATEWAY_HUB_URL").orEmpty(); val token = System.getenv("GATEWAY_HUB_TOKEN").orEmpty()
         assumeTrue("GATEWAY_HUB_URL / GATEWAY_HUB_TOKEN not set", url.isNotBlank() && token.isNotBlank())
         val api = HubApi(url, token)
-        assertEquals("0.0.1", api.state().version)
+        assertTrue(api.state().version.isNotBlank())
+        // The scan only reads: every app answers with its state, nothing is turned on.
+        assertTrue(api.scan().any { it.prefix == "calc_" && it.online })
         val created = api.createAgent("Prueba app Android", listOf("calc_"), readOnly = true, days = 1)
         try {
             assertTrue(created.url.startsWith("https://") && created.token.startsWith("gw_"))

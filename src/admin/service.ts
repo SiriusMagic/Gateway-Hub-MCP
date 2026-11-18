@@ -16,11 +16,24 @@ export async function overview(store: AdminStore, ctx: HubContext, modules: HubM
   const now = Date.now();
   return {
     version,
-    modules: modules.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary })),
+    modules: modules.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary, androidPackage: m.androidPackage ?? null })),
     stoneLinked: !!await savedLink(ctx),
     agents: (await store.agentsList()).map(publicAgent),
     metrics: { day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY) },
   };
+}
+
+/**
+ * Read-only scan of every app: built-in ones are always ready; remote ones (Stone) get one harmless
+ * request (tools/list) in parallel. Nothing is turned on or changed.
+ */
+export async function scan(ctx: HubContext, modules: HubModule[]) {
+  const results = await Promise.all(modules.map(async (m) => {
+    const status = m.status ? await m.status(ctx).catch((e) => ({ linked: false, online: false, tools: 0, detail: String(e) }))
+      : { linked: true, online: true, tools: (await m.tools(ctx)).length, detail: "Integrada en el hub." };
+    return { prefix: m.prefix, title: m.title, androidPackage: m.androidPackage ?? null, remote: !!m.status, ...status };
+  }));
+  return { scannedAt: Date.now(), apps: results };
 }
 
 /** Saves Stone's link after checking it; a token Stone rejects is never saved. Returns a note for the owner. */

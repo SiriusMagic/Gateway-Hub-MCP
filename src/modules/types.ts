@@ -67,11 +67,20 @@ export interface HubModule {
   title: string;
   /** One line for the LLM: what this module is for. */
   summary: string;
+  /** Android package of the app behind this module, so the hub app's scanner can match it (e.g. Stone). */
+  androidPackage?: string;
+  /**
+   * Read-only check of a remote app: linked to the hub, answering now. Never turns anything on.
+   * Built-in modules leave it out (always ready).
+   */
+  status?(ctx: HubContext): Promise<ModuleStatus>;
   /** true when the module checks its own arguments (e.g. a remote app); otherwise the router does. */
   validatesOwnArgs?: boolean;
   tools(ctx: HubContext): Promise<Tool[]>;
   call(name: string, args: Record<string, unknown>, ctx: HubContext): Promise<ToolResult>;
 }
+
+export interface ModuleStatus { linked: boolean; online: boolean; tools: number; detail: string }
 
 /** An expected failure with a stable code the LLM can read and act on. */
 export class ToolError extends Error {

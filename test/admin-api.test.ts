@@ -21,7 +21,8 @@ test("state lists modules, agents without hashes and metrics", async () => {
   const h = hub();
   await h.api("POST", "/agents", { name: "Claude", apps: ["calc_", "notes_"], readOnly: true, days: 30 });
   const { body } = await h.api("GET", "/state");
-  assert.equal(body.version, "0.0.1");
+  assert.equal(body.version, "0.0.2");
+  assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
   assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "notes_", "calc_", "utils_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
@@ -61,4 +62,22 @@ test("link and unlink Stone through the API", async () => {
   assert.equal((await h.api("GET", "/state")).body.stoneLinked, true);
   await h.api("DELETE", "/stone");
   assert.equal((await h.api("GET", "/state")).body.stoneLinked, false);
+});
+
+test("scan: built-in apps ready, Stone unlinked / online / offline, read-only", async () => {
+  const { fakeStone, MemoryStore } = await import("./helpers.ts");
+  const stone = fakeStone();
+  const h = hub(new MemoryStore(), stone.fetcher);
+  let apps = (await h.api("GET", "/scan")).body.apps;
+  assert.equal(apps.find((a: any) => a.prefix === "calc_").online, true);
+  assert.deepEqual(apps.find((a: any) => a.prefix === "music_").linked, false);
+  await h.api("POST", "/stone", { link: STONE_LINK });
+  apps = (await h.api("GET", "/scan")).body.apps;
+  const music = apps.find((a: any) => a.prefix === "music_");
+  assert.ok(music.linked && music.online && music.tools === 2 && music.remote);
+  assert.ok(stone.calls.every((c) => c.body.method === "tools/list"));          // the scan only reads
+  const offline = hub(h.store, fakeStone({ status: 503 }).fetcher);
+  const down = (await offline.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
+  assert.ok(down.linked && !down.online);
+  assert.match(down.detail, /not open/);
 });

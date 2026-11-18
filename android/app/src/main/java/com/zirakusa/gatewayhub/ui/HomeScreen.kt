@@ -17,7 +17,8 @@ import com.zirakusa.gatewayhub.R
 
 /** Everything the owner does once connected; [vm] actions are passed down as callbacks. */
 enum class HubTab(val label: Int, val icon: ImageVector) {
-    AGENTS(R.string.tab_agents, Icons.Default.Key), APPS(R.string.tab_apps, Icons.Default.Apps), METRICS(R.string.tab_metrics, Icons.Default.Insights)
+    AGENTS(R.string.tab_agents, Icons.Default.Key), SCANNER(R.string.tab_scanner, Icons.Default.Radar),
+    APPS(R.string.tab_apps, Icons.Default.Apps), METRICS(R.string.tab_metrics, Icons.Default.Insights)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +55,7 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
             if (hub == null) { if (!state.loading) Text(state.error ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
             when (tab) {
                 HubTab.AGENTS -> AgentsList(hub.agents, hub.modules, vm::setPaused, vm::revoke)
+                HubTab.SCANNER -> ScannerList(state.scan, state.loading, vm::scan)
                 HubTab.APPS -> AppsList(hub, state.loading, vm::linkStone, vm::unlinkStone)
                 HubTab.METRICS -> MetricsList(hub)
             }
@@ -76,4 +78,5 @@ interface HubActions {
     fun setPaused(id: String, paused: Boolean); fun revoke(id: String)
     fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int)
     fun linkStone(link: String); fun unlinkStone()
+    fun scan()
 }

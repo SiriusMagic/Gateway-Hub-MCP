@@ -9,7 +9,7 @@ import { modules } from "./modules/index.ts";
 import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
 
-export const VERSION = "0.0.1";
+export const VERSION = "0.0.2";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",

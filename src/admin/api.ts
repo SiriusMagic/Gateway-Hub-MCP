@@ -2,7 +2,7 @@
 // travels only in the Authorization header (never in the URL), and these answers carry no CORS
 // headers, so no web page can call them from a browser.
 import { type HubContext, type HubModule, ToolError } from "../modules/types.ts";
-import { type AdminStore, createAgent, linkStone, overview, setPaused, unlinkStone } from "./service.ts";
+import { type AdminStore, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
 
 export interface ApiDeps { store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string }
 
@@ -22,6 +22,7 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
   }
   try {
     if (path === "/state" && method === "GET") return ok(await overview(store, ctx, modules, deps.version));
+    if (path === "/scan" && method === "GET") return ok(await scan(ctx, modules));
     if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
     if (path === "/stone" && method === "DELETE") { await unlinkStone(store); return ok({ message: "Stone desvinculado." }); }
     if (path === "/agents" && method === "POST") return ok(await createAgent(store, modules, url.origin,
