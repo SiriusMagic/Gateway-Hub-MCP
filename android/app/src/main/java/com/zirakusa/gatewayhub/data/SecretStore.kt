@@ -22,6 +22,8 @@ interface SessionStore {
     /** This phone's channel credential for [hubUrl] (encrypted): device id + secret. */
     fun device(hubUrl: String): Pair<String, String>? = null
     fun saveDevice(hubUrl: String, value: Pair<String, String>?) {}
+    /** The hub this phone's channel credential belongs to (a satellite phone has only this, no owner token). */
+    fun deviceHub(): String? = null
 }
 
 

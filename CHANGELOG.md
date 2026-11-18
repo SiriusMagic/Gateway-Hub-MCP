@@ -1,3 +1,17 @@
+# Sin publicar (fase 5: varios teléfonos)
+
+- **Añadir otro teléfono:** Ajustes › Teléfonos › «Añadir otro teléfono» crea un código de un solo uso (10 caracteres,
+  5 minutos; el hub guarda solo su hash y los códigos erróneos cuentan como tokens erróneos). En el otro teléfono, la
+  misma APK: entrada › «Unir este teléfono a un hub». Ese teléfono no tiene el token del propietario: solo su credencial
+  del canal.
+- **Teléfono satélite:** pantalla propia con el estado del canal, sus apps compatibles (Vincular, Paquetes, Probar) y
+  «Salir del hub». Cada teléfono firma los paquetes de sus apps con su propia clave del Keystore.
+- **Enrutado sin programar nada:** cada app registrada por un teléfono cuyo prefijo no usa un módulo integrado se sirve
+  sola por su canal. La misma app en otro teléfono recibe otro prefijo (`music_` → `music2_` … `music9_`); los agentes
+  pueden limitarse a ella como a cualquier app.
+- Ajustes › Teléfonos lista los teléfonos, si están conectados y qué apps sirven, y permite revocarlos (el canal se corta
+  al momento).
+
 # Sin publicar (fase 4: Cloudflare por usuario)
 
 - **La app publica o actualiza tu hub** con un token de Cloudflare que se usa una vez y se olvida:

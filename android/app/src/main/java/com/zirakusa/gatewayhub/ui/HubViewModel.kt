@@ -25,6 +25,7 @@ class HubViewModel(
     signer: () -> PackageSigner = SoftwareSigner().let { key -> { key } },
     ledger: PackageLedger = MemoryLedger(),
     private val afterPackages: () -> Unit = {},
+    hubTransport: HubTransport = HttpTransport,
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
@@ -32,9 +33,11 @@ class HubViewModel(
     private val sync = AppSync(localApps, linker) { requireApi() }
     private val providers = ProviderFlow(bridge, signer, ledger, localApps)
     private val cloudflare = CloudflareFlow(newCloudflare, workerBundle)
+    private val phones = PhoneFlow(sessions, hubTransport)
 
     init {
-        mutable.update { it.copy(autoSync = sessions.flag("autoSync", true), packages = ledger.packages()) }
+        mutable.update { it.copy(autoSync = sessions.flag("autoSync", true), packages = ledger.packages(), providerApps = providerApps(),
+            satellite = phones.satelliteHub() != null, hubUrl = phones.satelliteHub() ?: it.hubUrl) }
         sendMode()
         sessions.load()?.let { (url, token) ->
             api = newApi(url, token)
@@ -47,11 +50,9 @@ class HubViewModel(
     fun connect(pasted: String) = run { open(AccessParser.parse(pasted, defaultUrl)); null }
 
     /** Checks [access] against the hub and only then saves it. */
-    private suspend fun open(access: Access, tries: Int = 1) {
-        val candidate = newApi(access.url, access.token)
+    private suspend fun open(access: Access, tries: Int = 1) = newApi(access.url, access.token).let { candidate ->
         val hub = stateWithRetry(candidate, tries)
-        api = candidate
-        sessions.save(candidate.base, access.token)
+        api = candidate; sessions.save(candidate.base, access.token)
         mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = hub) }
     }
 
@@ -63,14 +64,10 @@ class HubViewModel(
     override fun refresh() = run { reload(); null }
 
     override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) = run {
-        val created = requireApi().createAgent(name, apps, readOnly, days)
-        mutable.update { it.copy(created = created, hub = requireApi().state()) }
-        null
+        val created = requireApi().createAgent(name, apps, readOnly, days); mutable.update { it.copy(created = created, hub = requireApi().state()) }; null
     }
 
-    override fun setPaused(id: String, paused: Boolean) = run {
-        requireApi().setPaused(id, paused); reload(); UiText.Res(if (paused) R.string.note_paused else R.string.note_resumed)
-    }
+    override fun setPaused(id: String, paused: Boolean) = run { requireApi().setPaused(id, paused); reload(); UiText.Res(if (paused) R.string.note_paused else R.string.note_resumed) }
     override fun revoke(id: String) = run { requireApi().revoke(id); reload(); UiText.Res(R.string.note_revoked) }
     override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); UiText.Raw(note) }
     override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); UiText.Res(R.string.note_unlinked) }
@@ -103,6 +100,13 @@ class HubViewModel(
     override fun revokePackage(packageName: String, id: String) = providers(packageName) { providers.revoke(it, id) }
     override fun refreshPackages(packageName: String) = providers(packageName) { providers.refresh(it) }
     private fun providers(name: String, block: suspend (String) -> UiText?) = run { block(name).also { mutable.update { s -> s.copy(packages = providers.packages()) }; afterPackages() } }
+
+    /** Another phone joins this hub with a code from the owner's phone. */
+    fun join(url: String, code: String, name: String) = run { val hub = phones.join(url, code, name); mutable.update { it.copy(satellite = true, hubUrl = hub, providerApps = providerApps()) }; UiText.Res(R.string.phone_joined) }
+    override fun leaveHub() { phones.leave(); mutable.update { it.copy(satellite = false) } }
+    override fun createPairing() = run { mutable.update { it.copy(pairing = requireApi().createPairing()) }; null }
+    override fun revokeDevice(id: String) = run { requireApi().deleteDevice(id); reload(); UiText.Res(R.string.phone_revoked) }
+    private fun providerApps() = runCatching { localApps.installed().filter { it.bridge && it.sameDeveloper } }.getOrDefault(emptyList())
 
     override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }
 

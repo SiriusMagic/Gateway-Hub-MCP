@@ -4,6 +4,7 @@ import com.zirakusa.gatewayhub.data.AppSettings
 import com.zirakusa.gatewayhub.data.CreatedAgent
 import com.zirakusa.gatewayhub.data.HubState
 import com.zirakusa.gatewayhub.data.IssuedPackage
+import com.zirakusa.gatewayhub.data.LocalApp
 import com.zirakusa.gatewayhub.data.ScannedApp
 
 data class UiState(
@@ -22,6 +23,12 @@ data class UiState(
     val settings: AppSettings = AppSettings(),
     /** Execution packages this Gateway issued (status as the provider app last reported). */
     val packages: List<IssuedPackage> = emptyList(),
+    /** Satellite phone: joined a hub with a code; serves its own apps, has no owner token. */
+    val satellite: Boolean = false,
+    /** Provider apps on this phone (they offer the local bridge). */
+    val providerApps: List<LocalApp> = emptyList(),
+    /** One-use code just made for another phone, and when it expires (ms). */
+    val pairing: Pair<String, Long>? = null,
 )
 
 /** The actions the screens may trigger (the ViewModel in the app, a fake in tests). */
@@ -42,4 +49,6 @@ interface HubActions {
     fun linkProvider(packageName: String); fun refreshPackages(packageName: String)
     fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int)
     fun revokePackage(packageName: String, id: String)
+    /** Phase 5: other phones. */
+    fun createPairing(); fun revokeDevice(id: String); fun leaveHub()
 }

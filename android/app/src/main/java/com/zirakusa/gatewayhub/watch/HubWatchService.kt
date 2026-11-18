@@ -57,8 +57,9 @@ class HubWatchService : Service() {
         while (scope.isActive) {
             delay(POLL_MS)
             val settings = PrefsSettingsStore(this).load()
-            val api = api()
-            if (api == null || settings.mode != McpMode.BACKGROUND) return finish()
+            if (settings.mode != McpMode.BACKGROUND) return finish()
+            // A satellite phone has no owner token: it only keeps its channel (no activity summaries).
+            val api = api() ?: if (KeystoreSessionStore(this).deviceHub() != null) continue else return finish()
             val started = System.currentTimeMillis()
             val activity = try { api.activity(since) } catch (e: HubException) {
                 if (e.code == "UNAUTHORIZED") return finish() else continue

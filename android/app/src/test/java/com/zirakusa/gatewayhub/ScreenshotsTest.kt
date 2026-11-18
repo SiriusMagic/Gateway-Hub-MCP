@@ -5,6 +5,7 @@ import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.zirakusa.gatewayhub.data.AppSettings
 import com.zirakusa.gatewayhub.data.CreatedAgent
+import com.zirakusa.gatewayhub.data.DeviceInfo
 import com.zirakusa.gatewayhub.data.McpMode
 import com.zirakusa.gatewayhub.data.ThemeChoice
 import com.zirakusa.gatewayhub.data.HubJson
@@ -38,6 +39,7 @@ class ScreenshotsTest {
         override fun linkProvider(packageName: String) {}; override fun refreshPackages(packageName: String) {}
         override fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int) {}
         override fun revokePackage(packageName: String, id: String) {}
+        override fun createPairing() {}; override fun revokeDevice(id: String) {}; override fun leaveHub() {}
     }
 
     private fun shot(name: String, theme: ThemeChoice = ThemeChoice.NIGHT, content: @androidx.compose.runtime.Composable () -> Unit) {
@@ -69,4 +71,13 @@ class ScreenshotsTest {
         LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev"), { })
     }
 
+    @Test fun satellite() = shot("satellite") {
+        SatelliteScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev", satellite = true, providerApps = listOf(
+            LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.18", "music_", true, "x", bridge = true))), NoActions)
+    }
+    @Test fun phones() = shot("phones") {
+        HomeScreen(connected.copy(settings = AppSettings("es"), pairing = "ABCDE23456" to System.currentTimeMillis() + 300_000,
+            hub = hub.copy(devices = listOf(DeviceInfo("0123456789ab", "Pixel 8", true, listOf("music_")), DeviceInfo("ba9876543210", "Tablet", false, listOf("music2_"))))),
+            NoActions, HubTab.SETTINGS)
+    }
 }

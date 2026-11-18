@@ -39,6 +39,8 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     suspend fun createDevice(name: String): Pair<String, String> = JSONObject(call("POST", "/devices", JSONObject().put("name", name.take(40))))
         .let { it.getJSONObject("device").getString("id") to it.getString("secret") }
     suspend fun deleteDevice(id: String) { call("DELETE", "/devices/$id") }
+    /** A one-use code (5 min) for another phone to join this hub. Returns (code, expiresAt ms). */
+    suspend fun createPairing(): Pair<String, Long> = JSONObject(call("POST", "/pairing", JSONObject())).let { it.getString("code") to it.getLong("expiresAt") }
     /** Read-only: the hub asks each remote app whether it is linked and online. */
     suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 
@@ -55,6 +57,17 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     }
 
     companion object {
+        /** Another phone joins [hubUrl] with a pairing code (no owner token). Returns its (device id, secret). */
+        suspend fun pair(hubUrl: String, code: String, name: String, transport: HubTransport = HttpTransport): Pair<String, String> = withContext(Dispatchers.IO) {
+            val base = normalize(hubUrl)
+            val (status, text) = try { transport.send("POST", "$base/pair", "", JSONObject().put("code", code.trim()).put("name", name.take(40)).toString()) }
+                catch (e: Exception) { throw HubException("NETWORK", "") }
+            if (status == 401) throw HubException("BAD_PAIRING_CODE", "")
+            if (status == 429) throw HubException("RATE_LIMITED", "")
+            val o = runCatching { JSONObject(text) }.getOrNull() ?: throw HubException("HTTP_$status", "")
+            o.getJSONObject("device").getString("id") to o.getString("secret")
+        }
+
         /** https://host[:port] only: no other scheme, no path, no user info, no query. */
         fun normalize(raw: String): String {
             val uri = runCatching { URI(raw.trim().let { if ("://" in it) it else "https://$it" }) }.getOrNull()

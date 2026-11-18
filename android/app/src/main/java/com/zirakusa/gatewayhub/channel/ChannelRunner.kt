@@ -40,8 +40,10 @@ object ChannelRunner {
         if (client != null) return
         scope.launch {
             val sessions = KeystoreSessionStore(context)
-            val (url, owner) = sessions.load() ?: return@launch
-            val device = sessions.device(url) ?: runCatching { HubApi(url, owner).createDevice(Build.MODEL ?: "Android") }.getOrNull()
+            // The owner's phone (owner token) or a satellite (only its channel credential, from a pairing code).
+            val owner = sessions.load()
+            val url = owner?.first ?: sessions.deviceHub() ?: return@launch
+            val device = sessions.device(url) ?: owner?.let { runCatching { HubApi(url, it.second).createDevice(Build.MODEL ?: "Android") }.getOrNull() }
                 ?.also { sessions.saveDevice(url, it) } ?: return@launch
             val bridge: BridgeConnector = LocalBridge(context)
             val apps = PackageScanner(context)

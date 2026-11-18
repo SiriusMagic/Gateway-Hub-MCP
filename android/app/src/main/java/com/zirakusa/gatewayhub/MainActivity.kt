@@ -30,14 +30,18 @@ import com.zirakusa.gatewayhub.ui.HubTheme
 import com.zirakusa.gatewayhub.ui.HubViewModel
 import com.zirakusa.gatewayhub.ui.LoginScreen
 import com.zirakusa.gatewayhub.ui.PALETTES
+import com.zirakusa.gatewayhub.ui.SatelliteScreen
 import com.zirakusa.gatewayhub.ui.WelcomeScreen
 import com.zirakusa.gatewayhub.watch.HubWatchService
 
 class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
-        vm.state.value.let { ChannelRunner.sync(applicationContext, it.connected && it.hub?.environment == ENV_ACTIVE) }
+        vm.state.value.let { ChannelRunner.sync(applicationContext, serves(it.connected, it.satellite, it.hub?.environment)) }
     }
+
+    /** The channel runs on a satellite, or on the owner's phone while the environment is connected. */
+    private fun serves(connected: Boolean, satellite: Boolean, environment: String?) = satellite || (connected && environment == ENV_ACTIVE)
 
     /** Safe mode: nothing keeps serving once Gateway leaves the screen. */
     override fun onStop() {
@@ -92,16 +96,17 @@ class MainActivity : ComponentActivity() {
             val environment = state.hub?.environment
             // The phone's channel with the hub: while connected and the environment is active (the app open,
             // or the background service in background mode).
-            LaunchedEffect(state.connected, environment) { ChannelRunner.sync(applicationContext, state.connected && environment == ENV_ACTIVE) }
+            LaunchedEffect(state.connected, state.satellite, environment) { ChannelRunner.sync(applicationContext, serves(state.connected, state.satellite, environment)) }
             LaunchedEffect(settings.mode, state.connected, environment) {
                 if (!state.connected || environment != null)
-                    HubWatchService.sync(applicationContext, state.connected && settings.mode == McpMode.BACKGROUND && environment == ENV_ACTIVE)
+                    HubWatchService.sync(applicationContext, settings.mode == McpMode.BACKGROUND && serves(state.connected, state.satellite, environment))
             }
             HubTheme(settings.theme) {
                 when {
                     settings.language == null -> WelcomeScreen { tag -> vm.updateSettings { it.copy(language = tag) } }
                     state.connected -> HomeScreen(state, vm)
-                    else -> LoginScreen(state, vm::connect, vm::createAccess)
+                    state.satellite -> SatelliteScreen(state, vm)
+                    else -> LoginScreen(state, vm::connect, vm::createAccess) { url, code -> vm.join(url, code, android.os.Build.MODEL ?: "Android") }
                 }
             }
         }

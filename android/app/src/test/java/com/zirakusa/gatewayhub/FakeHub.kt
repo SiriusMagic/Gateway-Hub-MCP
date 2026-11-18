@@ -42,5 +42,9 @@ class MemorySessions(var saved: Pair<String, String>? = null) : SessionStore {
     override fun load() = saved
     override fun save(hubUrl: String, token: String) { saved = hubUrl to token }
     override fun clear() { saved = null }
+    var device: Pair<String, Pair<String, String>>? = null
+    override fun device(hubUrl: String) = device?.takeIf { it.first == hubUrl }?.second
+    override fun saveDevice(hubUrl: String, value: Pair<String, String>?) { device = value?.let { hubUrl to it } }
+    override fun deviceHub() = device?.first
 
 }

@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.zirakusa.gatewayhub.R
 
 /** First screen: one paste with the hub address and the owner token. Nothing is saved until the hub accepts it. */
-@Composable fun LoginScreen(state: UiState, connect: (String) -> Unit, createAccess: (String) -> Unit = {}) {
+@Composable fun LoginScreen(state: UiState, connect: (String) -> Unit, createAccess: (String) -> Unit = {}, join: (String, String) -> Unit = { _, _ -> }) {
     val context = LocalContext.current
     var access by remember { mutableStateOf("") }
     Surface(Modifier.fillMaxSize(), color = HubColors.Background, contentColor = HubColors.Text) {
@@ -46,6 +46,7 @@ import com.zirakusa.gatewayhub.R
         }
         Text(stringResource(R.string.login_token_hint), Modifier.fillMaxWidth().padding(top = 16.dp), color = HubColors.Muted, fontSize = 12.sp)
         CreateAccessCard(state.loading, createAccess)
+        JoinHubCard(state.loading, join)
     }
     }
 }

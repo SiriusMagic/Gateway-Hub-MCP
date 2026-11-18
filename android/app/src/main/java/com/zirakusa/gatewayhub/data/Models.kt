@@ -22,7 +22,12 @@ data class HubState(
     val agents: List<Agent>, val day: Metrics, val week: Metrics,
     /** The whole MCP environment: "active", "paused" or "disconnected" (set by the owner). */
     val environment: String = ENV_ACTIVE,
+    /** Phones allowed on the hub's channel (this one included once it connected). */
+    val devices: List<DeviceInfo> = emptyList(),
 )
+
+/** A phone on the channel: whether it is connected and the app prefixes it serves. */
+data class DeviceInfo(val id: String, val name: String, val online: Boolean, val providers: List<String>)
 
 const val ENV_ACTIVE = "active"
 const val ENV_PAUSED = "paused"
@@ -51,13 +56,16 @@ internal object HubJson {
         val m = o.getJSONObject("metrics")
         return HubState(o.getString("version"), o.getJSONArray("modules").map { HubModule(it.getString("prefix"), it.getString("title"), it.getString("summary")) },
             o.getBoolean("stoneLinked"), o.getJSONArray("agents").map(::agent), metrics(m.getJSONObject("day")), metrics(m.getJSONObject("week")),
-            o.optString("environment", ENV_ACTIVE).ifBlank { ENV_ACTIVE })
+            o.optString("environment", ENV_ACTIVE).ifBlank { ENV_ACTIVE }, o.optJSONArray("devices")?.map(::device).orEmpty())
     }
 
     fun scan(text: String) = JSONObject(text).getJSONArray("apps").map {
         RemoteStatus(it.getString("prefix"), it.getString("title"), it.optString("androidPackage").takeIf { p -> p.isNotBlank() && p != "null" },
             it.getBoolean("remote"), it.getBoolean("linked"), it.getBoolean("online"), it.getInt("tools"), it.getString("detail"))
     }
+
+    fun device(o: JSONObject) = DeviceInfo(o.getString("id"), o.optString("name"), o.optBoolean("online"),
+        o.optJSONArray("providers")?.map { it.optString("prefix") }.orEmpty())
 
     fun activity(text: String) = JSONObject(text).let { Activity(it.optString("environment", ENV_ACTIVE), metrics(it)) }
 

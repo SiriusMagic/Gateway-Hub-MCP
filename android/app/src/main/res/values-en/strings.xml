@@ -243,4 +243,23 @@
     <string name="cf_deploy">Update my hub</string>
     <string name="cf_updated">Hub updated to this app\'s version: %1$s. Its token, agents and data are kept.</string>
     <string name="err_no_subdomain">Your Cloudflare account has no workers.dev subdomain yet. Open dash.cloudflare.com › Workers, pick one and try again.</string>
+    <string name="phone_joined">This phone is now on the hub. Link its apps here and give them packages.</string>
+    <string name="phone_revoked">Phone revoked: its channel was cut.</string>
+    <string name="phone_bad_code">Wrong or expired code. Ask for a new one on the main phone (Settings › Phones).</string>
+    <string name="phones_title">Phones</string>
+    <string name="phones_none">No phones on the channel yet.</string>
+    <string name="phones_online">Connected</string>
+    <string name="phones_offline">Not connected</string>
+    <string name="phones_add">Add another phone</string>
+    <string name="phones_code_hint">On the other phone: Gateway Hub › «Join this phone to a hub», with the address %1$s and this code. Expires: %2$s. It works once.</string>
+    <string name="join_title">Is this another phone?</string>
+    <string name="join_hint">Join it to the hub of your main phone so its apps work with the same link. The owner token is not needed here.</string>
+    <string name="join_url">Hub address (https://…)</string>
+    <string name="join_code">Code from the main phone</string>
+    <string name="join_button">Join this phone to a hub</string>
+    <string name="satellite_title">Gateway Hub · another phone</string>
+    <string name="satellite_hint">This phone serves its apps to the hub. Link each app and give it packages; everything else is on the main phone.</string>
+    <string name="satellite_apps_none">No compatible apps on this phone.</string>
+    <string name="satellite_leave">Leave the hub</string>
+    <string name="satellite_leave_confirm">This phone stops serving its apps. Coming back needs a new code.</string>
 </resources>

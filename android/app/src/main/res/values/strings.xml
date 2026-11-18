@@ -243,4 +243,23 @@
     <string name="cf_deploy">Actualizar mi hub</string>
     <string name="cf_updated">Hub actualizado a la versión de esta app: %1$s. Se conservan el token, los agentes y los datos.</string>
     <string name="err_no_subdomain">Tu cuenta de Cloudflare aún no tiene subdominio workers.dev. Ábrela en dash.cloudflare.com › Workers, elige uno y vuelve a intentarlo.</string>
+    <string name="phone_joined">Este teléfono ya está en el hub. Vincula aquí sus apps y dales paquetes.</string>
+    <string name="phone_revoked">Teléfono revocado: su canal se cortó.</string>
+    <string name="phone_bad_code">Código incorrecto o caducado. Pide uno nuevo en el teléfono principal (Ajustes › Teléfonos).</string>
+    <string name="phones_title">Teléfonos</string>
+    <string name="phones_none">Aún no hay teléfonos en el canal.</string>
+    <string name="phones_online">Conectado</string>
+    <string name="phones_offline">Sin conectar</string>
+    <string name="phones_add">Añadir otro teléfono</string>
+    <string name="phones_code_hint">En el otro teléfono: Gateway Hub › «Unir este teléfono a un hub», con la dirección %1$s y este código. Caduca: %2$s. Solo sirve una vez.</string>
+    <string name="join_title">¿Este es otro teléfono?</string>
+    <string name="join_hint">Únelo al hub de tu teléfono principal para que sus apps se usen con el mismo enlace. Aquí no hace falta el token del propietario.</string>
+    <string name="join_url">Dirección del hub (https://…)</string>
+    <string name="join_code">Código del teléfono principal</string>
+    <string name="join_button">Unir este teléfono a un hub</string>
+    <string name="satellite_title">Gateway Hub · otro teléfono</string>
+    <string name="satellite_hint">Este teléfono sirve sus apps al hub. Vincula cada app y dale paquetes; las demás opciones están en el teléfono principal.</string>
+    <string name="satellite_apps_none">No hay apps compatibles en este teléfono.</string>
+    <string name="satellite_leave">Salir del hub</string>
+    <string name="satellite_leave_confirm">Este teléfono deja de servir sus apps. Para volver hará falta un código nuevo.</string>
 </resources>

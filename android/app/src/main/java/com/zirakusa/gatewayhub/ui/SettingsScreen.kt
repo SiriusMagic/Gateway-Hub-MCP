@@ -38,6 +38,7 @@ import com.zirakusa.gatewayhub.data.ThemeChoice
     val s = state.settings
     EnvironmentSection(hub.environment, s, state.loading, vm, askNotifications)
 
+    PhonesSection(hub.devices, state.pairing, state.hubUrl, state.loading, vm)
     CloudflareSection(state.loading, vm)
 
     SectionTitle(stringResource(R.string.privacy_title))
