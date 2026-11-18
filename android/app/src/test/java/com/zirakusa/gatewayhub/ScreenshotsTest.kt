@@ -34,6 +34,7 @@ class ScreenshotsTest {
         override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}
         override fun setEnvironment(target: String) {}; override fun updateSettings(change: (AppSettings) -> AppSettings) {}
         override fun createAccess(cfToken: String) {}; override fun saveCloudflare(token: String) {}; override fun forgetCloudflare() {}
+        override fun testBridge(packageName: String) {}
     }
 
     private fun shot(name: String, theme: ThemeChoice = ThemeChoice.NIGHT, content: @androidx.compose.runtime.Composable () -> Unit) {
@@ -44,7 +45,7 @@ class ScreenshotsTest {
     @Test fun login() = shot("login") { LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev"), { }) }
     @Test fun agents() = shot("agents") { HomeScreen(connected, NoActions, HubTab.AGENTS) }
     @Test fun scanner() = shot("scanner") { HomeScreen(connected.copy(scan = ScanMerge.merge(
-        listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.13", "music_", true, "com.zirakusa.stone.kotlin.preview.hublink"),
+        listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.13", "music_", true, "com.zirakusa.stone.kotlin.preview.hublink", bridge = true),
             LocalApp("com.example.lookalike", "Stone Pro", "9.9", "music_", false)),
         HubJson.scan(SCAN_JSON))), NoActions, HubTab.SCANNER) }
     @Test fun apps() = shot("apps") { HomeScreen(connected, NoActions, HubTab.APPS) }

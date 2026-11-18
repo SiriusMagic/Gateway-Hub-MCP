@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,13 +25,10 @@ import com.zirakusa.gatewayhub.data.CloudflareApi
         info == null -> stringResource(R.string.cf_none) to HubColors.Muted
         days == null -> stringResource(R.string.cf_no_expiry) to HubColors.Good
         days < 0 -> stringResource(R.string.cf_expired) to HubColors.Bad
-        else -> pluralStringRes(R.plurals.cf_expires_in, days.toInt(), formatDate(info.expiresAt, "")) to if (days <= 2) HubColors.Gold else HubColors.Good
+        else -> pluralStringResource(R.plurals.cf_expires_in, days.toInt(), days.toInt(), formatDate(info.expiresAt, "")) to if (days <= 2) HubColors.Gold else HubColors.Good
     }
     Text(text, color = color, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
 }
-
-@Composable private fun pluralStringRes(id: Int, count: Int, date: String) =
-    LocalContext.current.resources.getQuantityString(id, count, count, date)
 
 @Composable fun CreateCloudflareTokenButton() {
     val context = LocalContext.current

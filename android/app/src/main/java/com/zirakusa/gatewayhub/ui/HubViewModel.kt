@@ -21,6 +21,7 @@ class HubViewModel(
     private val modeSender: ModeSender = ModeSender { _, _ -> false },
     share: CloudflareShare = CloudflareShare.None,
     newCloudflare: (String) -> CloudflareApi = { CloudflareApi(it) },
+    private val bridge: BridgeConnector = BridgeConnector.None,
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
@@ -96,6 +97,13 @@ class HubViewModel(
         val note = sync.link(row?.local, row?.remote, force = true)
         mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }
         note
+    }
+
+    override fun testBridge(packageName: String) = run {
+        val app = localApps.installed().firstOrNull { it.packageName == packageName } ?: throw HubException("BRIDGE_UNSUPPORTED", "")
+        val r = bridge.withApp(app) { BridgeProbe.run(it) }
+        UiText.Res(when (r.probeOk) { true -> R.string.bridge_ok; false -> R.string.bridge_probe_failed; null -> R.string.bridge_no_probe },
+            listOf(app.label, r.server, r.tools, r.probe.orEmpty()))
     }
 
     override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }

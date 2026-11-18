@@ -207,4 +207,17 @@
     <string name="cf_login_title">No hub_ token?</string>
     <string name="cf_login_hint">The app makes it for you with your Cloudflare account: 1) Create a token in Cloudflare (it comes with the Workers Scripts › Edit permission) and copy it. 2) Paste it here and tap Create my access.</string>
     <string name="cf_create_access">Create my access</string>
+    <string name="bridge_test">Test local bridge</string>
+    <string name="bridge_ok">Local bridge with %1$s: %2$s · read tools: %3$d, test \"%4$s\" passed.</string>
+    <string name="bridge_no_probe">Local bridge with %1$s: %2$s · read tools: %3$d. The app marks no test tool: only initialize and tools/list were checked.</string>
+    <string name="bridge_probe_failed">Local bridge with %1$s: %2$s · read tools: %3$d, but the test \"%4$s\" returned an error.</string>
+    <string name="bridge_unsupported">This app does not offer the local bridge (it needs Stone 1.7.16 or later).</string>
+    <string name="bridge_denied">The app refused Gateway Hub: it only accepts apps signed by the same developer.</string>
+    <string name="bridge_lost">The connection with the app was lost. Try again.</string>
+    <string name="bridge_timeout">The app did not answer in time.</string>
+    <string name="bridge_too_large">The answer is too large for the local bridge.</string>
+    <string name="bridge_bad_answer">The app answered something that is not MCP.</string>
+    <string name="bridge_redirect_off">Turn on \"Hub redirect\" in Stone › Settings › API mode › Gateway Hub.</string>
+    <string name="bridge_api_off">Turn on MCP in Stone › Settings › API mode (the bridge needs it in this phase).</string>
+    <string name="bridge_busy">The app is busy with other requests. Try again.</string>
 </resources>

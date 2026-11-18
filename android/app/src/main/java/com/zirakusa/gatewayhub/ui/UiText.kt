@@ -29,6 +29,10 @@ private val CODES = mapOf(
     "INVALID_URL" to R.string.err_invalid_url, "EMPTY" to R.string.err_empty, "STONE_LINK" to R.string.err_stone_link,
     "AGENT_LINK" to R.string.err_agent_link, "NO_TOKEN" to R.string.err_no_token,
     "CF_INVALID" to R.string.err_cf_invalid, "CF_NETWORK" to R.string.err_cf_network, "CF_INACTIVE" to R.string.err_cf_inactive, "CF_FORBIDDEN" to R.string.err_cf_forbidden,
+    "BRIDGE_UNSUPPORTED" to R.string.bridge_unsupported, "BRIDGE_DENIED" to R.string.bridge_denied, "BRIDGE_LOST" to R.string.bridge_lost,
+    "BRIDGE_TIMEOUT" to R.string.bridge_timeout, "BRIDGE_TOO_LARGE" to R.string.bridge_too_large, "RESPONSE_TOO_LARGE" to R.string.bridge_too_large,
+    "BRIDGE_BAD_ANSWER" to R.string.bridge_bad_answer, "REDIRECT_OFF" to R.string.bridge_redirect_off, "API_OFF" to R.string.bridge_api_off,
+    "NOT_GATEWAY" to R.string.bridge_denied, "NOT_SAME_DEVELOPER" to R.string.bridge_denied, "BUSY" to R.string.bridge_busy,
     "CF_EMPTY" to R.string.err_cf_empty, "CF_MISSING" to R.string.err_cf_missing, "NO_HUB" to R.string.err_no_hub,
 )
 private val LINK_CODES = mapOf(

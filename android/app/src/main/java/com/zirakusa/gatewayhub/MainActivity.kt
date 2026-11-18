@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zirakusa.gatewayhub.data.ENV_ACTIVE
 import com.zirakusa.gatewayhub.data.KeystoreSessionStore
+import com.zirakusa.gatewayhub.data.LocalBridge
 import com.zirakusa.gatewayhub.data.McpMode
 import com.zirakusa.gatewayhub.data.PackageScanner
 import com.zirakusa.gatewayhub.data.PrefsSettingsStore
@@ -35,7 +36,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val linker = ProviderLinker(applicationContext)
                 return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext),
-                    linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker, share = linker) as T
+                    linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker, share = linker, bridge = LocalBridge(applicationContext)) as T
             }
         }
     }

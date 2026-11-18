@@ -36,4 +36,6 @@ interface HubActions {
     /** Makes a new hub_ token with the Cloudflare token (blank = the saved one) and logs in with it. */
     fun createAccess(cfToken: String)
     fun saveCloudflare(token: String); fun forgetCloudflare()
+    /** Phase 1 of the hub migration: checks the local MCP bridge with one app (read-only). */
+    fun testBridge(packageName: String)
 }

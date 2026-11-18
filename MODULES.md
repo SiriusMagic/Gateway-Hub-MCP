@@ -58,6 +58,17 @@ declara esto en una Activity exportada:
     `HubLink.kt` en Stone.
   - Opcional: `call("mode", "safe"|"background")` aplica el modo de Gateway (en `safe`, la app solo atiende MCP
     mientras está en pantalla) y responde `mode`. Ver `HubLink.answerMode` en Stone.
+- **Puente local MCP (fase 1, opcional):** un `Service` exportado con la acción `com.zirakusa.gatewayhub.action.MCP`,
+  protegido con `com.zirakusa.gatewayhub.permission.LINK` (`signature`), que responde por `Messenger`:
+  - Mensaje `what = 1`, `arg1` = id de petición, `Bundle` con `message` = un objeto JSON-RPC MCP (sin lotes); la
+    respuesta va a `replyTo` con el mismo `arg1`. Máximo 200 000 caracteres por mensaje.
+  - La app identifica a Gateway con `Message.sendingUid` → paquete `com.zirakusa.gatewayhub` + misma firma; nunca con
+    datos del mensaje.
+  - En esta fase, solo lectura: `tools/list` y `tools/call` solo con herramientas que la app clasifica como de lectura.
+  - Para «Probar puente local», la app puede marcar **una** herramienta de lectura sin efectos con
+    `_meta["com.zirakusa.gatewayhub/probe"] = true`. Si no marca ninguna, Gateway solo prueba `initialize` y `tools/list`.
+  - Errores con el código al principio de `error.message` (`REDIRECT_OFF`, `NOT_SAME_DEVELOPER`, `BUSY`,
+    `RESPONSE_TOO_LARGE`…). Implementación de referencia: `HubBridge.kt` y `HubBridgeService.kt` en Stone.
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».
 

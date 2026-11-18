@@ -1,3 +1,13 @@
+# Gateway Hub 0.0.7 (app)
+
+- **Puente local con Stone** (fase 1 de la migración a un solo endpoint MCP por usuario): el Escáner detecta si una
+  app del mismo desarrollador ofrece el puente (Stone 1.7.16+) y muestra **Probar puente local**.
+  - Hace `initialize` y `tools/list` por IPC de Android (Messenger) y solo ejecuta la herramienta que la app marca como
+    prueba, si además es de solo lectura. Nunca ejecuta otra.
+  - Mensajes de 200 000 caracteres como máximo, 75 s por petición, y cada fallo del canal con su motivo
+    (sin puente, rechazado, conexión perdida, sin respuesta, demasiado grande, «Redirección hub» apagada…).
+- Sin cambios en el hub (`stone-hub`), el relay ni Cloudflare. Con una Stone anterior el botón no aparece.
+
 # Gateway Hub 0.0.6 (app)
 
 - **La app crea el token del propietario (`hub_`)**: en la pantalla de entrada, «¿No tienes el token hub_?».

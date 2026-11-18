@@ -7,7 +7,9 @@ import android.content.pm.PackageManager
 /** An app on this phone that declares support for the Gateway Hub (only what it declares; nothing is started). */
 data class LocalApp(val packageName: String, val label: String, val version: String, val prefix: String?, val sameDeveloper: Boolean,
     /** content:// authority that gives the hub its link (Redirección hub); null when the app has none. */
-    val linkAuthority: String? = null)
+    val linkAuthority: String? = null,
+    /** It offers the local MCP bridge (a service with [LocalBridge.ACTION]). */
+    val bridge: Boolean = false)
 
 /** What the hub says about one app (from /api/admin/scan). */
 data class RemoteStatus(val prefix: String, val title: String, val androidPackage: String?, val remote: Boolean,
@@ -33,8 +35,9 @@ class PackageScanner(private val context: Context) : LocalAppSource {
             val version = runCatching { pm.getPackageInfo(pkg, 0).versionName }.getOrNull().orEmpty()
             // The authority must belong to that same package: an app cannot point the hub at another app's provider.
             val authority = info.metaData?.getString(META_LINK)?.takeIf { it.startsWith("$pkg.") && Regex("^[A-Za-z0-9._]+$").matches(it) }
+            val bridge = pm.queryIntentServices(Intent(LocalBridge.ACTION).setPackage(pkg), 0).isNotEmpty()
             LocalApp(pkg, info.applicationInfo.loadLabel(pm).toString().take(60), version, prefix,
-                pm.checkSignatures(context.packageName, pkg) == PackageManager.SIGNATURE_MATCH, authority)
+                pm.checkSignatures(context.packageName, pkg) == PackageManager.SIGNATURE_MATCH, authority, bridge)
         }
     }
 
