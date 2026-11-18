@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The encrypted owner token stays on this phone: no cloud backup, no device transfer. -->
+<data-extraction-rules>
+    <cloud-backup><exclude domain="root" path="." /><exclude domain="sharedpref" path="." /></cloud-backup>
+    <device-transfer><exclude domain="root" path="." /><exclude domain="sharedpref" path="." /></device-transfer>
+</data-extraction-rules>

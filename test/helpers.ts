@@ -78,6 +78,13 @@ export function hub(store = new MemoryStore(), fetcher: typeof fetch = fakeStone
         body: JSON.stringify({ jsonrpc: "2.0", id: 7, method, params }) }), env, store, fetcher);
       return { status: response.status, body: response.status === 202 ? null : await response.json() as any, response };
     },
+    async api(method: string, path: string, body?: unknown, token: string | null = TOKEN, ip = "1.1.1.1") {
+      const headers: Record<string, string> = { "CF-Connecting-IP": ip, "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const response = await serve(new Request(`https://hub.example/api/admin${path}`, { method, headers,
+        body: body === undefined ? undefined : JSON.stringify(body) }), env, store, fetcher);
+      return { status: response.status, body: await response.json() as any, response };
+    },
     async admin(fields: Record<string, string | string[]>, ip = "1.1.1.1") {
       const body = new URLSearchParams();
       for (const [k, v] of Object.entries(fields)) for (const x of [v].flat()) body.append(k, x);

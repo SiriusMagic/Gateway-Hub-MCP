@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Same toolchain as Stone: newer Compose/Lifecycle need compileSdk 37 and AGP 9.1, and AGP 9's R8
+         is needed for Kotlin 2.4. Versions here are the newest that build safely with AGP 8.13. -->
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="OldTargetApi" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+</lint>

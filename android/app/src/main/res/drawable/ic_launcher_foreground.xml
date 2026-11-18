@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- One hub, four apps around it. -->
+    <path android:strokeColor="#E8B931" android:strokeWidth="4" android:strokeLineCap="round"
+        android:pathData="M54,54L32,36M54,54L76,36M54,54L32,72M54,54L76,72" />
+    <path android:fillColor="#E8B931" android:pathData="M54,54m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
+    <path android:fillColor="#F3F0FA" android:pathData="M32,36m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#F3F0FA" android:pathData="M76,36m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#F3F0FA" android:pathData="M32,72m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path android:fillColor="#F3F0FA" android:pathData="M76,72m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+</vector>

@@ -32,6 +32,13 @@ Claude / ChatGPT ──https──▶ Gateway Hub (Cloudflare Worker, TypeScript
 La seguridad final vive en cada app: aunque el hub fallara o lo atacaran, Stone seguiría
 comprobando su propio token y pidiendo confirmación en el teléfono.
 
+## App Android
+
+[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.1**, la app nativa del propietario:
+agentes, apps y métricas. El APK está en `android/GatewayHub-0.0.1.apk`. Usa la API JSON
+`/api/admin/*`, que solo acepta el token del propietario en la cabecera y no responde a navegadores
+(sin CORS).
+
 ## Uso (desde el teléfono, sin pegar tokens en ningún chat)
 
 1. Abre **`https://<hub>/admin`** y entra con el **token del propietario**.
@@ -66,7 +73,7 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ```sh
 npm ci
-npm test                 # 20 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
+npm test                 # 25 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
 npm run dev              # http://127.0.0.1:8790 (secretos locales en .dev.vars, ignorado por Git)
 npx wrangler secret put HUB_TOKEN
 npx wrangler deploy

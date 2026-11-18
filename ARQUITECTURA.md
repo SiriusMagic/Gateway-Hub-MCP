@@ -11,14 +11,20 @@ gateway-hub-mcp/
 │   ├── mcp.ts              # MCP / JSON-RPC 2.0: filtra herramientas por agente y registra métricas
 │   ├── router.ts           # Discriminador: prefijo → módulo; aísla fallos de cada módulo
 │   ├── validate.ts         # Validación de argumentos con el esquema de la herramienta
-│   ├── admin/              # Panel del propietario (sin JavaScript, sin cookies)
-│   │   ├── layout.ts · views.ts · actions.ts
+│   ├── admin/              # Lo que puede hacer el propietario
+│   │   ├── service.ts      # Lógica compartida (validación una sola vez)
+│   │   ├── layout.ts · views.ts · actions.ts   # Panel HTML /admin (sin JavaScript, sin cookies)
+│   │   └── api.ts          # API JSON /api/admin/* para la app Android (token solo en cabecera, sin CORS)
 │   └── modules/            # UNA CARPETA POR APP
 │       ├── types.ts        # Contrato HubModule (lo único que un módulo necesita conocer)
 │       ├── index.ts        # Lista de apps: añadir una = una línea
 │       ├── music/          # Stone a través de su relay
 │       ├── notes/ · calculator/ · utils/
 ├── test/                   # node --test (sin dependencias)
+├── android/                # App Android del propietario (Kotlin + Compose) → android/README.md
+│   └── app/src/main/java/com/zirakusa/gatewayhub/
+│       ├── data/           # HubApi (HTTPS), modelos, SessionStore cifrado con el Keystore
+│       └── ui/             # HubViewModel (único dueño del estado) y pantallas
 ├── MODULES.md              # Cómo crear un módulo
 └── .github/workflows/      # CI: npm ci, pruebas y npm audit
 ```

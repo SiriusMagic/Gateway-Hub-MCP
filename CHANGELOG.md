@@ -5,6 +5,10 @@ Primera versión, separada de Stone.
 - Un solo enlace MCP para varias apps, enrutado por prefijo: `music_` (Stone), `notes_`, `calc_`, `utils_`.
 - Panel `/admin` del propietario: vincular Stone, crear un enlace por IA (apps permitidas, solo lectura,
   caducidad), pausar o revocar, y métricas de 24 h y 7 días.
+- **App Android 0.0.1** (`android/`): crear, copiar, pausar y revocar enlaces de agente, vincular Stone y
+  ver métricas. Token del propietario cifrado con el Android Keystore, solo HTTPS, sin copias de seguridad,
+  sin capturas de pantalla.
+- API JSON `/api/admin/*` para la app: solo el token del propietario y solo en la cabecera, sin CORS.
 - Seguridad: solo HTTPS, token del propietario como secreto de Cloudflare, enlaces de agente guardados
   como SHA-256, 120 peticiones/min, bloqueo tras 20 tokens erróneos, validación de argumentos, SQL
   parametrizado, panel sin JavaScript ni cookies.

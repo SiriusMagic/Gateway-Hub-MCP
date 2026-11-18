@@ -7,6 +7,7 @@ import { handleRpc } from "./mcp.ts";
 import { createRouter } from "./router.ts";
 import { modules } from "./modules/index.ts";
 import { handleAdmin } from "./admin/actions.ts";
+import { handleAdminApi } from "./admin/api.ts";
 
 export const VERSION = "0.0.1";
 const MAX_BODY = 1 << 20;
@@ -73,6 +74,16 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
       rejected(store, caller, !token);
       return false;
     } });
+  }
+  if (url.pathname.startsWith("/api/admin/")) {
+    // The owner token only in the Authorization header here: an API URL never carries a secret.
+    const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
+    if (!bearer || !await sameSecret(bearer, owner)) {
+      rejected(store, caller, !bearer);
+      return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
+        { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } });
+    }
+    return handleAdminApi(request, url, { store, ctx, modules, security: SECURITY, version: VERSION });
   }
   return rpcError(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }

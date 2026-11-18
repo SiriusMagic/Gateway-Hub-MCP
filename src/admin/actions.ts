@@ -1,19 +1,16 @@
-// /admin (and the old /setup): owner-only panel. Every POST carries the owner token; there are no
-// cookies, so a foreign page cannot act on the owner's behalf (no CSRF).
-import type { Agent, HubAdminStore, HubContext, HubModule, HubStoreApi, ToolError } from "../modules/types.ts";
-import { MAX_AGENTS, newAgentToken, newId, sha256Hex } from "../agents.ts";
-import { parseStoneLink, stoneRpc } from "../modules/music/stone.ts";
-import { savedLink } from "../modules/music/index.ts";
+// /admin (and the old /setup): owner-only HTML panel. Every POST carries the owner token; there are
+// no cookies, so a foreign page cannot act on the owner's behalf (no CSRF).
+import type { HubContext, HubModule } from "../modules/types.ts";
 import { ADMIN_HEADERS } from "./layout.ts";
 import { type PanelData, loginPage, panelPage } from "./views.ts";
+import { type AdminStore, DAY, createAgent, linkStone, setPaused, unlinkStone } from "./service.ts";
+import { savedLink } from "../modules/music/index.ts";
 
-type Store = HubStoreApi & HubAdminStore;
-const DAY = 86_400_000;
 const html = (status: number, body: string, security: Record<string, string>) =>
   new Response(body, { status, headers: { ...security, ...ADMIN_HEADERS } });
 
 export interface AdminDeps {
-  store: Store; ctx: HubContext; modules: HubModule[]; security: Record<string, string>;
+  store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>;
   /** Checks the owner token (counting failures per caller). */
   isOwner(token: string): Promise<boolean>;
 }
@@ -35,41 +32,26 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
   const fail = (text: string) => view({ notice: { text, error: true } }, 400);
   const field = (name: string) => String(form.get(name) ?? "").trim();
 
-  switch (field("action")) {
-    case "login": return view();
-    case "link_stone": {
-      let link;
-      try { link = parseStoneLink(field("link"), ctx.env.STONE_RELAY_HOST); } catch (error) { return fail((error as Error).message); }
-      let text = "Stone vinculado y en línea.";
-      try { await stoneRpc(ctx, link, "tools/list", {}, 8_000); } catch (error) {
-        if ((error as ToolError).code === "STONE_TOKEN") return fail((error as Error).message); // never save a rejected token
-        text = "Stone vinculado. Ahora no responde: abre Stone con el Modo API activado.";
+  try {
+    switch (field("action")) {
+      case "login": return view();
+      case "link_stone": return view({ notice: { text: await linkStone(store, ctx, field("link")) } });
+      case "unlink_stone": await unlinkStone(store); return view({ notice: { text: "Stone desvinculado." } });
+      case "agent_create": {
+        const made = await createAgent(store, modules, url.origin,
+          { name: field("name"), apps: form.getAll("apps").map(String), readOnly: form.get("readonly") === "1", days: Number(field("days")) });
+        return view({ newLink: { name: made.agent.name, url: made.url, token: made.token } });
       }
-      await store.setConfig("music.link", JSON.stringify(link)); await store.setConfig("music.tools", null);
-      return view({ notice: { text } });
+      case "agent_pause": case "agent_resume": {
+        const pause = field("action") === "agent_pause";
+        if (!await setPaused(store, field("id"), pause)) return fail("Ese agente no existe.");
+        return view({ notice: { text: pause ? "Agente pausado." : "Agente reanudado." } });
+      }
+      case "agent_revoke":
+        return (await store.agentsDelete(field("id"))) ? view({ notice: { text: "Enlace revocado: deja de funcionar ya." } }) : fail("Ese agente no existe.");
     }
-    case "unlink_stone":
-      await store.setConfig("music.link", null); await store.setConfig("music.tools", null);
-      return view({ notice: { text: "Stone desvinculado." } });
-    case "agent_create": {
-      const name = field("name").slice(0, 40);
-      if (!name) return fail("Ponle un nombre al agente.");
-      if ((await store.agentsList()).length >= MAX_AGENTS) return fail(`Máximo ${MAX_AGENTS} agentes.`);
-      const known = new Set(modules.map((m) => m.prefix));
-      const apps = form.getAll("apps").map(String).filter((p) => known.has(p));
-      if (!apps.length) return fail("Elige al menos una app.");
-      const days = Math.min(365, Math.max(0, Math.floor(Number(field("days")) || 0)));
-      const secret = newAgentToken(), now = Date.now();
-      const agent: Agent = { id: newId(), name, tokenHash: await sha256Hex(secret), modules: apps.length === known.size ? ["*"] : apps,
-        readOnly: form.get("readonly") === "1", paused: false, expiresAt: days ? now + days * DAY : 0, created: now, lastUsed: 0 };
-      await store.agentsCreate(agent);
-      return view({ newLink: { name, url: `${url.origin}/mcp?token=${secret}`, token: secret } });
-    }
-    case "agent_pause": case "agent_resume":
-      await store.agentsSet(field("id"), { paused: field("action") === "agent_pause" });
-      return view({ notice: { text: field("action") === "agent_pause" ? "Agente pausado." : "Agente reanudado." } });
-    case "agent_revoke":
-      return (await store.agentsDelete(field("id"))) ? view({ notice: { text: "Enlace revocado: deja de funcionar ya." } }) : fail("Ese agente no existe.");
+  } catch (error) {
+    return fail((error as Error).message);
   }
   return fail("Acción desconocida.");
 }
