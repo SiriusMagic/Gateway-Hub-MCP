@@ -64,11 +64,16 @@ declara esto en una Activity exportada:
     respuesta va a `replyTo` con el mismo `arg1`. Máximo 200 000 caracteres por mensaje.
   - La app identifica a Gateway con `Message.sendingUid` → paquete `com.zirakusa.gatewayhub` + misma firma; nunca con
     datos del mensaje.
-  - En esta fase, solo lectura: `tools/list` y `tools/call` solo con herramientas que la app clasifica como de lectura.
+  - Permisos delegados (fase 1b): cada petición puede llevar
+    `params._meta["com.zirakusa.gatewayhub/grant"] = {"mode": "read"|"write"|"full", "blockedTools": [...], "agent": "id"}`.
+    La app lo acepta solo porque ya verificó al remitente por uid y firma, lo recorta a su propio tope y trata un valor
+    ausente o mal formado como «nada extra». Las herramientas bloqueadas no se listan ni se ejecutan.
+  - En esta fase el tope de Stone es solo lectura: `tools/list` y `tools/call` solo con herramientas que la app
+    clasifica como de lectura (su riesgo declarado, nunca el nombre).
   - Para «Probar puente local», la app puede marcar **una** herramienta de lectura sin efectos con
     `_meta["com.zirakusa.gatewayhub/probe"] = true`. Si no marca ninguna, Gateway solo prueba `initialize` y `tools/list`.
   - Errores con el código al principio de `error.message` (`REDIRECT_OFF`, `NOT_SAME_DEVELOPER`, `BUSY`,
-    `RESPONSE_TOO_LARGE`…). Implementación de referencia: `HubBridge.kt` y `HubBridgeService.kt` en Stone.
+    `RESPONSE_TOO_LARGE`…). Implementación de referencia: `automation/provider/` en Stone (`ProviderService`, `ProviderBridge`, `GatewayGrant`, `McpDispatcher`).
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».
 
