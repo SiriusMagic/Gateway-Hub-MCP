@@ -5,6 +5,8 @@ import com.zirakusa.gatewayhub.data.ActivityReport
 import com.zirakusa.gatewayhub.data.AppSettings
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.data.HubJson
+import com.zirakusa.gatewayhub.data.LocalApp
+import com.zirakusa.gatewayhub.data.ModeSender
 import com.zirakusa.gatewayhub.data.McpMode
 import com.zirakusa.gatewayhub.data.MemorySettingsStore
 import com.zirakusa.gatewayhub.data.PrefsSettingsStore
@@ -98,5 +100,19 @@ class SettingsTest {
         val vm = HubViewModel(MemorySessions(), "https://hub.example", settingsStore = MemorySettingsStore(saved))
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(saved, vm.state.value.settings)
+    }
+
+    @Test fun theModeIsSentToStoneAtStartAndOnEveryChangeOnlyToTheSameDeveloper() {
+        val stone = LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.14", "music_", true, "com.zirakusa.stone.kotlin.preview.hublink")
+        val stranger = stone.copy(packageName = "com.example.fake", sameDeveloper = false, linkAuthority = "com.example.fake.hublink")
+        val sent = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val vm = HubViewModel(MemorySessions(), "https://hub.example", { listOf(stone, stranger) },
+            settingsStore = MemorySettingsStore(), modeSender = ModeSender { app, mode -> sent += "${app.packageName}=$mode"; true })
+        fun settle() = repeat(50) { shadowOf(Looper.getMainLooper()).idle(); Thread.sleep(10) }
+        settle()
+        assertEquals(listOf("com.zirakusa.stone.kotlin.preview=safe"), sent.toList())
+        vm.updateSettings { it.copy(mode = McpMode.BACKGROUND) }; settle()
+        vm.updateSettings { it.copy(theme = ThemeChoice.RUBY) }; settle()       // not a mode change: nothing sent
+        assertEquals(listOf("com.zirakusa.stone.kotlin.preview=safe", "com.zirakusa.stone.kotlin.preview=background"), sent.toList())
     }
 }

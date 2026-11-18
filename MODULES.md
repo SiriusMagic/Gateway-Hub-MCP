@@ -56,6 +56,8 @@ declara esto en una Activity exportada:
   - Su método `call("link")` devuelve `link`, o `error` + `message`.
   - Antes de responder, la app comprueba la firma de quien llama **y** un interruptor del usuario. Ver
     `HubLink.kt` en Stone.
+  - Opcional: `call("mode", "safe"|"background")` aplica el modo de Gateway (en `safe`, la app solo atiende MCP
+    mientras está en pantalla) y responde `mode`. Ver `HubLink.answerMode` en Stone.
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».
 

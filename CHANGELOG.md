@@ -1,3 +1,9 @@
+# Gateway Hub 0.0.5 (app)
+
+- **Modo seguro aplicado en Stone:** Gateway envía el modo elegido a Stone 1.7.14 o posterior (al abrirse y en cada
+  cambio), por el mismo canal `signature` de «Redirección hub». En Modo seguro, Stone atiende MCP solo mientras está
+  en pantalla; en MCP en segundo plano, sigue funcionando con Stone cerrada.
+
 # Gateway Hub 0.0.4 (app) · hub 0.0.3
 
 - **Ajustes** (nueva pestaña):
@@ -18,8 +24,6 @@
   - **Ayuda:** conectar una IA, conectar una app de un tercero, hacer una app compatible y qué hace cada estado.
 - **Hub:** se quitan Calculadora, Notas y Utilidades. Solo queda Stone (`music_`). Los datos antiguos de notas siguen
   guardados en el Durable Object, pero ya no se usan ni se borran.
-- **Pendiente (Stone):** que el *Modo seguro* corte el relay de Stone cuando Stone no esté visible. Hace falta una
-  versión de Stone que reciba el modo desde Gateway (canal `signature` de «Redirección hub»).
 
 # Gateway Hub app 0.0.3
 

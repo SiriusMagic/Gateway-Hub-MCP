@@ -4,6 +4,8 @@ import com.zirakusa.gatewayhub.data.AppLinker
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.data.LocalApp
 import com.zirakusa.gatewayhub.data.LocalAppSource
+import com.zirakusa.gatewayhub.data.McpMode
+import com.zirakusa.gatewayhub.data.ModeSender
 import com.zirakusa.gatewayhub.data.RemoteStatus
 import com.zirakusa.gatewayhub.data.ScanMerge
 import com.zirakusa.gatewayhub.data.ScannedApp
@@ -28,5 +30,11 @@ class AppSync(private val localApps: LocalAppSource, private val linker: AppLink
         if (remote.prefix != "music_") return null // the hub links Stone today; other apps will follow the same path
         val answer = linker.requestLink(app)
         return answer.link?.let { UiText.Raw(api().linkStone(it)) } ?: linkFailure(app.label, answer.error, answer.message)
+    }
+
+    /** In safe mode the apps serve MCP only while on screen. Apps without support ignore it. */
+    fun sendMode(sender: ModeSender, mode: McpMode) = runCatching {
+        val name = if (mode == McpMode.BACKGROUND) "background" else "safe"
+        localApps.installed().filter { it.sameDeveloper && it.linkAuthority != null }.forEach { sender.sendMode(it, name) }
     }
 }

@@ -14,9 +14,11 @@ import com.zirakusa.gatewayhub.data.HubException
 import com.zirakusa.gatewayhub.data.LinkAnswer
 import com.zirakusa.gatewayhub.data.LocalAppSource
 import com.zirakusa.gatewayhub.data.MemorySettingsStore
+import com.zirakusa.gatewayhub.data.ModeSender
 import com.zirakusa.gatewayhub.data.ScanMerge
 import com.zirakusa.gatewayhub.data.SessionStore
 import com.zirakusa.gatewayhub.data.SettingsStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -30,6 +32,7 @@ class HubViewModel(
     private val linker: AppLinker = AppLinker { LinkAnswer(null, "NOT_SUPPORTED", null) },
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
     private val settingsStore: SettingsStore = MemorySettingsStore(),
+    private val modeSender: ModeSender = ModeSender { _, _ -> false },
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
@@ -38,6 +41,7 @@ class HubViewModel(
 
     init {
         mutable.update { it.copy(autoSync = sessions.flag("autoSync", true)) }
+        sendMode()
         sessions.load()?.let { (url, token) ->
             api = newApi(url, token)
             mutable.update { it.copy(hubUrl = url, connected = true) }
@@ -107,8 +111,12 @@ class HubViewModel(
 
     override fun updateSettings(change: (AppSettings) -> AppSettings) {
         val next = change(mutable.value.settings)
-        settingsStore.save(next); mutable.update { it.copy(settings = next) }
+        val modeChanged = next.mode != mutable.value.settings.mode
+        settingsStore.save(next); mutable.update { it.copy(settings = next) }; if (modeChanged) sendMode()
     }
+
+    /** Tells Stone (same developer) the chosen mode, at start and on every change. */
+    private fun sendMode() = mutable.value.settings.mode.let { mode -> viewModelScope.launch(Dispatchers.IO) { sync.sendMode(modeSender, mode) } }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }
     override fun dismissMessage() = mutable.update { it.copy(error = null, notice = null) }

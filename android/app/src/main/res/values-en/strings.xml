@@ -123,7 +123,7 @@
     <string name="env_note_disconnected">MCP environment disconnected: Stone unlinked and runs blocked.</string>
     <string name="mode_title">Operating mode</string>
     <string name="mode_safe">Safe mode</string>
-    <string name="mode_safe_hint">Gateway works only while you have it open: no service and no notification in the background.</string>
+    <string name="mode_safe_hint">Stone serves MCP only while it is on screen (Stone 1.7.14 or later), and Gateway leaves nothing in the background.</string>
     <string name="mode_background">MCP in the background</string>
     <string name="mode_background_hint">Gateway keeps watching the hub with a persistent \"MCP active\" notification, from which you can pause or disconnect.</string>
     <string name="mode_android_note">Android limits background work and battery use: the service cannot guarantee it stays on forever.</string>

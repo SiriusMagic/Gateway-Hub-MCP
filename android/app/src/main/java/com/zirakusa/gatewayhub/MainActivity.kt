@@ -32,9 +32,11 @@ class MainActivity : ComponentActivity() {
     private val vm: HubViewModel by viewModels {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext),
-                    ProviderLinker(applicationContext), settingsStore = PrefsSettingsStore(applicationContext)) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                val linker = ProviderLinker(applicationContext)
+                return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext),
+                    linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker) as T
+            }
         }
     }
     /** The language this Activity was created with; choosing another one recreates it. */

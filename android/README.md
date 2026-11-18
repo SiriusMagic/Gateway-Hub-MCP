@@ -1,4 +1,4 @@
-# Gateway Hub para Android (0.0.4)
+# Gateway Hub para Android (0.0.5)
 
 App nativa (Kotlin, Jetpack Compose) del **propietario** del Gateway Hub. Hace lo mismo que el panel
 web `/admin`, pero en el teléfono:
@@ -19,7 +19,7 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.4.apk`](GatewayHub-0.0.4.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.5.apk`](GatewayHub-0.0.5.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 
