@@ -38,6 +38,8 @@ import com.zirakusa.gatewayhub.data.ThemeChoice
     val s = state.settings
     EnvironmentSection(hub.environment, s, state.loading, vm, askNotifications)
 
+    CloudflareSection(state.cloudflare, state.loading, vm)
+
     SectionTitle(stringResource(R.string.privacy_title))
     HubCard {
         SwitchRow(stringResource(R.string.block_screenshots), stringResource(R.string.block_screenshots_hint), s.blockScreenshots) { on ->

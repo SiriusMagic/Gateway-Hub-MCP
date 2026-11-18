@@ -1,6 +1,7 @@
 package com.zirakusa.gatewayhub
 
 import com.zirakusa.gatewayhub.data.HubTransport
+import com.zirakusa.gatewayhub.data.SavedCloudflare
 import com.zirakusa.gatewayhub.data.SessionStore
 
 /** The JSON the real hub answers (shape copied from gateway-hub-mcp/src/admin/service.ts). */
@@ -42,4 +43,7 @@ class MemorySessions(var saved: Pair<String, String>? = null) : SessionStore {
     override fun load() = saved
     override fun save(hubUrl: String, token: String) { saved = hubUrl to token }
     override fun clear() { saved = null }
+    var cf: SavedCloudflare? = null
+    override fun cloudflare() = cf
+    override fun saveCloudflare(value: SavedCloudflare?) { cf = value }
 }

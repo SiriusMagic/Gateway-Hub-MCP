@@ -33,6 +33,7 @@ class ScreenshotsTest {
         override fun linkStone(link: String) {}; override fun unlinkStone() {}; override fun scan() {}
         override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}
         override fun setEnvironment(target: String) {}; override fun updateSettings(change: (AppSettings) -> AppSettings) {}
+        override fun createAccess(cfToken: String) {}; override fun saveCloudflare(token: String) {}; override fun forgetCloudflare() {}
     }
 
     private fun shot(name: String, theme: ThemeChoice = ThemeChoice.NIGHT, content: @androidx.compose.runtime.Composable () -> Unit) {
@@ -40,7 +41,7 @@ class ScreenshotsTest {
         compose.onRoot().captureRoboImage("build/screenshots/hub-$name.png")
     }
 
-    @Test fun login() = shot("login") { LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev")) { } }
+    @Test fun login() = shot("login") { LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev"), { }) }
     @Test fun agents() = shot("agents") { HomeScreen(connected, NoActions, HubTab.AGENTS) }
     @Test fun scanner() = shot("scanner") { HomeScreen(connected.copy(scan = ScanMerge.merge(
         listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.13", "music_", true, "com.zirakusa.stone.kotlin.preview.hublink"),
@@ -59,5 +60,11 @@ class ScreenshotsTest {
     @Test fun lightTheme() = shot("agents-light", ThemeChoice.LIGHT) { HomeScreen(connected, NoActions, HubTab.AGENTS) }
     @Test @Config(qualifiers = "en-w400dp-h860dp-xxhdpi") fun settingsEnglish() = shot("settings-en", ThemeChoice.FOREST) {
         HomeScreen(connected.copy(settings = AppSettings("en", ThemeChoice.FOREST)), NoActions, HubTab.SETTINGS)
+    }
+    @Test fun loginWithCloudflare() = shot("login-cloudflare") {
+        LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev", cloudflare = CloudflareInfo(System.currentTimeMillis() + 6 * 86_400_000L, 1)), { })
+    }
+    @Test fun cloudflareExpiring() = shot("cloudflare-expiring") {
+        HomeScreen(connected.copy(settings = AppSettings("es"), cloudflare = CloudflareInfo(System.currentTimeMillis() + 36 * 3_600_000L, 1)), NoActions, HubTab.SETTINGS)
     }
 }

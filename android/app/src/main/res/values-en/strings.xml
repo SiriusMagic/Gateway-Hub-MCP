@@ -179,4 +179,32 @@
         <item quantity="one">%1$d call failed or was refused by permissions. Check Metrics.</item>
         <item quantity="other">%1$d calls failed or were refused by permissions. Check Metrics.</item>
     </plurals>
+    <string name="err_cf_invalid">Cloudflare does not accept that token. Copy it again from Cloudflare.</string>
+    <string name="err_cf_inactive">That Cloudflare token is not active (expired or disabled). Create a new one.</string>
+    <string name="err_cf_forbidden">The Cloudflare token lacks the permission it needs: Account › Workers Scripts › Edit.</string>
+    <string name="err_cf_empty">Paste the Cloudflare token.</string>
+    <string name="err_cf_missing">Save your Cloudflare token first.</string>
+    <string name="err_cf_network">Could not reach Cloudflare. Check your connection.</string>
+    <string name="err_no_hub">I cannot find your hub in that Cloudflare account (stone-hub). It must be published once.</string>
+    <string name="cf_title">Cloudflare</string>
+    <string name="cf_hint">Your Cloudflare API token: with it the app creates the owner token (hub_) in your account. It is stored encrypted and shared with Stone: update it here or in Stone and it works for both.</string>
+    <string name="cf_token">Cloudflare API token</string>
+    <string name="cf_update">Update token</string>
+    <string name="cf_create_token">Create token in Cloudflare</string>
+    <string name="cf_rotate_owner">Make a new owner token</string>
+    <string name="cf_rotate_confirm">The app makes a new hub_ token, stores it in your Cloudflare hub and logs in with it. The previous one stops working. The AI links keep working.</string>
+    <string name="cf_forget">Forget Cloudflare token</string>
+    <string name="cf_saved">Cloudflare token saved and shared with Stone.</string>
+    <string name="cf_owner_done">Owner token created and stored in your hub. You are logged in.</string>
+    <string name="cf_none">No Cloudflare token saved.</string>
+    <string name="cf_no_expiry">Cloudflare token valid, no expiry date.</string>
+    <string name="cf_expired">The Cloudflare token expired. Create a new one and update it.</string>
+    <plurals name="cf_expires_in">
+        <item quantity="one">Cloudflare token valid: expires in %1$d day (%2$s).</item>
+        <item quantity="other">Cloudflare token valid: expires in %1$d days (%2$s).</item>
+    </plurals>
+    <string name="cf_banner">Update it in Settings › Cloudflare so everything keeps working.</string>
+    <string name="cf_login_title">No hub_ token?</string>
+    <string name="cf_login_hint">The app makes it for you with your Cloudflare account: 1) Create a token in Cloudflare (it comes with the Workers Scripts › Edit permission) and copy it. 2) Paste it here and tap Create my access.</string>
+    <string name="cf_create_access">Create my access</string>
 </resources>

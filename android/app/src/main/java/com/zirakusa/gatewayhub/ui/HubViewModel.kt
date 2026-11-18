@@ -3,21 +3,7 @@ package com.zirakusa.gatewayhub.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zirakusa.gatewayhub.R
-import com.zirakusa.gatewayhub.data.AccessParser
-import com.zirakusa.gatewayhub.data.AppLinker
-import com.zirakusa.gatewayhub.data.AppSettings
-import com.zirakusa.gatewayhub.data.ENV_ACTIVE
-import com.zirakusa.gatewayhub.data.ENV_DISCONNECTED
-import com.zirakusa.gatewayhub.data.ENV_PAUSED
-import com.zirakusa.gatewayhub.data.HubApi
-import com.zirakusa.gatewayhub.data.HubException
-import com.zirakusa.gatewayhub.data.LinkAnswer
-import com.zirakusa.gatewayhub.data.LocalAppSource
-import com.zirakusa.gatewayhub.data.MemorySettingsStore
-import com.zirakusa.gatewayhub.data.ModeSender
-import com.zirakusa.gatewayhub.data.ScanMerge
-import com.zirakusa.gatewayhub.data.SessionStore
-import com.zirakusa.gatewayhub.data.SettingsStore
+import com.zirakusa.gatewayhub.data.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,15 +19,19 @@ class HubViewModel(
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
     private val settingsStore: SettingsStore = MemorySettingsStore(),
     private val modeSender: ModeSender = ModeSender { _, _ -> false },
+    share: CloudflareShare = CloudflareShare.None,
+    newCloudflare: (String) -> CloudflareApi = { CloudflareApi(it) },
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
     private var api: HubApi? = null
     private val sync = AppSync(localApps, linker) { requireApi() }
+    private val cloudflare = CloudflareFlow(sessions, localApps, share, newCloudflare)
 
     init {
         mutable.update { it.copy(autoSync = sessions.flag("autoSync", true)) }
         sendMode()
+        viewModelScope.launch(Dispatchers.IO) { val info = cloudflare.pullNewer(); mutable.update { it.copy(cloudflare = info) } }
         sessions.load()?.let { (url, token) ->
             api = newApi(url, token)
             mutable.update { it.copy(hubUrl = url, connected = true) }
@@ -50,16 +40,24 @@ class HubViewModel(
     }
 
     /** One paste (address + token, or only the token); checked against the hub before it is saved. */
-    fun connect(pasted: String) = run {
-        val access = AccessParser.parse(pasted, defaultUrl)
+    fun connect(pasted: String) = run { open(AccessParser.parse(pasted, defaultUrl)); null }
+
+    /** Checks [access] against the hub and only then saves it. */
+    private suspend fun open(access: Access, tries: Int = 1) {
         val candidate = newApi(access.url, access.token)
-        candidate.state().also {
-            api = candidate
-            sessions.save(candidate.base, access.token)
-            mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = it) }
-        }
-        null
+        val hub = stateWithRetry(candidate, tries)
+        api = candidate
+        sessions.save(candidate.base, access.token)
+        mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = hub) }
     }
+
+    /** No hub_ token? The app makes one with the person's Cloudflare token ([cfToken], or the saved one). */
+    override fun createAccess(cfToken: String) = run {
+        if (cfToken.isNotBlank()) mutable.update { it.copy(cloudflare = cloudflare.save(cfToken)) }
+        open(cloudflare.issueOwner(), tries = 6); UiText.Res(R.string.cf_owner_done)
+    }
+    override fun saveCloudflare(token: String) = run { mutable.update { it.copy(cloudflare = cloudflare.save(token)) }; UiText.Res(R.string.cf_saved) }
+    override fun forgetCloudflare() { cloudflare.forget(); mutable.update { it.copy(cloudflare = null) } }
 
     override fun refresh() = run { reload(); null }
 
@@ -76,10 +74,7 @@ class HubViewModel(
     override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); UiText.Raw(note) }
     override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); UiText.Res(R.string.note_unlinked) }
 
-    /**
-     * Connect, pause or disconnect the whole MCP environment (the hub enforces it). Connecting after a
-     * disconnection links again, by themselves, the apps that allow it (with automatic sync on).
-     */
+    /** Connect, pause or disconnect the MCP environment (the hub enforces it); reconnecting relinks Stone. */
     override fun setEnvironment(target: String) = run {
         val wasDisconnected = mutable.value.hub?.environment == ENV_DISCONNECTED
         requireApi().setEnvironment(target)
@@ -89,11 +84,7 @@ class HubViewModel(
         if (relinked.isEmpty()) note else UiText.Lines(listOf(note) + relinked)
     }
 
-    /**
-     * Lists compatible apps and asks the hub for their state (read-only). With [UiState.autoSync], an app
-     * of the same developer that is installed but not linked (or whose token was revoked) is asked for its
-     * link and linked; the app answers only if the user turned "Redirección hub" on in it.
-     */
+    /** Read-only scan; with [UiState.autoSync] it also links the apps that allow it (see [AppSync]). */
     override fun scan() = run {
         val notes = if (mutable.value.autoSync) sync.scanAndLink { scan -> mutable.update { it.copy(scan = scan) } } else { mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }; emptyList() }
         notes.takeIf { it.isNotEmpty() }?.let { UiText.Lines(it) }
@@ -123,7 +114,7 @@ class HubViewModel(
 
     override fun logout() {
         sessions.clear(); api = null
-        mutable.update { UiState(hubUrl = it.hubUrl, autoSync = it.autoSync, settings = it.settings) }
+        mutable.update { UiState(hubUrl = it.hubUrl, autoSync = it.autoSync, settings = it.settings, cloudflare = it.cloudflare) }
     }
 
     private suspend fun reload() = mutable.update { it.copy(hub = requireApi().state()) }

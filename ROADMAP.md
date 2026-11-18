@@ -29,6 +29,10 @@ pegar y sin depender de la cuenta de Cloudflare de otra persona**.
 
 ## Fase 2: «Mi Cloudflare» (instalación en un toque)
 
+Hecho (Hub app 0.0.6 · Stone 1.7.15): pegar y actualizar el token de Cloudflare en las dos apps (compartido), y la app
+genera el token del propietario y lo guarda como secreto del Worker. Falta publicar el relay y el hub desde la app.
+
+
 1. En la app del hub, el botón **Crear mi clave de Cloudflare** abre `dash.cloudflare.com` con la plantilla
    de permisos ya rellenada («Editar Workers»). El usuario solo toca *Crear* y *Copiar*.
 2. El usuario pega esa clave **una sola vez**. Se guarda cifrada con el Android Keystore.

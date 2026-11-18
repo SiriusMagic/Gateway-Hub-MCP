@@ -1,3 +1,15 @@
+# Gateway Hub 0.0.6 (app)
+
+- **La app crea el token del propietario (`hub_`)**: en la pantalla de entrada, «¿No tienes el token hub_?».
+  1. *Crear token en Cloudflare* abre Cloudflare con el permiso Workers Scripts › Editar ya elegido.
+  2. Pegas ese token y pulsas *Generar mi acceso*. La app crea un `hub_` nuevo, lo guarda como secreto `HUB_TOKEN` del
+     Worker de tu hub (`stone-hub`) con la API de Cloudflare y entra sola. Ya no hace falta `wrangler secret put`.
+- **Ajustes › Cloudflare:** actualizar el token de Cloudflare (p. ej. al caducar a los 7 días), ver los días que le
+  quedan, generar un nuevo token del propietario u olvidarlo. Con 2 días o menos aparece un aviso en todas las pestañas.
+- El token de Cloudflare se guarda cifrado y se **comparte con Stone 1.7.15** (misma firma + «Redirección hub»): si lo
+  actualizas en una app, vale para las dos.
+- Límite: el hub tiene que estar publicado una vez en tu cuenta. Publicarlo desde la app sigue en la Fase 2.
+
 # Gateway Hub 0.0.5 (app)
 
 - **Modo seguro aplicado en Stone:** Gateway envía el modo elegido a Stone 1.7.14 o posterior (al abrirse y en cada

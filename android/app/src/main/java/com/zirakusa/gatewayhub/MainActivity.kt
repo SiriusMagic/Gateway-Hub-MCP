@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val linker = ProviderLinker(applicationContext)
                 return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext),
-                    linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker) as T
+                    linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker, share = linker) as T
             }
         }
     }
@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 when {
                     settings.language == null -> WelcomeScreen { tag -> vm.updateSettings { it.copy(language = tag) } }
                     state.connected -> HomeScreen(state, vm)
-                    else -> LoginScreen(state, vm::connect)
+                    else -> LoginScreen(state, vm::connect, vm::createAccess)
                 }
             }
         }

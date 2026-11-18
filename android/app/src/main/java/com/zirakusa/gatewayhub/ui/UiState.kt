@@ -19,6 +19,8 @@ data class UiState(
     /** Scan also links compatible apps by themselves (they must have "Redirección hub" on). */
     val autoSync: Boolean = true,
     val settings: AppSettings = AppSettings(),
+    /** The saved Cloudflare token's dates (never the token); null when none is saved. */
+    val cloudflare: CloudflareInfo? = null,
 )
 
 /** The actions the screens may trigger (the ViewModel in the app, a fake in tests). */
@@ -31,4 +33,7 @@ interface HubActions {
     /** "active", "paused" or "disconnected". */
     fun setEnvironment(target: String)
     fun updateSettings(change: (AppSettings) -> AppSettings)
+    /** Makes a new hub_ token with the Cloudflare token (blank = the saved one) and logs in with it. */
+    fun createAccess(cfToken: String)
+    fun saveCloudflare(token: String); fun forgetCloudflare()
 }
