@@ -22,19 +22,23 @@ export async function providerFor(store: HubStoreApi, prefix: string): Promise<P
 
 const strings = (v: unknown, max: number) => Array.isArray(v) ? v.filter((x) => typeof x === "string").map((x) => x.slice(0, 80)).slice(0, max) : [];
 
-/** Saves a phone's registration. A prefix another phone already serves is not taken over. */
+/** Saves a phone's registration. A prefix another phone already serves is never taken over: a free one is used. */
 export async function register(store: HubStoreApi, device: string, message: Record<string, unknown>): Promise<void> {
   const all = await providers(store);
   for (const [prefix, record] of Object.entries(all)) if (record.device === device) delete all[prefix];
   const list = Array.isArray(message.providers) ? message.providers.slice(0, 10) : [];
   for (const raw of list as Record<string, unknown>[]) {
     const prefix = String(raw?.prefix ?? ""), app = String(raw?.app ?? "");
-    if (!PREFIX.test(prefix) || !APP.test(app) || (all[prefix] && all[prefix].device !== device)) continue;
+    if (!PREFIX.test(prefix) || !APP.test(app)) continue;
+    // The same app on another phone gets its own prefix (music_ → music2_ … music9_), so both can be used.
+    const base = prefix.slice(0, -1).slice(0, 14);
+    const free = [prefix, ...[2, 3, 4, 5, 6, 7, 8, 9].map((n) => `${base}${n}_`)].find((p) => !all[p] || all[p].device === device);
+    if (!free) continue;
     const packages = (Array.isArray(raw.packages) ? raw.packages : []).slice(0, MAX_PACKAGES)
       .map((p: Record<string, unknown>) => ({ id: String(p?.id ?? ""), agent: String(p?.agent ?? ""), acts: strings(p?.acts, 5),
         tools: strings(p?.tools, 100), exp: Number(p?.exp) || 0, status: String(p?.status ?? "") }))
       .filter((p: PackageRecord) => ID.test(p.id) && /^(\*|[A-Za-z0-9_-]{1,40})$/.test(p.agent));
-    all[prefix] = { device, app, prefix, title: String(raw.title ?? app).slice(0, 60), packages, seen: Date.now() };
+    all[free] = { device, app, prefix: free, title: String(raw.title ?? app).slice(0, 60), packages, seen: Date.now() };
   }
   await store.setConfig(KEY, JSON.stringify(all));
 }

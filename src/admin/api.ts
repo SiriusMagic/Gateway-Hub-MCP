@@ -4,6 +4,7 @@
 import { type HubContext, type HubModule, ToolError } from "../modules/types.ts";
 import { environmentState } from "../environment.ts";
 import { createDevice, deleteDevice } from "../channel/devices.ts";
+import { createPairing } from "../channel/pairing.ts";
 import { devicesView } from "./service.ts";
 import { type AdminStore, DAY, changeEnvironment, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
 
@@ -38,6 +39,7 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
     if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
     if (path === "/stone" && method === "DELETE") { await unlinkStone(store); return ok({ message: "Stone desvinculado." }); }
     if (path === "/environment" && method === "POST") return ok(await changeEnvironment(store, String(body.state ?? "")));
+    if (path === "/pairing" && method === "POST") return ok(await createPairing(store));
     if (path === "/devices" && method === "GET") return ok({ devices: await devicesView(store, ctx) });
     if (path === "/devices" && method === "POST") return ok(await createDevice(store, String(body.name ?? "")));
     const device = /^\/devices\/([0-9a-f]{12})$/.exec(path);

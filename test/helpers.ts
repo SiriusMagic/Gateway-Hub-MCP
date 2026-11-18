@@ -71,6 +71,11 @@ export function hub(store = new MemoryStore(), fetcher: typeof fetch = fakeStone
         body: body === undefined ? undefined : JSON.stringify(body) }), env, store, fetcher, TEST_MODULES);
       return { status: response.status, body: await response.json() as any, response };
     },
+    async pair(code: string, name = "Tablet", ip = "1.1.1.1") {
+      const response = await serve(new Request("https://hub.example/pair", { method: "POST", headers: { "CF-Connecting-IP": ip,
+        "Content-Type": "application/json" }, body: JSON.stringify({ code, name }) }), env, store, fetcher, TEST_MODULES);
+      return { status: response.status, body: await response.json() as any };
+    },
     async channel(token: string, ip = "1.1.1.1") {
       const response = await serve(new Request("https://hub.example/channel", { headers: { Authorization: `Bearer ${token}`,
         Upgrade: "websocket", "CF-Connecting-IP": ip } }), env, store, fetcher, TEST_MODULES);

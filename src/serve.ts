@@ -11,6 +11,8 @@ import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
 import type { Channel } from "./channel/core.ts";
 import { deviceFor } from "./channel/devices.ts";
+import { redeemPairing } from "./channel/pairing.ts";
+import { channelModules } from "./channel/dynamic.ts";
 
 export const VERSION = "0.0.4";
 const MAX_BODY = 1 << 20;
@@ -65,6 +67,16 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
   const ctx: HubContext = { store, env, channel: store.channel, fetch: (input, init) => fetcher(input, init) };
 
+  if (url.pathname === "/pair") {
+    // Another phone joins with a one-use code from the owner's Gateway (no owner token on that phone).
+    if (request.method !== "POST") return rpcError(405, "Gateway Hub: POST the pairing code.", { Allow: "POST" });
+    let body: Record<string, unknown> = {};
+    try { body = await request.json() as Record<string, unknown>; } catch { /* empty */ }
+    const made = await redeemPairing(store, String(body.code ?? ""), String(body.name ?? ""));
+    if (!made) { rejected(store, caller, !body.code); return rpcError(401, "Gateway Hub: wrong or expired pairing code."); }
+    return json(200, made);
+  }
+
   if (url.pathname === "/channel") {
     // A phone's Gateway Hub app opens its channel with its own device credential (never the owner token).
     const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
@@ -86,7 +98,8 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
     ctx.agent = principal.id;
-    const reply = await handleRpc(body, routerFor(modules), ctx, VERSION,
+    const dynamic = ctx.channel ? await channelModules(ctx, modules) : [];
+    const reply = await handleRpc(body, dynamic.length ? createRouter([...modules, ...dynamic]) : routerFor(modules), ctx, VERSION,
       { principal, record: (tool, ok, ms) => store.metricsRecord(principal.id, tool, ok, ms) });
     const session = body.includes('"initialize"') ? { "Mcp-Session-Id": crypto.randomUUID() } : {};
     return reply === null ? json(202, null, session) : json(200, reply, session);
@@ -108,7 +121,8 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
       return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
         { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } });
     }
-    return handleAdminApi(request, url, { store, ctx, modules, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
+    const all = ctx.channel ? [...modules, ...await channelModules(ctx, modules)] : modules;
+    return handleAdminApi(request, url, { store, ctx, modules: all, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
   }
   return rpcError(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }
