@@ -1,5 +1,6 @@
 {
   "name": "gateway-hub-mcp",
+  "version": "0.0.1",
   "private": true,
   "description": "Gateway Hub MCP: one MCP link for several apps, routed by tool prefix, with a link per agent and metrics.",
   "type": "module",
