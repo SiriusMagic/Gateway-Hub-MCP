@@ -49,6 +49,10 @@ export interface HubEnv { STONE_RELAY_HOST: string; HUB_TOKEN?: string }
 export interface HubContext {
   store: HubStoreApi;
   env: HubEnv;
+  /** The phones' channel (absent in tests that do not need it). */
+  channel?: import("../channel/core.ts").Channel;
+  /** Who is calling: an agent id or "owner" (set for /mcp requests). */
+  agent?: string;
   /** Injected so tests can fake the network. */
   fetch: typeof fetch;
 }

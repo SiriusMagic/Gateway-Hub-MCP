@@ -5,6 +5,8 @@ import { MAX_AGENTS, agentStatus, newAgentToken, newId, sha256Hex } from "../age
 import { parseStoneLink, stoneRpc } from "../modules/music/stone.ts";
 import { savedLink } from "../modules/music/index.ts";
 import { environmentState, setEnvironmentState } from "../environment.ts";
+import { listDevices } from "../channel/devices.ts";
+import { providers } from "../channel/registry.ts";
 
 export type AdminStore = HubStoreApi & HubAdminStore;
 export const DAY = 86_400_000;
@@ -20,6 +22,7 @@ export async function overview(store: AdminStore, ctx: HubContext, modules: HubM
     modules: modules.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary, androidPackage: m.androidPackage ?? null })),
     stoneLinked: !!await savedLink(ctx),
     environment: await environmentState(store),
+    devices: await devicesView(store, ctx),
     agents: (await store.agentsList()).map(publicAgent),
     metrics: { day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY) },
   };
@@ -88,4 +91,11 @@ const ENVIRONMENT_NOTES = {
 export async function changeEnvironment(store: AdminStore, raw: string) {
   const state = await setEnvironmentState(store, raw);
   return { state, message: ENVIRONMENT_NOTES[state] };
+}
+
+/** Phones allowed on the channel (never their credential hash), whether they are connected and what they serve. */
+export async function devicesView(store: AdminStore, ctx: HubContext) {
+  const served = Object.values(await providers(store));
+  return (await listDevices(store)).map((d) => ({ id: d.id, name: d.name, created: d.created, online: ctx.channel?.online(d.id) ?? false,
+    providers: served.filter((p) => p.device === d.id).map((p) => ({ prefix: p.prefix, app: p.app, title: p.title, packages: p.packages.length })) }));
 }

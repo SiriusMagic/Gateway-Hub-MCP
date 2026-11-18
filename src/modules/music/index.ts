@@ -2,6 +2,7 @@
 // music_<tool>. Stone keeps checking its own token, permissions and on-screen confirmations.
 import { type HubContext, type HubModule, type Tool, ToolError, type ToolResult, text } from "../types.ts";
 import { type StoneLink, stoneRpc } from "./stone.ts";
+import { channelCall, channelRoute, channelTools } from "./channel.ts";
 
 export const MUSIC = "music_";
 const LIST_TTL_MS = 10 * 60_000;
@@ -37,6 +38,8 @@ export const musicModule: HubModule = {
   validatesOwnArgs: true, // Stone validates every argument itself
   androidPackage: "com.zirakusa.stone.kotlin.preview",
   async status(ctx) {
+    const route = await channelRoute(ctx, MUSIC);
+    if (route) return { linked: true, online: true, tools: route.packages.length, detail: "En línea por el canal de Gateway Hub." };
     const link = await savedLink(ctx);
     if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Stone, Modo API › Gateway Hub › Vincular." };
     try {
@@ -47,11 +50,17 @@ export const musicModule: HubModule = {
     }
   },
   async tools(ctx) {
+    // The phone's channel first (Gateway Hub + execution packages); the relay only when it is not connected.
+    const route = await channelRoute(ctx, MUSIC);
+    if (route) { try { return [statusTool, ...await channelTools(ctx, route)]; } catch { return [statusTool]; } }
     const link = await savedLink(ctx);
     if (!link) return [statusTool];
     try { return [statusTool, ...await stoneTools(ctx, link)]; } catch { return [statusTool]; }
   },
   async call(name, args, ctx): Promise<ToolResult> {
+    const route = await channelRoute(ctx, MUSIC);
+    if (name === "music_status" && route) return text("Stone is connected through Gateway Hub (phone channel).", { linked: true, online: true, via: "channel" });
+    if (route) return channelCall(ctx, route, name, args);
     const link = await savedLink(ctx);
     if (name === "music_status") {
       if (!link) return text("Stone is not linked. The owner opens <hub>/admin and pastes the link copied from Stone.", { linked: false });

@@ -8,6 +8,9 @@ export const RELAY = "stone-relay.example.workers.dev";
 export const STONE_LINK = `https://${RELAY}/d/abcdefghijkl12/mcp?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345`;
 
 export class MemoryStore implements HubStoreApi, HubAdminStore {
+  channel?: import("../src/channel/core.ts").Channel;
+  accepted: string[] = [];
+  acceptChannel?: (device: string) => Response;
   requests = new Limiter(120);
   failures = new Limiter(20);
   config = new Map<string, string>();
@@ -67,6 +70,11 @@ export function hub(store = new MemoryStore(), fetcher: typeof fetch = fakeStone
       const response = await serve(new Request(`https://hub.example/api/admin${path}`, { method, headers,
         body: body === undefined ? undefined : JSON.stringify(body) }), env, store, fetcher, TEST_MODULES);
       return { status: response.status, body: await response.json() as any, response };
+    },
+    async channel(token: string, ip = "1.1.1.1") {
+      const response = await serve(new Request("https://hub.example/channel", { headers: { Authorization: `Bearer ${token}`,
+        Upgrade: "websocket", "CF-Connecting-IP": ip } }), env, store, fetcher, TEST_MODULES);
+      return { status: response.status };
     },
     async admin(fields: Record<string, string | string[]>, ip = "1.1.1.1") {
       const body = new URLSearchParams();

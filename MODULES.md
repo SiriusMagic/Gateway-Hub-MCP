@@ -81,7 +81,7 @@ declara esto en una Activity exportada:
   - Paquete: bytes JSON firmados (`v`, `id`, `env`, `aud = <paquete>#<instancia>`, `agent`, `label`, `acts`, `tools`,
     `nbf`, `exp`). Acciones: `leer`, `revisar`, `escribir`, `modificar`, `revertir`; la app las aplica sobre el riesgo
     que declara cada herramienta y pide confirmación en pantalla para lo irreversible.
-  - Cada llamada nombra su paquete en `_meta["com.zirakusa.gatewayhub/grant"].package`; la app aprueba en su pantalla
+  - Cada llamada nombra sus paquetes candidatos en `_meta["com.zirakusa.gatewayhub/grant"].packages` (o uno en `.package`); la app aprueba en su pantalla
     todo paquete que no sea solo de lectura. Referencia: `automation/provider/` en Stone.
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».

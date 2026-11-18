@@ -3,9 +3,15 @@
 // headers, so no web page can call them from a browser.
 import { type HubContext, type HubModule, ToolError } from "../modules/types.ts";
 import { environmentState } from "../environment.ts";
+import { createDevice, deleteDevice } from "../channel/devices.ts";
+import { devicesView } from "./service.ts";
 import { type AdminStore, DAY, changeEnvironment, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
 
-export interface ApiDeps { store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string }
+export interface ApiDeps {
+  store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string;
+  /** Closes a phone's channel at once (the Durable Object); absent in tests. */
+  dropDevice?(id: string): void;
+}
 
 const send = (status: number, body: unknown, security: Record<string, string>) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...security } });
@@ -32,6 +38,14 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
     if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
     if (path === "/stone" && method === "DELETE") { await unlinkStone(store); return ok({ message: "Stone desvinculado." }); }
     if (path === "/environment" && method === "POST") return ok(await changeEnvironment(store, String(body.state ?? "")));
+    if (path === "/devices" && method === "GET") return ok({ devices: await devicesView(store, ctx) });
+    if (path === "/devices" && method === "POST") return ok(await createDevice(store, String(body.name ?? "")));
+    const device = /^\/devices\/([0-9a-f]{12})$/.exec(path);
+    if (device && method === "DELETE") {
+      if (!await deleteDevice(store, device[1])) return error(404, "NOT_FOUND", "Ese teléfono no existe.");
+      deps.dropDevice?.(device[1]);
+      return ok({ id: device[1] });
+    }
     if (path === "/agents" && method === "POST") return ok(await createAgent(store, modules, url.origin,
       { name: String(body.name ?? ""), apps: body.apps as string[], readOnly: body.readOnly === true, days: Number(body.days) }));
     const agent = /^\/agents\/([0-9a-f]{12})(\/pause|\/resume)?$/.exec(path);

@@ -4,6 +4,8 @@ import { DurableObject } from "cloudflare:workers";
 import type { Agent, CallStat, HubAdminStore, HubEnv, HubStoreApi, MetricsSummary } from "./modules/types.ts";
 import { serve } from "./serve.ts";
 import { Limiter } from "./auth.ts";
+import { ChannelCore } from "./channel/core.ts";
+import { register } from "./channel/registry.ts";
 
 type Row = Record<string, string | number>;
 const toAgent = (r: Row): Agent => ({ id: String(r.id), name: String(r.name), tokenHash: String(r.token_hash),
@@ -25,9 +27,27 @@ export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubA
     this.sql.exec(`CREATE TABLE IF NOT EXISTS calls(at INTEGER NOT NULL, agent TEXT NOT NULL, tool TEXT NOT NULL,
       ok INTEGER NOT NULL, ms INTEGER NOT NULL)`);
     this.sql.exec("CREATE INDEX IF NOT EXISTS calls_at ON calls(at)");
+    // Keep-alive pings are answered without waking the object.
+    ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
   }
 
   fetch(request: Request): Promise<Response> { return serve(request, this.env, this); }
+
+  // ---- phones' channel (WebSocket hibernation: one socket per device, tagged with its id) ----
+  channel = new ChannelCore((device) => this.ctx.getWebSockets(device)[0], (device, message) => register(this, device, message));
+
+  acceptChannel(device: string): Response {
+    for (const old of this.ctx.getWebSockets(device)) { try { old.close(1000, "replaced"); } catch { /* already closed */ } }
+    const [client, server] = Object.values(new WebSocketPair());
+    this.ctx.acceptWebSocket(server, [device]);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+  dropChannel(device: string) {
+    for (const socket of this.ctx.getWebSockets(device)) { try { socket.close(4001, "revoked"); } catch { /* closed */ } }
+    this.channel.closed(device);
+  }
+  async webSocketMessage(socket: WebSocket, data: string | ArrayBuffer) { await this.channel.receive(this.ctx.getTags(socket)[0] ?? "", data); }
+  async webSocketClose(socket: WebSocket) { this.channel.closed(this.ctx.getTags(socket)[0] ?? ""); try { socket.close(1000, "closed"); } catch { /* closed */ } }
 
   async getConfig(key: string) {
     const rows = this.sql.exec("SELECT value FROM config WHERE key = ?", key).toArray() as Row[];

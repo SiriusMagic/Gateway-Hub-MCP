@@ -9,6 +9,8 @@ import { modules as builtIn } from "./modules/index.ts";
 import type { HubModule } from "./modules/types.ts";
 import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
+import type { Channel } from "./channel/core.ts";
+import { deviceFor } from "./channel/devices.ts";
 
 export const VERSION = "0.0.3";
 const MAX_BODY = 1 << 20;
@@ -36,7 +38,12 @@ const rpcError = (status: number, message: string, extra: Record<string, string>
   json(status, { jsonrpc: "2.0", id: null, error: { code: -32001, message } }, extra);
 
 export interface Limits { requests: Limiter; failures: Limiter }
-export type ServeStore = HubStoreApi & HubAdminStore & Limits;
+export type ServeStore = HubStoreApi & HubAdminStore & Limits & {
+  channel?: Channel;
+  /** Accepts the phone's WebSocket (the Durable Object); tests leave it out. */
+  acceptChannel?(device: string): Response;
+  dropChannel?(device: string): void;
+};
 
 function rejected(store: ServeStore, caller: string, missing: boolean) {
   store.failures.hit(caller);
@@ -56,7 +63,16 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   if (!owner) return rpcError(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
   if (store.failures.blocked(caller)) return rpcError(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
-  const ctx: HubContext = { store, env, fetch: (input, init) => fetcher(input, init) };
+  const ctx: HubContext = { store, env, channel: store.channel, fetch: (input, init) => fetcher(input, init) };
+
+  if (url.pathname === "/channel") {
+    // A phone's Gateway Hub app opens its channel with its own device credential (never the owner token).
+    const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
+    const device = bearer ? await deviceFor(store, bearer) : null;
+    if (!device) { rejected(store, caller, !bearer); return rpcError(401, "Gateway Hub: unknown device."); }
+    if (request.headers.get("Upgrade") !== "websocket" || !store.acceptChannel) return rpcError(426, "Gateway Hub: WebSocket required.");
+    return store.acceptChannel(device.id);
+  }
 
   if (url.pathname === "/mcp") {
     if (request.method === "DELETE") return json(200, null);
@@ -69,6 +85,7 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
     }
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
+    ctx.agent = principal.id;
     const reply = await handleRpc(body, routerFor(modules), ctx, VERSION,
       { principal, record: (tool, ok, ms) => store.metricsRecord(principal.id, tool, ok, ms) });
     const session = body.includes('"initialize"') ? { "Mcp-Session-Id": crypto.randomUUID() } : {};
@@ -91,7 +108,7 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
       return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
         { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } });
     }
-    return handleAdminApi(request, url, { store, ctx, modules, security: SECURITY, version: VERSION });
+    return handleAdminApi(request, url, { store, ctx, modules, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
   }
   return rpcError(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }

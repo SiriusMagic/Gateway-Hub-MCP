@@ -11,6 +11,8 @@ gateway-hub-mcp/
 │   ├── mcp.ts              # MCP / JSON-RPC 2.0: filtra herramientas por agente y registra métricas
 │   ├── router.ts           # Discriminador: prefijo → módulo; aísla fallos de cada módulo
 │   ├── environment.ts      # Entorno MCP: conectado, en pausa o desconectado
+│   ├── channel/            # Canal de los teléfonos: WebSocket por teléfono (en HubStore), credencial por
+│   │                       #   teléfono (devices.ts) y registro de apps proveedoras y paquetes (registry.ts)
 │   ├── validate.ts         # Validación de argumentos con el esquema de la herramienta
 │   ├── admin/              # Lo que puede hacer el propietario
 │   │   ├── service.ts      # Lógica compartida (validación una sola vez)
