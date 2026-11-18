@@ -24,6 +24,7 @@ class HubViewModel(
     bridge: BridgeConnector = BridgeConnector.None,
     signer: () -> PackageSigner = SoftwareSigner().let { key -> { key } },
     ledger: PackageLedger = MemoryLedger(),
+    private val afterPackages: () -> Unit = {},
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
@@ -105,7 +106,7 @@ class HubViewModel(
     override fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int) = providers(packageName) { providers.offer(it, agent, label, acts, days) }
     override fun revokePackage(packageName: String, id: String) = providers(packageName) { providers.revoke(it, id) }
     override fun refreshPackages(packageName: String) = providers(packageName) { providers.refresh(it) }
-    private fun providers(name: String, block: suspend (String) -> UiText?) = run { block(name).also { mutable.update { s -> s.copy(packages = providers.packages()) } } }
+    private fun providers(name: String, block: suspend (String) -> UiText?) = run { block(name).also { mutable.update { s -> s.copy(packages = providers.packages()) }; afterPackages() } }
 
     override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }
 

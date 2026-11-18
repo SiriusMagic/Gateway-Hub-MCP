@@ -93,6 +93,18 @@ class LocalBridgeTest {
         assertEquals(listOf("initialize", "tools/list"), methods.getOrThrow())
     }
 
+    @Test fun rawMessagesTravelUntouchedAndNotificationsDoNotWait() {
+        val got = mutableListOf<String>()
+        val raw = withFakeService({ msg -> got += msg.data.getString(LocalBridge.KEY_MESSAGE)!!; if (!got.last().contains("notifications/")) echo(msg) }) { bridge ->
+            bridge.withApp(stone) { pipe ->
+                pipe.notify("""{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":"ch-1"}}""")
+                pipe.raw("""{"jsonrpc":"2.0","id":"ch-9","method":"tools/list","params":{}}""")
+            }
+        }
+        assertEquals("ch-9", JSONObject(raw.getOrThrow()).get("id"))
+        assertTrue(got[0].contains("notifications/cancelled"))
+    }
+
     @Test fun silenceAndUnsupportedAppsAreNamed() {
         val silent = withFakeService({ }, timeoutMs = 200) { bridge -> bridge.withApp(stone) { it.request("tools/list", JSONObject()) } }
         assertEquals("BRIDGE_TIMEOUT", (silent.exceptionOrNull() as HubException).code)

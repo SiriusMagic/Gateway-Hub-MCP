@@ -250,4 +250,6 @@
     <string name="act_write">write</string>
     <string name="act_modify">modify</string>
     <string name="act_revert">revert</string>
+    <string name="channel_online">Phone channel: connected to the hub (Stone goes through it).</string>
+    <string name="channel_offline">Phone channel: not connected (Stone keeps using the previous link).</string>
 </resources>

@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.IBinder
 import com.zirakusa.gatewayhub.LocaleContext
 import com.zirakusa.gatewayhub.R
+import com.zirakusa.gatewayhub.channel.ChannelRunner
 import com.zirakusa.gatewayhub.data.ENV_ACTIVE
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.data.HubException
@@ -45,7 +46,7 @@ class HubWatchService : Service() {
         if (intent?.action == ACTION_ENVIRONMENT) {
             val target = intent.getStringExtra(EXTRA_STATE) ?: return START_NOT_STICKY
             scope.launch { runCatching { api()?.setEnvironment(target) }.onSuccess { notifier.environment(target) }; finish() }
-        } else if (loop?.isActive != true) loop = scope.launch { watch() }
+        } else if (loop?.isActive != true) { loop = scope.launch { watch() }; ChannelRunner.sync(this, true) }
         return START_NOT_STICKY
     }
 
@@ -79,7 +80,7 @@ class HubWatchService : Service() {
 
     private fun api(): HubApi? = KeystoreSessionStore(this).load()?.let { (url, token) -> HubApi(url, token) }
 
-    private fun finish() { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
+    private fun finish() { ChannelRunner.stop(); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf() }
 
     override fun onDestroy() { scope.cancel(); super.onDestroy() }
 

@@ -36,6 +36,9 @@ import com.zirakusa.gatewayhub.data.McpMode
         Text(stringResource(when (environment) { ENV_PAUSED -> R.string.env_paused_hint; ENV_DISCONNECTED -> R.string.env_disconnected_hint
             else -> if (settings.mode == McpMode.BACKGROUND) R.string.env_active_background else R.string.env_active_safe }),
             Modifier.padding(top = 6.dp), color = HubColors.Muted, fontSize = 13.sp)
+        val channel by com.zirakusa.gatewayhub.channel.ChannelRunner.state.collectAsState()
+        Text(stringResource(if (channel == com.zirakusa.gatewayhub.channel.ChannelClient.State.ONLINE) R.string.channel_online else R.string.channel_offline),
+            Modifier.padding(top = 4.dp), color = HubColors.Muted, fontSize = 12.sp)
         Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (environment != ENV_ACTIVE) Button({ vm.setEnvironment(ENV_ACTIVE) }, enabled = !loading) { Text(stringResource(R.string.env_connect)) }
             if (environment == ENV_ACTIVE) OutlinedButton({ vm.setEnvironment(ENV_PAUSED) }, enabled = !loading) { Text(stringResource(R.string.env_pause)) }

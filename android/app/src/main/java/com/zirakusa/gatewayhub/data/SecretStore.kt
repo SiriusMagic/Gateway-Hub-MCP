@@ -22,6 +22,9 @@ interface SessionStore {
     /** The person's Cloudflare API token (encrypted; kept after logout, it is not the hub's). */
     fun cloudflare(): SavedCloudflare? = null
     fun saveCloudflare(value: SavedCloudflare?) {}
+    /** This phone's channel credential for [hubUrl] (encrypted): device id + secret. */
+    fun device(hubUrl: String): Pair<String, String>? = null
+    fun saveDevice(hubUrl: String, value: Pair<String, String>?) {}
 }
 
 /** A Cloudflare API token, when it expires (0 = never or unknown) and when it was saved (to sync with Stone). */
@@ -73,6 +76,15 @@ class KeystoreSessionStore(context: Context) : SessionStore {
     override fun cloudflare(): SavedCloudflare? {
         val token = open(cf.getString("token", null) ?: return null) ?: return null
         return SavedCloudflare(token, cf.getLong("expiresAt", 0), cf.getLong("savedAt", 0))
+    }
+    private val dev = context.getSharedPreferences("hub_device", Context.MODE_PRIVATE)
+    override fun device(hubUrl: String): Pair<String, String>? {
+        if (dev.getString("hub", null) != hubUrl) return null
+        val id = dev.getString("id", null) ?: return null
+        return open(dev.getString("secret", null) ?: return null)?.let { id to it }
+    }
+    override fun saveDevice(hubUrl: String, value: Pair<String, String>?) = dev.edit {
+        if (value == null) clear() else { putString("hub", hubUrl); putString("id", value.first); putString("secret", seal(value.second)) }
     }
     override fun saveCloudflare(value: SavedCloudflare?) = cf.edit {
         if (value == null) clear()

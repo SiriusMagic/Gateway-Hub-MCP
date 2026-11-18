@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zirakusa.gatewayhub.channel.ChannelRunner
 import com.zirakusa.gatewayhub.data.ENV_ACTIVE
 import com.zirakusa.gatewayhub.data.KeystoreSessionStore
 import com.zirakusa.gatewayhub.data.KeystoreSigner
@@ -32,6 +33,17 @@ import com.zirakusa.gatewayhub.ui.WelcomeScreen
 import com.zirakusa.gatewayhub.watch.HubWatchService
 
 class MainActivity : ComponentActivity() {
+    override fun onStart() {
+        super.onStart()
+        vm.state.value.let { ChannelRunner.sync(applicationContext, it.connected && it.hub?.environment == ENV_ACTIVE) }
+    }
+
+    /** Safe mode: nothing keeps serving once Gateway leaves the screen. */
+    override fun onStop() {
+        if (vm.state.value.settings.mode == McpMode.SAFE) ChannelRunner.stop()
+        super.onStop()
+    }
+
     private val vm: HubViewModel by viewModels {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -39,7 +51,8 @@ class MainActivity : ComponentActivity() {
                 val linker = ProviderLinker(applicationContext)
                 return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext),
                     linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker, share = linker, bridge = LocalBridge(applicationContext),
-                    signer = { KeystoreSigner(applicationContext) }, ledger = PrefsLedger(applicationContext)) as T
+                    signer = { KeystoreSigner(applicationContext) }, ledger = PrefsLedger(applicationContext),
+                    afterPackages = { ChannelRunner.refresh(applicationContext) }) as T
             }
         }
     }
@@ -70,6 +83,9 @@ class MainActivity : ComponentActivity() {
             }
             // The background service runs only in background mode, logged in, with the environment connected.
             val environment = state.hub?.environment
+            // The phone's channel with the hub: while connected and the environment is active (the app open,
+            // or the background service in background mode).
+            LaunchedEffect(state.connected, environment) { ChannelRunner.sync(applicationContext, state.connected && environment == ENV_ACTIVE) }
             LaunchedEffect(settings.mode, state.connected, environment) {
                 if (!state.connected || environment != null)
                     HubWatchService.sync(applicationContext, state.connected && settings.mode == McpMode.BACKGROUND && environment == ENV_ACTIVE)

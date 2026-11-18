@@ -32,6 +32,10 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     suspend fun setEnvironment(state: String) { call("POST", "/environment", JSONObject().put("state", state)) }
     /** What ran since [since] (epoch ms). */
     suspend fun activity(since: Long): Activity = HubJson.activity(call("GET", "/activity?since=$since"))
+    /** A credential for this phone's channel (shown once; the hub keeps its hash). Returns (device id, secret). */
+    suspend fun createDevice(name: String): Pair<String, String> = JSONObject(call("POST", "/devices", JSONObject().put("name", name.take(40))))
+        .let { it.getJSONObject("device").getString("id") to it.getString("secret") }
+    suspend fun deleteDevice(id: String) { call("DELETE", "/devices/$id") }
     /** Read-only: the hub asks each remote app whether it is linked and online. */
     suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 

@@ -18,7 +18,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 /** MCP requests to one app; [request] returns the JSON-RPC "result" or throws [HubException]. */
-fun interface McpPipe { suspend fun request(method: String, params: JSONObject): JSONObject }
+fun interface McpPipe {
+    suspend fun request(method: String, params: JSONObject): JSONObject
+    /** Sends one JSON-RPC message as it is and returns the app's answer as it is (the hub's channel). */
+    suspend fun raw(text: String): String = throw HubException("BRIDGE_UNSUPPORTED", "")
+    /** Sends a notification (no answer), e.g. notifications/cancelled. */
+    suspend fun notify(text: String) { throw HubException("BRIDGE_UNSUPPORTED", "") }
+}
 
 /** Opens a pipe to an app on this phone for the length of [block] (replaceable in tests). */
 interface BridgeConnector {
@@ -57,17 +63,22 @@ class LocalBridge(private val context: Context, private val timeoutMs: Long = 75
             if (!bound) throw HubException("BRIDGE_UNSUPPORTED", "")
             val target = try { withTimeout(connectMs) { connected.await() } } catch (e: kotlinx.coroutines.TimeoutCancellationException) { throw HubException("BRIDGE_TIMEOUT", "") }
             val ids = AtomicInteger(0)
-            return block(McpPipe { method, params ->
-                val id = ids.incrementAndGet()
-                val text = JSONObject().put("jsonrpc", "2.0").put("id", id).put("method", method).put("params", params).toString()
+            suspend fun exchange(text: String, wait: Boolean): String? {
                 if (text.length > MAX_CHARS) throw HubException("BRIDGE_TOO_LARGE", "")
-                val answer = CompletableDeferred<String>().also { pending[id] = it }
+                val id = ids.incrementAndGet()
+                val answer = CompletableDeferred<String>().also { if (wait) pending[id] = it }
                 val msg = Message.obtain(null, MSG_RPC, id, 0).apply { data = Bundle().apply { putString(KEY_MESSAGE, text) }; replyTo = replies }
                 try { target.send(msg) } catch (e: RemoteException) { pending.remove(id); throw HubException("BRIDGE_LOST", "") }
-                val reply = try { withTimeout(timeoutMs) { answer.await() } } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                if (!wait) return null
+                return try { withTimeout(timeoutMs) { answer.await() } } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
                     pending.remove(id); throw HubException("BRIDGE_TIMEOUT", "")
                 }
-                parse(reply)
+            }
+            return block(object : McpPipe {
+                override suspend fun request(method: String, params: JSONObject): JSONObject = parse(exchange(
+                    JSONObject().put("jsonrpc", "2.0").put("id", ids.get() + 1).put("method", method).put("params", params).toString(), true)!!)
+                override suspend fun raw(text: String): String = exchange(text, true)!!.also { if (it.length > MAX_CHARS) throw HubException("BRIDGE_TOO_LARGE", "") }
+                override suspend fun notify(text: String) { exchange(text, false) }
             })
         } finally {
             runCatching { context.unbindService(connection) }

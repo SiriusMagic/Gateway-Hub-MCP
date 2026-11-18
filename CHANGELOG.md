@@ -1,3 +1,20 @@
+# Sin publicar (fase 3: canal central)
+
+- **Hub (Worker `stone-hub`):** nuevo canal `wss://<hub>/channel`. Cada teléfono entra con su propia credencial
+  (`POST /api/admin/devices`, se muestra una vez y el hub guarda solo su hash; `DELETE` la revoca y corta el canal al
+  momento). El WebSocket lo mantiene el Durable Object `HubStore` que ya existe: no hay clase nueva ni migración.
+  - Gateway registra por el canal sus apps proveedoras (prefijo) y los paquetes emitidos. El hub nunca firma paquetes:
+    solo elige hasta 8 candidatos por llamada, y la app los verifica.
+  - `music_`: si Stone está conectada por el canal, las llamadas van por ahí y **necesitan un paquete activo**
+    (`NO_PACKAGE` si no lo hay; Gateway da a Stone uno de solo lectura al vincular). Si no, todo sigue por el relay
+    como hasta ahora. Un tiempo agotado avisa al teléfono para cancelar la petición.
+  - `/api/admin/state` y `/api/admin/devices` muestran los teléfonos, si están conectados y qué apps sirven.
+- **App:** `channel/` (OkHttp 5.3.2, como Stone): conecta el canal con la credencial del teléfono, reenvía cada petición
+  a la app por el puente local con un id propio (`ch-<id>`, para cancelar la correcta) y vuelve a registrarse al cambiar
+  los paquetes. Funciona con la app abierta y, en «MCP en segundo plano», desde el servicio. En modo seguro se corta al
+  salir de Gateway. Ajustes › Entorno MCP muestra el estado del canal.
+- Sin desplegar el Worker ni generar APK.
+
 # Sin publicar (fase 2: proveedores y paquetes de ejecución)
 
 - Escáner › Stone: **Vincular** (entrega la clave pública del entorno y recibe el id de la instalación; Stone recibe al

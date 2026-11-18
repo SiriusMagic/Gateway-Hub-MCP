@@ -250,4 +250,6 @@
     <string name="act_write">escribir</string>
     <string name="act_modify">modificar</string>
     <string name="act_revert">revertir</string>
+    <string name="channel_online">Canal del teléfono: conectado al hub (Stone va por aquí).</string>
+    <string name="channel_offline">Canal del teléfono: sin conectar (Stone sigue por el enlace anterior).</string>
 </resources>
