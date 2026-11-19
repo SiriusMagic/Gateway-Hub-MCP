@@ -1,11 +1,15 @@
-# Sin publicar (fase 6: Stone solo proveedor)
+# Gateway Hub 0.0.8 (app) · hub 0.0.4
+
+Publica las fases 2 a 6. Necesita Stone 1.7.18.
+
+## Fase 6: Stone solo proveedor
 
 - Gateway envía el estado del entorno y el modo (seguro / segundo plano) a cada app vinculada por el puente
   (`gatewayhub/state`), al vincular, al cambiar el modo y al conectar, pausar o desconectar. Stone 1.7.18 ya no tiene
   HubLink: aplica el modo seguro sola (solo responde con Stone en pantalla).
 - El hub conserva el camino por el relay solo para Stone anteriores; se retirará con el Worker `stone-relay`.
 
-# Sin publicar (fase 5: varios teléfonos)
+## Fase 5: varios teléfonos
 
 - **Añadir otro teléfono:** Ajustes › Teléfonos › «Añadir otro teléfono» crea un código de un solo uso (10 caracteres,
   5 minutos; el hub guarda solo su hash y los códigos erróneos cuentan como tokens erróneos). En el otro teléfono, la
@@ -19,7 +23,7 @@
 - Ajustes › Teléfonos lista los teléfonos, si están conectados y qué apps sirven, y permite revocarlos (el canal se corta
   al momento).
 
-# Sin publicar (fase 4: Cloudflare por usuario)
+## Fase 4: cloudflare por usuario
 
 - **La app publica o actualiza tu hub** con un token de Cloudflare que se usa una vez y se olvida:
   - Entrada › «¿No tienes el token hub_?»: si la cuenta no tiene hub, se publica (`gateway-hub`, con su Durable Object,
@@ -32,7 +36,7 @@
   guardado se borra al abrir esta versión.
 - Hub 0.0.4.
 
-# Sin publicar (fase 3: canal central)
+## Fase 3: canal central
 
 - **Hub (Worker `stone-hub`):** nuevo canal `wss://<hub>/channel`. Cada teléfono entra con su propia credencial
   (`POST /api/admin/devices`, se muestra una vez y el hub guarda solo su hash; `DELETE` la revoca y corta el canal al
@@ -49,7 +53,7 @@
   salir de Gateway. Ajustes › Entorno MCP muestra el estado del canal.
 - Sin desplegar el Worker ni generar APK.
 
-# Sin publicar (fase 2: proveedores y paquetes de ejecución)
+## Fase 2: proveedores y paquetes de ejecución
 
 - Escáner › Stone: **Vincular** (entrega la clave pública del entorno y recibe el id de la instalación; Stone recibe al
   momento un paquete de solo lectura) y **Paquetes**: ofrecer un paquete (para todos los agentes o uno, con leer,
