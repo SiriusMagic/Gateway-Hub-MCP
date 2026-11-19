@@ -1,7 +1,6 @@
 // Who is calling: the owner (HUB_TOKEN, full access) or an agent with its own link. Agent tokens
 // are random 256-bit values shown once; only their SHA-256 is stored.
 import type { Agent, HubAdminStore, Tool } from "./modules/types.ts";
-import { sameSecret } from "./auth.ts";
 
 export interface Principal { id: string; name: string; modules: string[]; readOnly: boolean }
 export const OWNER: Principal = { id: "owner", name: "Propietario", modules: ["*"], readOnly: false };
@@ -12,9 +11,11 @@ export async function sha256Hex(value: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export function newAgentToken(): string {
+/** A random 256-bit secret; in a shared hub it also names its space ("gw_s<space>_…", see spaces.ts). */
+export function newSecret(prefix: "hub" | "gw" | "dev", space: string | null = null): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return "gw_" + btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const random = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${prefix}_${space ? `s${space}_` : ""}${random}`;
 }
 
 export function newId(): string {
@@ -22,8 +23,8 @@ export function newId(): string {
 }
 
 /** The principal behind [token], or null when it is unknown, paused or expired. */
-export async function principalFor(token: string, ownerToken: string, store: HubAdminStore, now = Date.now()): Promise<Principal | null> {
-  if (await sameSecret(token, ownerToken)) return OWNER;
+export async function principalFor(token: string, isOwner: (token: string) => Promise<boolean>, store: HubAdminStore, now = Date.now()): Promise<Principal | null> {
+  if (await isOwner(token)) return OWNER;
   if (!token.startsWith("gw_")) return null;
   const agent = await store.agentByHash(await sha256Hex(token));
   if (!agent || agent.paused || (agent.expiresAt && agent.expiresAt <= now)) return null;

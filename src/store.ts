@@ -6,18 +6,24 @@ import { serve } from "./serve.ts";
 import { Limiter } from "./auth.ts";
 import { ChannelCore } from "./channel/core.ts";
 import { register } from "./channel/registry.ts";
+import { SPACE_KEY, issueAgent, setupSpace } from "./spaces.ts";
+import { handleDirectory } from "./oauth/directory.ts";
+import { createConnectCode } from "./oauth/connect.ts";
+
+interface StoreEnv extends HubEnv { HUB: DurableObjectNamespace<HubStore> }
 
 type Row = Record<string, string | number>;
 const toAgent = (r: Row): Agent => ({ id: String(r.id), name: String(r.name), tokenHash: String(r.token_hash),
   modules: JSON.parse(String(r.modules)), readOnly: r.read_only === 1, paused: r.paused === 1,
   expiresAt: Number(r.expires_at), created: Number(r.created), lastUsed: Number(r.last_used) });
 
-export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubAdminStore {
+export class HubStore extends DurableObject<StoreEnv> implements HubStoreApi, HubAdminStore {
   requests = new Limiter(120);   // per caller and minute
   failures = new Limiter(20);    // wrong tokens per caller and minute
+  signups = new Limiter(5, 3_600_000);   // new spaces per caller and hour (directory only)
   private sql: SqlStorage;
 
-  constructor(ctx: DurableObjectState, env: HubEnv) {
+  constructor(ctx: DurableObjectState, env: StoreEnv) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
     this.sql.exec("CREATE TABLE IF NOT EXISTS config(key TEXT PRIMARY KEY, value TEXT NOT NULL)");
@@ -31,7 +37,29 @@ export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubA
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
   }
 
+  /** "main": the single-owner hub (HUB_TOKEN). */
   fetch(request: Request): Promise<Response> { return serve(request, this.env, this); }
+
+  // ---- the shared hub (called by the Worker over RPC, never reachable from outside) ----
+  private hub(name: string) { return this.env.HUB.get(this.env.HUB.idFromName(name)); }
+  /** u_<space>: one person's hub. Its sign-in codes come from the directory. */
+  tenant(request: Request): Promise<Response> {
+    return serve(request, this.env, this, fetch, undefined, { tenant: true, connectCode: async () => {
+      const space = await this.getConfig(SPACE_KEY);
+      if (!space) throw new Error("space not set up");
+      return this.hub("directory").createConnect(space);
+    } });
+  }
+  /** "directory": new spaces and the public link's sign-in. */
+  directory(request: Request): Promise<Response> {
+    return handleDirectory(request, new URL(request.url), this, {
+      setupSpace: (space, phone) => this.hub(`u_${space}`).setupSpace(space, phone),
+      issueAgent: (space, name) => this.hub(`u_${space}`).issueAgent(name),
+    });
+  }
+  setupSpace(space: string, phone: string) { return setupSpace(this, space, phone); }
+  issueAgent(name: string) { return issueAgent(this, name); }
+  createConnect(space: string) { return createConnectCode(this, space); }
 
   // ---- phones' channel (WebSocket hibernation: one socket per device, tagged with its id) ----
   channel = new ChannelCore((device) => this.ctx.getWebSockets(device)[0], (device, message) => register(this, device, message));

@@ -12,6 +12,9 @@ export interface ApiDeps {
   store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string;
   /** Closes a phone's channel at once (the Durable Object); absent in tests. */
   dropDevice?(id: string): void;
+  /** A space of the shared hub: the app shows the public link and its sign-in code. */
+  shared?: boolean;
+  connectCode?(): Promise<{ code: string; expiresAt: number }>;
 }
 
 const send = (status: number, body: unknown, security: Record<string, string>) =>
@@ -29,7 +32,12 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
     if (typeof body !== "object" || body === null || Array.isArray(body)) return error(400, "INVALID_JSON", "El cuerpo debe ser un objeto JSON.");
   }
   try {
-    if (path === "/state" && method === "GET") return ok(await overview(store, ctx, modules, deps.version));
+    if (path === "/state" && method === "GET") return ok({ ...await overview(store, ctx, modules, deps.version),
+      shared: deps.shared === true, publicUrl: `${url.origin}/mcp` });
+    if (path === "/connect-code" && method === "POST") {
+      if (!deps.connectCode) return error(404, "NOT_FOUND", "Este hub no tiene enlace público.");
+      return ok(await deps.connectCode());
+    }
     if (path === "/activity" && method === "GET") {
       // For the app's activity notifications: what ran since [since] (at most 7 days back).
       const since = Math.max(Date.now() - 7 * DAY, Math.floor(Number(url.searchParams.get("since")) || 0));

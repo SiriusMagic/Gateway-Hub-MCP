@@ -1,7 +1,7 @@
 // Phones allowed to open the channel. Each gets its own random credential, shown once to the Gateway
 // Hub app (created with the owner token); the hub keeps only its SHA-256.
 import { type HubStoreApi, ToolError } from "../modules/types.ts";
-import { newId, sha256Hex } from "../agents.ts";
+import { newId, newSecret, sha256Hex } from "../agents.ts";
 import { sameSecret } from "../auth.ts";
 
 export interface Device { id: string; name: string; hash: string; created: number }
@@ -16,8 +16,7 @@ export async function createDevice(store: HubStoreApi, rawName: string): Promise
   const name = String(rawName ?? "").trim().slice(0, 40) || "Teléfono";
   const devices = await listDevices(store);
   if (devices.length >= MAX_DEVICES) throw new ToolError("LIMIT", `Máximo ${MAX_DEVICES} teléfonos.`);
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  const secret = "dev_" + btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const secret = newSecret("dev", await store.getConfig("space.id"));
   const device: Device = { id: newId(), name, hash: await sha256Hex(secret), created: Date.now() };
   await store.setConfig(KEY, JSON.stringify([...devices, device]));
   return { device: { id: device.id, name, created: device.created }, secret };

@@ -12,6 +12,7 @@ import { handleAdminApi } from "./admin/api.ts";
 import type { Channel } from "./channel/core.ts";
 import { deviceFor } from "./channel/devices.ts";
 import { redeemPairing } from "./channel/pairing.ts";
+import { SPACE_KEY, isSpaceOwner } from "./spaces.ts";
 import { channelModules } from "./channel/dynamic.ts";
 
 export const VERSION = "0.0.5";
@@ -52,9 +53,16 @@ function rejected(store: ServeStore, caller: string, missing: boolean) {
   console.warn(JSON.stringify({ event: "auth_rejected", caller, missing })); // never the token itself
 }
 
+export interface ServeOptions {
+  /** A person's space in the shared hub (u_<space>): its owner is its own secret, not HUB_TOKEN. */
+  tenant?: boolean;
+  /** A one-use code for the public link's sign-in page (the directory object makes it). */
+  connectCode?(): Promise<{ code: string; expiresAt: number }>;
+}
+
 /** [modules] is the hub's app list; tests pass their own. */
 export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch,
-  modules: HubModule[] = builtIn): Promise<Response> {
+  modules: HubModule[] = builtIn, opts: ServeOptions = {}): Promise<Response> {
   const url = new URL(request.url);
   const caller = request.headers.get("CF-Connecting-IP") || "local";
   if (store.requests.hit(caller)) {
@@ -62,7 +70,11 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
     return rpcError(429, "Gateway Hub: too many requests. Wait a minute.", { "Retry-After": "60" });
   }
   const owner = env.HUB_TOKEN;
-  if (!owner) return rpcError(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
+  const space = opts.tenant ? await store.getConfig(SPACE_KEY) : null;
+  // A space that was never set up answers nothing (its secrets cannot exist).
+  if (opts.tenant && !space) { rejected(store, caller, false); return rpcError(401, "Gateway Hub: unknown link.") }
+  if (!opts.tenant && !owner) return rpcError(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
+  const isOwner = async (token: string) => opts.tenant ? isSpaceOwner(store, token) : !!owner && sameSecret(token, owner);
   if (store.failures.blocked(caller)) return rpcError(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
   const ctx: HubContext = { store, env, channel: store.channel, fetch: (input, init) => fetcher(input, init) };
@@ -90,10 +102,12 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
     if (request.method === "DELETE") return json(200, null);
     if (request.method !== "POST") return rpcError(405, "Gateway Hub: send MCP requests with POST.", { Allow: "POST, DELETE" });
     const token = givenToken(request, url);
-    const principal: Principal | null = token ? await principalFor(token, owner, store) : null;
+    const principal: Principal | null = token ? await principalFor(token, isOwner, store) : null;
     if (!principal) {
       rejected(store, caller, !token);
-      return rpcError(401, "Gateway Hub: missing, wrong, paused or expired link.", { "WWW-Authenticate": "Bearer" });
+      // The public link signs in with OAuth: this header tells the AI app where (see oauth/).
+      return rpcError(401, "Gateway Hub: missing, wrong, paused or expired link.",
+        { "WWW-Authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource"` });
     }
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
@@ -108,7 +122,7 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   if (url.pathname === "/admin" || url.pathname === "/setup") {
     return handleAdmin(request, url, { store, ctx, modules, security: SECURITY, async isOwner(token) {
       // Only the owner token opens the panel: agent links never do.
-      if (token && await sameSecret(token, owner)) return true;
+      if (token && await isOwner(token)) return true;
       rejected(store, caller, !token);
       return false;
     } });
@@ -116,13 +130,14 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   if (url.pathname.startsWith("/api/admin/")) {
     // The owner token only in the Authorization header here: an API URL never carries a secret.
     const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
-    if (!bearer || !await sameSecret(bearer, owner)) {
+    if (!bearer || !await isOwner(bearer)) {
       rejected(store, caller, !bearer);
       return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
         { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } });
     }
     const all = ctx.channel ? [...modules, ...await channelModules(ctx, modules)] : modules;
-    return handleAdminApi(request, url, { store, ctx, modules: all, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
+    return handleAdminApi(request, url, { store, ctx, modules: all, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store),
+      shared: !!space, connectCode: opts.connectCode });
   }
   return rpcError(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }

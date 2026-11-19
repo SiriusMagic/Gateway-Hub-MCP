@@ -1,7 +1,7 @@
 // What the owner can do, shared by the HTML panel (actions.ts) and the JSON API (api.ts) used by
 // the Android app. Validation lives here, once.
 import { type Agent, type HubAdminStore, type HubContext, type HubModule, type HubStoreApi, ToolError } from "../modules/types.ts";
-import { MAX_AGENTS, agentStatus, newAgentToken, newId, sha256Hex } from "../agents.ts";
+import { MAX_AGENTS, agentStatus, newId, newSecret, sha256Hex } from "../agents.ts";
 import { environmentState, setEnvironmentState } from "../environment.ts";
 import { listDevices } from "../channel/devices.ts";
 import { providers } from "../channel/registry.ts";
@@ -50,7 +50,7 @@ export async function createAgent(store: AdminStore, modules: HubModule[], origi
   const apps = [...new Set((Array.isArray(input.apps) ? input.apps : []).map(String))].filter((p) => known.has(p));
   if (!apps.length) throw new ToolError("INVALID_ARGUMENT", "Elige al menos una app.");
   const days = Math.min(365, Math.max(0, Math.floor(Number(input.days) || 0)));
-  const secret = newAgentToken(), now = Date.now();
+  const secret = newSecret("gw", await store.getConfig("space.id")), now = Date.now();
   const agent: Agent = { id: newId(), name, tokenHash: await sha256Hex(secret), modules: apps.length === known.size ? ["*"] : apps,
     readOnly: input.readOnly === true, paused: false, expiresAt: days ? now + days * DAY : 0, created: now, lastUsed: 0 };
   await store.agentsCreate(agent);

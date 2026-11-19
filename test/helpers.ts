@@ -1,6 +1,6 @@
 import type { Agent, CallStat, HubAdminStore, HubStoreApi, MetricsSummary } from "../src/modules/types.ts";
 import { Limiter } from "../src/auth.ts";
-import { serve } from "../src/serve.ts";
+import { type ServeOptions, serve } from "../src/serve.ts";
 import { TEST_MODULES } from "./demo-module.ts";
 
 export const TOKEN = "hub_test_token_0123456789abcdefghijklmnop";
@@ -35,7 +35,7 @@ export class MemoryStore implements HubStoreApi, HubAdminStore {
   }
 }
 
-export function hub(store = new MemoryStore(), fetcher: typeof fetch = fetch) {
+export function hub(store = new MemoryStore(), fetcher: typeof fetch = fetch, opts: ServeOptions = {}) {
   const env = { HUB_TOKEN: TOKEN };
   return {
     store,
@@ -43,31 +43,31 @@ export function hub(store = new MemoryStore(), fetcher: typeof fetch = fetch) {
       const headers: Record<string, string> = { "Content-Type": "application/json", "CF-Connecting-IP": ip };
       if (token) headers.Authorization = `Bearer ${token}`;
       const response = await serve(new Request("https://hub.example/mcp", { method: "POST", headers,
-        body: JSON.stringify({ jsonrpc: "2.0", id: 7, method, params }) }), env, store, fetcher, TEST_MODULES);
+        body: JSON.stringify({ jsonrpc: "2.0", id: 7, method, params }) }), env, store, fetcher, TEST_MODULES, opts);
       return { status: response.status, body: response.status === 202 ? null : await response.json() as any, response };
     },
     async api(method: string, path: string, body?: unknown, token: string | null = TOKEN, ip = "1.1.1.1") {
       const headers: Record<string, string> = { "CF-Connecting-IP": ip, "Content-Type": "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
       const response = await serve(new Request(`https://hub.example/api/admin${path}`, { method, headers,
-        body: body === undefined ? undefined : JSON.stringify(body) }), env, store, fetcher, TEST_MODULES);
+        body: body === undefined ? undefined : JSON.stringify(body) }), env, store, fetcher, TEST_MODULES, opts);
       return { status: response.status, body: await response.json() as any, response };
     },
     async pair(code: string, name = "Tablet", ip = "1.1.1.1") {
       const response = await serve(new Request("https://hub.example/pair", { method: "POST", headers: { "CF-Connecting-IP": ip,
-        "Content-Type": "application/json" }, body: JSON.stringify({ code, name }) }), env, store, fetcher, TEST_MODULES);
+        "Content-Type": "application/json" }, body: JSON.stringify({ code, name }) }), env, store, fetcher, TEST_MODULES, opts);
       return { status: response.status, body: await response.json() as any };
     },
     async channel(token: string, ip = "1.1.1.1") {
       const response = await serve(new Request("https://hub.example/channel", { headers: { Authorization: `Bearer ${token}`,
-        Upgrade: "websocket", "CF-Connecting-IP": ip } }), env, store, fetcher, TEST_MODULES);
+        Upgrade: "websocket", "CF-Connecting-IP": ip } }), env, store, fetcher, TEST_MODULES, opts);
       return { status: response.status };
     },
     async admin(fields: Record<string, string | string[]>, ip = "1.1.1.1") {
       const body = new URLSearchParams();
       for (const [k, v] of Object.entries(fields)) for (const x of [v].flat()) body.append(k, x);
       const response = await serve(new Request("https://hub.example/admin", { method: "POST",
-        headers: { "CF-Connecting-IP": ip }, body }), env, store, fetcher, TEST_MODULES);
+        headers: { "CF-Connecting-IP": ip }, body }), env, store, fetcher, TEST_MODULES, opts);
       return { status: response.status, html: await response.text() };
     },
   };
