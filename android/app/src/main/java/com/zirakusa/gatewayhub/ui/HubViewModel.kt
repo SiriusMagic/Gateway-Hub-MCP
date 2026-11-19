@@ -23,7 +23,10 @@ class HubViewModel(
     signer: () -> PackageSigner = SoftwareSigner().let { key -> { key } },
     ledger: PackageLedger = MemoryLedger(),
     private val afterPackages: () -> Unit = {},
-    hubTransport: HubTransport = HttpTransport,
+    private val hubTransport: HubTransport = HttpTransport,
+    /** First launch with no hub: join the shared hub on its own (the app passes true; tests choose). */
+    autoStart: Boolean = false,
+    private val phoneName: String = "Android",
 ) : ViewModel(), HubActions {
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
@@ -36,12 +39,47 @@ class HubViewModel(
         mutable.update { it.copy(packages = ledger.packages(), providerApps = providerApps(),
             satellite = phones.satelliteHub() != null, hubUrl = phones.satelliteHub() ?: it.hubUrl) }
         sendMode()
-        sessions.load()?.let { (url, token) ->
-            api = newApi(url, token)
-            mutable.update { it.copy(hubUrl = url, connected = true) }
-            refresh()
+        val saved = sessions.load()
+        if (saved != null) {
+            api = newApi(saved.first, saved.second)
+            mutable.update { it.copy(hubUrl = saved.first, connected = true) }
+            run { reload(); setUp(); null }
+        } else if (autoStart && !mutable.value.satellite && defaultUrl.isNotBlank()) start()
+    }
+
+    /**
+     * The whole setup with nothing to type: a space of its own on the shared hub (owner secret and channel
+     * credential kept encrypted here), then [setUp]. A failure leaves a "try again" button.
+     */
+    override fun start() {
+        mutable.update { it.copy(starting = true, startFailed = false, error = null) }
+        viewModelScope.launch {
+            try {
+                val r = HubApi.register(defaultUrl, phoneName, hubTransport)
+                sessions.saveDevice(r.hubUrl, r.deviceId to r.deviceSecret)
+                open(Access(r.hubUrl, r.owner), tries = 4)
+                mutable.update { it.copy(starting = false) }
+                setUp()
+            } catch (e: Exception) {
+                mutable.update { it.copy(starting = false, startFailed = true) }
+            }
         }
     }
+
+    /** Someone with their own hub (Cloudflare) or an access to paste. */
+    override fun useOwnHub() = mutable.update { it.copy(manualLogin = true) }
+
+    /** Links every app of this phone that offers the bridge (Stone) and keeps its full package; a shared hub gets a code. */
+    private suspend fun setUp() {
+        val s = mutable.value
+        for (app in providerApps()) runCatching { providers.link(app.packageName, s.hub?.environment ?: ENV_ACTIVE, s.settings.mode.name.lowercase()) }
+        mutable.update { it.copy(packages = providers.packages(), providerApps = providerApps()) }
+        afterPackages()
+        if (mutable.value.hub?.shared == true) runCatching { mutable.update { it.copy(connect = requireApi().connectCode()) } }
+    }
+
+    /** A new sign-in code (the old one stops working). */
+    override fun newConnectCode() = run { mutable.update { it.copy(connect = requireApi().connectCode()) }; null }
 
     /** One paste (address + token, or only the token); checked against the hub before it is saved. */
     fun connect(pasted: String) = run { open(AccessParser.parse(pasted, defaultUrl)); null }
@@ -58,7 +96,14 @@ class HubViewModel(
     override fun updateHub(cfToken: String) = run { UiText.Res(R.string.cf_updated, listOf(cloudflare.updateHub(cfToken).removePrefix("https://"))) }
     override fun rotateOwner(cfToken: String) = run { open(cloudflare.rotateOwner(cfToken), tries = 8); UiText.Res(R.string.cf_owner_done) }
 
-    override fun refresh() = run { reload(); null }
+    override fun refresh() = run {
+        reload()
+        // The sign-in code lasts 10 minutes: a fresh one whenever the screen is refreshed after that.
+        val code = mutable.value.connect
+        if (mutable.value.hub?.shared == true && (code == null || code.second <= System.currentTimeMillis()))
+            mutable.update { it.copy(connect = requireApi().connectCode()) }
+        null
+    }
 
     override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) = run {
         val created = requireApi().createAgent(name, apps, readOnly, days); mutable.update { it.copy(created = created, hub = requireApi().state()) }; null

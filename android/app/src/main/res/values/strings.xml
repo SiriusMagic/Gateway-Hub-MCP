@@ -271,4 +271,15 @@
     <string name="simple_ai_remove">Quitar</string>
     <string name="simple_advanced">Opciones avanzadas</string>
     <string name="simple_back">Volver</string>
+    <string name="shared_step_link">Pega este enlace en tu IA</string>
+    <string name="shared_link_hint">En Claude o ChatGPT: Ajustes › Conectores › Añadir conector personalizado. Pega el enlace y toca Añadir.</string>
+    <string name="shared_step_code">Cuando tu IA te pida un código, escribe este</string>
+    <string name="shared_code_hint">Sirve una sola vez y cambia cada 10 minutos.</string>
+    <string name="shared_new_code">Otro código</string>
+    <string name="simple_connected">IA conectadas</string>
+    <string name="start_working">Preparando todo…</string>
+    <string name="start_failed">No se pudo conectar. Revisa tu internet.</string>
+    <string name="start_retry">Reintentar</string>
+    <string name="start_go">Empezar</string>
+    <string name="start_own_hub">Tengo mi propio hub</string>
 </resources>

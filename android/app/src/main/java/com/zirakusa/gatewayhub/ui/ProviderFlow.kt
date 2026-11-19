@@ -11,12 +11,14 @@ import com.zirakusa.gatewayhub.data.McpPipe
 import com.zirakusa.gatewayhub.data.PackageIssuer
 import com.zirakusa.gatewayhub.data.PackageLedger
 import com.zirakusa.gatewayhub.data.PackageSigner
+import com.zirakusa.gatewayhub.data.ACTS
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
  * Gateway's side of the provider contract (phase 2): link an app of this phone (environment public key in,
- * instance id back), give it a reading package at once, offer, revoke and sync execution packages, and test.
+ * instance id back), give it the full package at once (every act, every AI, one year, renewed before it ends),
+ * offer, revoke and sync execution packages, and test.
  */
 class ProviderFlow(
     private val bridge: BridgeConnector,
@@ -34,8 +36,9 @@ class ProviderFlow(
         ledger.saveInstance(app.packageName, instance)
         pipe.request("gatewayhub/state", JSONObject().put("environment", environment).put("mode", mode))
         sync(app.packageName, linked.optJSONArray("packages"))
-        if (ledger.packages().none { it.app == app.packageName && it.agent == "*" && it.acts == listOf("leer") && it.status == "active" })
-            offerWith(pipe, app, instance, "*", "Lectura", listOf("leer"), 30)
+        val renewAfter = System.currentTimeMillis() / 1000 + RENEW_DAYS * 86_400L
+        if (ledger.packages().none { it.app == app.packageName && it.agent == "*" && it.acts == ACTS && it.status == "active" && it.exp > renewAfter })
+            offerWith(pipe, app, instance, "*", "Todo", ACTS, 365)
         UiText.Res(R.string.provider_linked, listOf(app.label))
     }
 
@@ -91,5 +94,12 @@ class ProviderFlow(
         return bridge.withApp(app) { block(app, it) }
     }
 
-    companion object { const val GRANT = "com.zirakusa.gatewayhub/grant" }
+    /** Whether [packageName] was linked by this Gateway (it has an instance id). */
+    fun linked(packageName: String) = ledger.instance(packageName) != null
+
+    companion object {
+        const val GRANT = "com.zirakusa.gatewayhub/grant"
+        /** The full package is renewed when it has fewer days left than this. */
+        const val RENEW_DAYS = 30
+    }
 }

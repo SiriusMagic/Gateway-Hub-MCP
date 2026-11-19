@@ -14,6 +14,7 @@ import com.zirakusa.gatewayhub.ui.UiText
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
+import com.zirakusa.gatewayhub.data.ACTS
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,7 +53,8 @@ class ProviderFlowTest {
                         !ok -> JSONObject().put("error", "BAD_SIGNATURE")
                         p.getString("env") != env -> JSONObject().put("error", "WRONG_ENVIRONMENT")
                         p.getString("aud") != "com.zirakusa.stone.kotlin.preview#$instance" -> JSONObject().put("error", "WRONG_DEVICE")
-                        else -> { val st = if (p.getJSONArray("acts").toString() == """["leer"]""") "active" else "pending"
+                        // Stone 1.7.19+: packages from Gateway (same signature) are active at once.
+                        else -> { val st = "active"
                             packages[p.getString("id")] = st; JSONObject().put("id", p.getString("id")).put("status", st) }
                     }
                     JSONObject().put("packages", JSONArray().put(answer))
@@ -71,14 +73,15 @@ class ProviderFlowTest {
             override suspend fun <T> withApp(app: LocalApp, block: suspend (McpPipe) -> T): T = block(fake)
         }, { signer }, ledger, { listOf(stone) })
 
-    @Test fun linkingGivesAReadingPackageThatStoneAccepts() = runBlocking {
+    @Test fun linkingGivesTheFullPackageThatStoneAccepts() = runBlocking {
         val fake = FakeStone(); val ledger = MemoryLedger(); val f = flow(fake, ledger)
         assertEquals(UiText.Res(R.string.provider_linked, listOf("Stone")), f.link(stone.packageName, "active", "safe"))
         assertEquals("inst_abc123", ledger.instance(stone.packageName))
-        val read = f.packages().single()
-        assertEquals(listOf("leer"), read.acts); assertEquals("*", read.agent); assertEquals("active", read.status)
+        val full = f.packages().single()
+        assertEquals(ACTS, full.acts); assertEquals("*", full.agent); assertEquals("active", full.status)
+        assertTrue(full.exp > System.currentTimeMillis() / 1000 + 360 * 86_400L)
         assertTrue(fake.calls.containsAll(listOf("gatewayhub/link", "gatewayhub/state", "gatewayhub/packages/offer")))
-        f.link(stone.packageName, "active", "safe")                       // linking again does not pile up reading packages
+        f.link(stone.packageName, "active", "safe")                       // linking again does not pile up packages
         assertEquals(1, f.packages().size)
     }
 
@@ -86,12 +89,11 @@ class ProviderFlowTest {
         val fake = FakeStone(); val f = flow(fake)
         assertEquals("NOT_LINKED", (runCatching { f.offer(stone.packageName, "a1", "x", listOf("modificar"), 7) }.exceptionOrNull() as HubException).code)
         f.link(stone.packageName, "active", "safe")
-        assertEquals(UiText.Res(R.string.package_pending, listOf("Stone")), f.offer(stone.packageName, "a1", "Etiquetas", listOf("revisar", "modificar"), 7))
+        assertEquals(UiText.Res(R.string.package_active, listOf("Stone")), f.offer(stone.packageName, "a1", "Etiquetas", listOf("revisar", "modificar"), 7))
         val pending = f.packages().first { it.label == "Etiquetas" }
-        assertEquals("pending", pending.status)
-        fake.packages[pending.id] = "active"                               // the user approved it in Stone
+        fake.packages[pending.id] = "pending"                              // an older Stone still asks
         f.refresh(stone.packageName)
-        assertEquals("active", f.packages().first { it.id == pending.id }.status)
+        assertEquals("pending", f.packages().first { it.id == pending.id }.status)
         f.revoke(stone.packageName, pending.id)
         assertTrue(f.packages().none { it.id == pending.id })
     }

@@ -30,6 +30,7 @@ import com.zirakusa.gatewayhub.ui.HubViewModel
 import com.zirakusa.gatewayhub.ui.LoginScreen
 import com.zirakusa.gatewayhub.ui.PALETTES
 import com.zirakusa.gatewayhub.ui.SatelliteScreen
+import com.zirakusa.gatewayhub.ui.StartScreen
 import com.zirakusa.gatewayhub.ui.WelcomeScreen
 import com.zirakusa.gatewayhub.watch.HubWatchService
 
@@ -54,7 +55,8 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext), settingsStore = PrefsSettingsStore(applicationContext), workerBundle = ::workerBundle, bridge = LocalBridge(applicationContext),
                     signer = { KeystoreSigner(applicationContext) }, ledger = PrefsLedger(applicationContext),
-                    afterPackages = { ChannelRunner.refresh(applicationContext) }) as T
+                    afterPackages = { ChannelRunner.refresh(applicationContext) },
+                    autoStart = BuildConfig.DEFAULT_HUB_URL.isNotBlank(), phoneName = android.os.Build.MODEL ?: "Android") as T
             }
         }
     }
@@ -103,6 +105,8 @@ class MainActivity : ComponentActivity() {
                     settings.language == null -> WelcomeScreen { tag -> vm.updateSettings { it.copy(language = tag) } }
                     state.connected -> HomeScreen(state, vm)
                     state.satellite -> SatelliteScreen(state, vm)
+                    // No hub yet: the app joins the shared hub by itself (unless the person has their own).
+                    !state.manualLogin && BuildConfig.DEFAULT_HUB_URL.isNotBlank() -> StartScreen(state, vm)
                     else -> LoginScreen(state, vm::connect, vm::createAccess) { url, code -> vm.join(url, code, android.os.Build.MODEL ?: "Android") }
                 }
             }

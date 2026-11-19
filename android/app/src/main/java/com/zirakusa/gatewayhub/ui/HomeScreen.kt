@@ -46,7 +46,7 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
             navigationIcon = { if (advanced) IconButton({ advanced = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.simple_back)) } },
             actions = {
                 IconButton(vm::refresh, enabled = !state.loading) { Icon(Icons.Default.Refresh, stringResource(R.string.refresh)) }
-                IconButton({ leaving = true }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.logout)) }
+                if (advanced) IconButton({ leaving = true }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.logout)) }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = HubColors.Background)) },
         bottomBar = { if (advanced) NavigationBar(containerColor = HubColors.Card) {

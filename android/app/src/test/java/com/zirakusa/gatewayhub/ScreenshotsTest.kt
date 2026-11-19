@@ -55,6 +55,13 @@ class ScreenshotsTest {
     @Test fun simpleHome() = shot("simple") { HomeScreen(connected.copy(providerApps = listOf(
         LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.18", "music_", true, bridge = true))), NoActions) }
     @Test fun simpleHomeReady() = shot("simple-ready") { HomeScreen(connected.copy(hub = hub.copy(stoneLinked = true)), NoActions) }
+    private val shared = connected.copy(hub = hub.copy(shared = true, publicUrl = "https://stone-hub.example.workers.dev/mcp",
+        agents = emptyList()), connect = "48291374" to System.currentTimeMillis() + 600_000, providerApps = listOf(
+        LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.19", "music_", true, bridge = true)))
+    @Test fun sharedHome() = shot("shared") { HomeScreen(shared, NoActions) }
+    @Test fun sharedHomeConnected() = shot("shared-ready") { HomeScreen(shared.copy(hub = shared.hub!!.copy(agents = hub.agents.take(1))), NoActions) }
+    @Test fun start() = shot("start") { StartScreen(UiState(starting = true), NoActions) }
+    @Test fun startFailed() = shot("start-failed") { StartScreen(UiState(startFailed = true), NoActions) }
     @Test fun apps() = shot("apps") { HomeScreen(connected, NoActions, HubTab.APPS) }
     @Test fun metrics() = shot("metrics") { HomeScreen(connected, NoActions, HubTab.METRICS) }
     @Test fun createdLink() = shot("created") {

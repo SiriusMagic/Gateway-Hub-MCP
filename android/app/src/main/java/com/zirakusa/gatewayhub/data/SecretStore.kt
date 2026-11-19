@@ -66,6 +66,17 @@ class KeystoreSessionStore(context: Context) : SessionStore {
 
     override fun clear() { prefs.edit { clear() } }
 
+    /** The channel credential, sealed like the owner token, with the hub it belongs to (cleared on logout). */
+    override fun device(hubUrl: String): Pair<String, String>? {
+        if (prefs.getString("device.hub", null) != hubUrl) return null
+        return open(prefs.getString("device", null) ?: return null)?.split('\n')?.takeIf { it.size == 2 }?.let { it[0] to it[1] }
+    }
+    override fun saveDevice(hubUrl: String, value: Pair<String, String>?) {
+        prefs.edit { if (value == null) { remove("device.hub"); remove("device") }
+            else { putString("device.hub", hubUrl); putString("device", seal("${value.first}\n${value.second}")) } }
+    }
+    override fun deviceHub(): String? = prefs.getString("device.hub", null)
+
     private val flags = context.getSharedPreferences("hub_prefs", Context.MODE_PRIVATE)
     init {
         // Gateway 0.0.6 kept the Cloudflare token: it is wiped on the first start of this version (never stored again).

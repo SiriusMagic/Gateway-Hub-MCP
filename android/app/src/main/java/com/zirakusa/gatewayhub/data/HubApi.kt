@@ -39,6 +39,8 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     suspend fun deleteDevice(id: String) { call("DELETE", "/devices/$id") }
     /** A one-use code (5 min) for another phone to join this hub. Returns (code, expiresAt ms). */
     suspend fun createPairing(): Pair<String, Long> = JSONObject(call("POST", "/pairing", JSONObject())).let { it.getString("code") to it.getLong("expiresAt") }
+    /** Shared hub: the 8-digit code to type on the public link's sign-in page (10 min, one use). Returns (code, expiresAt ms). */
+    suspend fun connectCode(): Pair<String, Long> = JSONObject(call("POST", "/connect-code", JSONObject())).let { it.getString("code") to it.getLong("expiresAt") }
     /** Read-only: the hub asks each remote app whether it is linked and online. */
     suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 
@@ -64,6 +66,19 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
             if (status == 429) throw HubException("RATE_LIMITED", "")
             val o = runCatching { JSONObject(text) }.getOrNull() ?: throw HubException("HTTP_$status", "")
             o.getJSONObject("device").getString("id") to o.getString("secret")
+        }
+
+        /**
+         * A new Gateway on the shared hub gets its own space: the owner secret (kept encrypted here, never shown) and
+         * this phone's channel credential. Nothing to type: no Cloudflare, no token.
+         */
+        suspend fun register(hubUrl: String, phone: String, transport: HubTransport = HttpTransport): Registered = withContext(Dispatchers.IO) {
+            val base = normalize(hubUrl)
+            val (status, text) = try { transport.send("POST", "$base/register", "", JSONObject().put("name", phone.take(40)).toString()) }
+                catch (e: Exception) { throw HubException("NETWORK", "") }
+            if (status == 429) throw HubException("RATE_LIMITED", "")
+            val o = runCatching { JSONObject(text) }.getOrNull()?.takeIf { status in 200..299 } ?: throw HubException("HTTP_$status", "")
+            Registered(base, o.getString("owner"), o.getJSONObject("device").getString("id"), o.getString("secret"))
         }
 
         /** https://host[:port] only: no other scheme, no path, no user info, no query. */

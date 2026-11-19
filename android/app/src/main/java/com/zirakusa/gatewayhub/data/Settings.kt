@@ -15,7 +15,8 @@ data class AppSettings(
     val theme: ThemeChoice = ThemeChoice.NIGHT,
     /** Screenshots are allowed by default; only the person turns this on, inside the app. */
     val blockScreenshots: Boolean = false,
-    val mode: McpMode = McpMode.SAFE,
+    /** Background by default: the AI must reach Stone without Gateway on screen (copy, paste, done). */
+    val mode: McpMode = McpMode.BACKGROUND,
     val activityNotifications: Boolean = true,
     val summaryMinutes: Int = 30,
 ) {

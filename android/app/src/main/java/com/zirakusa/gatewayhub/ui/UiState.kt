@@ -27,6 +27,13 @@ data class UiState(
     val providerApps: List<LocalApp> = emptyList(),
     /** One-use code just made for another phone, and when it expires (ms). */
     val pairing: Pair<String, Long>? = null,
+    /** Joining the shared hub on the first launch, and whether that failed (no internet…). */
+    val starting: Boolean = false,
+    val startFailed: Boolean = false,
+    /** The person chose "I have my own hub": the paste / Cloudflare screen. */
+    val manualLogin: Boolean = false,
+    /** Shared hub: the code to type on the public link's sign-in page, and when it expires (ms). */
+    val connect: Pair<String, Long>? = null,
 )
 
 /** The actions the screens may trigger (the ViewModel in the app, a fake in tests). */
@@ -48,4 +55,6 @@ interface HubActions {
     fun revokePackage(packageName: String, id: String)
     /** Phase 5: other phones. */
     fun createPairing(); fun revokeDevice(id: String); fun leaveHub()
+    /** Shared hub: first launch, "I have my own hub", and a new sign-in code. */
+    fun start() {}; fun useOwnHub() {}; fun newConnectCode() {}
 }

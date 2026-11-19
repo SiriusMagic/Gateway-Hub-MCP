@@ -31,11 +31,11 @@ import org.robolectric.annotation.Config
 class SettingsTest {
     private val context get() = RuntimeEnvironment.getApplication()
 
-    @Test fun defaultsAllowScreenshotsUseSafeModeAndAskTheLanguage() {
+    @Test fun defaultsAllowScreenshotsServeInTheBackgroundAndAskTheLanguage() {
         val d = PrefsSettingsStore(context).load()
         assertNull(d.language)                       // the first launch asks
         assertFalse(d.blockScreenshots)              // screenshots on by default; only the person blocks them
-        assertEquals(McpMode.SAFE, d.mode)
+        assertEquals(McpMode.BACKGROUND, d.mode)          // the AI reaches Stone without Gateway on screen
         assertTrue(d.activityNotifications)
     }
 
