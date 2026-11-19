@@ -29,8 +29,6 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
             .put("readOnly", readOnly).put("days", days)))
     suspend fun setPaused(id: String, paused: Boolean) { call("POST", "/agents/$id/${if (paused) "pause" else "resume"}", JSONObject()) }
     suspend fun revoke(id: String) { call("DELETE", "/agents/$id") }
-    suspend fun linkStone(link: String): String = JSONObject(call("POST", "/stone", JSONObject().put("link", link.trim()))).getString("message")
-    suspend fun unlinkStone() { call("DELETE", "/stone") }
     /** Connects ("active"), pauses or disconnects the whole MCP environment. */
     suspend fun setEnvironment(state: String) { call("POST", "/environment", JSONObject().put("state", state)) }
     /** What ran since [since] (epoch ms). */

@@ -101,9 +101,9 @@ object HubDeployer {
         if (bundle != null) {
             val hub = JSONObject().put("type", "durable_object_namespace").put("name", "HUB").put("class_name", "HubStore")
             val metadata = JSONObject().put("main_module", "index.js").put("compatibility_date", bundle.compatibilityDate)
-            if (created) metadata.put("bindings", JSONArray().put(hub).put(JSONObject().put("type", "plain_text").put("name", "STONE_RELAY_HOST").put("text", "")))
+            if (created) metadata.put("bindings", JSONArray().put(hub))
                 .put("migrations", JSONObject().put("new_tag", "v1").put("new_sqlite_classes", JSONArray().put("HubStore")))
-            // An update keeps the existing variables and secrets (HUB_TOKEN, STONE_RELAY_HOST) and the stored data.
+            // An update keeps the existing secrets (HUB_TOKEN) and the stored data.
             else metadata.put("bindings", JSONArray().put(hub)).put("keep_bindings", JSONArray().put("plain_text").put("secret_text"))
             cf.uploadScript(account, script, metadata, bundle.module)
             if (created) cf.enableWorkersDev(account, script)

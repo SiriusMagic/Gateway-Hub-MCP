@@ -28,7 +28,7 @@ import org.robolectric.Shadows.shadowOf
 /** Phase 1: the local MCP bridge with Stone over a Messenger (read-only, bounded, failures named). */
 @RunWith(RobolectricTestRunner::class)
 class LocalBridgeTest {
-    private val stone = LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.16", "music_", true, "x.hublink", bridge = true)
+    private val stone = LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.16", "music_", true, bridge = true)
     private val app = RuntimeEnvironment.getApplication()
 
     private fun tool(name: String, readOnly: Boolean, probe: Boolean) = JSONObject().put("name", name)

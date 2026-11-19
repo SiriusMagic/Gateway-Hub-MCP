@@ -14,7 +14,7 @@ import { deviceFor } from "./channel/devices.ts";
 import { redeemPairing } from "./channel/pairing.ts";
 import { channelModules } from "./channel/dynamic.ts";
 
-export const VERSION = "0.0.4";
+export const VERSION = "0.0.5";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",

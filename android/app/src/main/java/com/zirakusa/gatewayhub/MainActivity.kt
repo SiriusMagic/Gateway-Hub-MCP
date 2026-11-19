@@ -24,7 +24,6 @@ import com.zirakusa.gatewayhub.data.PrefsLedger
 import com.zirakusa.gatewayhub.data.McpMode
 import com.zirakusa.gatewayhub.data.PackageScanner
 import com.zirakusa.gatewayhub.data.PrefsSettingsStore
-import com.zirakusa.gatewayhub.data.ProviderLinker
 import com.zirakusa.gatewayhub.ui.HomeScreen
 import com.zirakusa.gatewayhub.ui.HubTheme
 import com.zirakusa.gatewayhub.ui.HubViewModel
@@ -53,9 +52,7 @@ class MainActivity : ComponentActivity() {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val linker = ProviderLinker(applicationContext)
-                return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext),
-                    linker, settingsStore = PrefsSettingsStore(applicationContext), modeSender = linker, workerBundle = ::workerBundle, bridge = LocalBridge(applicationContext),
+                return HubViewModel(KeystoreSessionStore(applicationContext), BuildConfig.DEFAULT_HUB_URL, PackageScanner(applicationContext), settingsStore = PrefsSettingsStore(applicationContext), workerBundle = ::workerBundle, bridge = LocalBridge(applicationContext),
                     signer = { KeystoreSigner(applicationContext) }, ledger = PrefsLedger(applicationContext),
                     afterPackages = { ChannelRunner.refresh(applicationContext) }) as T
             }

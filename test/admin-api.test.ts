@@ -1,7 +1,8 @@
 // JSON admin API used by the Android app: owner-only, header-only token, no CORS, same rules as the panel.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { STONE_LINK, TOKEN, hub } from "./helpers.ts";
+import { TOKEN, hub, MemoryStore } from "./helpers.ts";
+import { register } from "../src/channel/registry.ts";
 
 test("only the owner token, and only in the header", async () => {
   const h = hub();
@@ -21,7 +22,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
   const h = hub();
   await h.api("POST", "/agents", { name: "Claude", apps: ["demo_"], readOnly: true, days: 30 });
   const { body } = await h.api("GET", "/state");
-  assert.equal(body.version, "0.0.4");
+  assert.equal(body.version, "0.0.5");
   assert.equal(body.environment, "active");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
   assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "demo_"]);
@@ -56,36 +57,27 @@ test("validation: no name, no apps, unknown apps, bad JSON, unknown route", asyn
   assert.equal(h.store.agents.size, 0);
 });
 
-test("link and unlink Stone through the API", async () => {
-  const h = hub();
-  assert.equal((await h.api("POST", "/stone", { link: "https://evil.example/x" })).body.error.code, "INVALID_LINK");
-  assert.match((await h.api("POST", "/stone", { link: STONE_LINK })).body.message, /vinculado/);
-  assert.equal((await h.api("GET", "/state")).body.stoneLinked, true);
-  await h.api("DELETE", "/stone");
-  assert.equal((await h.api("GET", "/state")).body.stoneLinked, false);
-});
-
-test("scan: built-in apps ready, Stone unlinked / online / offline, read-only", async () => {
-  const { fakeStone, MemoryStore } = await import("./helpers.ts");
-  const stone = fakeStone();
-  const h = hub(new MemoryStore(), stone.fetcher);
+test("scan: built-in apps ready, Stone unlinked / registered offline / online through its channel, read-only", async () => {
+  const store = new MemoryStore();
+  const h = hub(store);
   let apps = (await h.api("GET", "/scan")).body.apps;
   assert.equal(apps.find((a: any) => a.prefix === "demo_").online, true);
-  assert.deepEqual(apps.find((a: any) => a.prefix === "music_").linked, false);
-  await h.api("POST", "/stone", { link: STONE_LINK });
-  apps = (await h.api("GET", "/scan")).body.apps;
-  const music = apps.find((a: any) => a.prefix === "music_");
-  assert.ok(music.linked && music.online && music.tools === 2 && music.remote);
-  assert.ok(stone.calls.every((c) => c.body.method === "tools/list"));          // the scan only reads
-  const offline = hub(h.store, fakeStone({ status: 503 }).fetcher);
-  const down = (await offline.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
-  assert.ok(down.linked && !down.online);
-  assert.match(down.detail, /not open/);
+  assert.equal(apps.find((a: any) => a.prefix === "music_").linked, false);
+  await register(store, "dev1", { providers: [{ app: "com.zirakusa.stone", prefix: "music_", title: "Stone", packages: [] }] });
+  let online = false; const sent: string[] = [];
+  store.channel = { online: () => online, async request(_d, _a, m: any) { sent.push(m.method); return { result: { tools: [] } }; } };
+  let music = (await h.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
+  assert.ok(music.linked && !music.online);
+  online = true;
+  music = (await h.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
+  assert.ok(music.linked && music.online && music.remote);
+  assert.deepEqual(sent, []);                                                             // the scan only reads the registry
+  assert.equal((await h.api("GET", "/state")).body.stoneLinked, true);
 });
-
 test("environment: pause and disconnect stop every tool call; connect brings them back", async () => {
-  const h = hub();
-  await h.api("POST", "/stone", { link: STONE_LINK });
+  const store = new MemoryStore();
+  const h = hub(store);
+  await register(store, "dev1", { providers: [{ app: "com.zirakusa.stone", prefix: "music_", title: "Stone", packages: [] }] });
   const save = () => h.rpc("tools/call", { name: "demo_save", arguments: { key: "k", value: "v" } });
   assert.equal((await save()).body.result.isError, undefined);
   const paused = await h.api("POST", "/environment", { state: "paused" });
@@ -96,7 +88,7 @@ test("environment: pause and disconnect stop every tool call; connect brings the
   assert.equal((await h.rpc("ping")).status, 200);                                    // the link itself still answers
   await h.api("POST", "/environment", { state: "disconnected" });
   assert.equal((await save()).body.result.structuredContent.error.code, "DISCONNECTED");
-  assert.equal((await h.api("GET", "/state")).body.stoneLinked, false);              // disconnect ends Stone's session
+  assert.equal((await h.api("GET", "/state")).body.stoneLinked, false);              // disconnect forgets the phones' apps
   await h.api("POST", "/environment", { state: "active" });
   assert.equal((await save()).body.result.isError, undefined);
   assert.equal((await h.api("POST", "/environment", { state: "off" })).body.error.code, "INVALID_ARGUMENT");

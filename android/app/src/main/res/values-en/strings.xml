@@ -24,9 +24,6 @@
     </plurals>
     <string name="scan_offline">Linked, offline</string>
     <string name="scan_open">Open</string>
-    <string name="scan_auto_link">Link automatically</string>
-    <string name="scanner_sync">Automatic sync</string>
-    <string name="scanner_sync_hint">When scanning, links by themselves the apps of the same developer that have \"Hub redirect\" on.</string>
     <string name="link_permission">link apps with Gateway Hub</string>
     <string name="tab_metrics">Metrics</string>
     <string name="refresh">Refresh</string>
@@ -68,12 +65,8 @@
     <string name="app_ready">Ready</string>
     <string name="app_linked">Linked</string>
     <string name="app_unlinked">Not linked</string>
-    <string name="stone_title">Link Stone</string>
     <string name="stone_hint">In Stone: Settings › API mode › Gateway Hub › Link. That copies a link only for the hub; paste it here.</string>
-    <string name="stone_link">Stone link</string>
     <string name="paste">Paste</string>
-    <string name="link">Link</string>
-    <string name="unlink">Unlink Stone</string>
     <string name="metrics_day">Last 24 h</string>
     <string name="metrics_week">Last 7 days</string>
     <string name="metrics_calls">calls</string>
@@ -90,7 +83,6 @@
     <string name="note_paused">Link paused.</string>
     <string name="note_resumed">Link resumed.</string>
     <string name="note_revoked">Link revoked: it stops working now.</string>
-    <string name="note_unlinked">Stone unlinked.</string>
     <string name="err_network">Could not reach the hub. Check the address and your connection.</string>
     <string name="err_unauthorized">Wrong owner token.</string>
     <string name="err_rate_limited">Too many attempts. Wait a minute.</string>

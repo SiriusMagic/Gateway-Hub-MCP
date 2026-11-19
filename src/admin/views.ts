@@ -21,11 +21,7 @@ const date = (ms: number) => ms ? new Date(ms).toISOString().slice(0, 16).replac
 function appsCard(d: PanelData): string {
   const rows = d.modules.map((m) => `<li><b>${esc(m.title)}</b> <small>${esc(m.prefix)}*</small>${m.prefix === "music_"
     ? (d.stoneLinked ? ' <span class="good">vinculado</span>' : ' <span class="bad">sin vincular</span>') : ' <span class="good">listo</span>'}</li>`).join("");
-  const stone = form(d.token, "link_stone", `<label for="l">Enlace de Stone</label>
-<input id="l" name="link" type="url" placeholder="https://…/d/…/mcp?token=stn_…" required>
-<small>Stone › Ajustes › Modo API › Gateway Hub › Vincular (copia un enlace solo para el hub).</small><br><button>Vincular Stone</button>`);
-  const unlink = d.stoneLinked ? form(d.token, "unlink_stone", `<button class="ghost">Desvincular Stone</button>`) : "";
-  return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}</div>`;
+  return `<div class="card"><h2>Apps</h2><ul>${rows}</ul><small>Stone y las demás apps se vinculan desde la app Gateway Hub del teléfono (Escáner › Vincular).</small></div>`;
 }
 
 const ENV_LABEL = { active: '<span class="good">conectado</span>', paused: '<span class="bad">en pausa</span>',

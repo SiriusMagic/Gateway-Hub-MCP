@@ -2,8 +2,6 @@
 // the Android app. Validation lives here, once.
 import { type Agent, type HubAdminStore, type HubContext, type HubModule, type HubStoreApi, ToolError } from "../modules/types.ts";
 import { MAX_AGENTS, agentStatus, newAgentToken, newId, sha256Hex } from "../agents.ts";
-import { parseStoneLink, stoneRpc } from "../modules/music/stone.ts";
-import { savedLink } from "../modules/music/index.ts";
 import { environmentState, setEnvironmentState } from "../environment.ts";
 import { listDevices } from "../channel/devices.ts";
 import { providers } from "../channel/registry.ts";
@@ -20,7 +18,7 @@ export async function overview(store: AdminStore, ctx: HubContext, modules: HubM
   return {
     version,
     modules: modules.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary, androidPackage: m.androidPackage ?? null })),
-    stoneLinked: !!await savedLink(ctx),
+    stoneLinked: !!(await providers(store))["music_"],
     environment: await environmentState(store),
     devices: await devicesView(store, ctx),
     agents: (await store.agentsList()).map(publicAgent),
@@ -39,22 +37,6 @@ export async function scan(ctx: HubContext, modules: HubModule[]) {
     return { prefix: m.prefix, title: m.title, androidPackage: m.androidPackage ?? null, remote: !!m.status, ...status };
   }));
   return { scannedAt: Date.now(), apps: results };
-}
-
-/** Saves Stone's link after checking it; a token Stone rejects is never saved. Returns a note for the owner. */
-export async function linkStone(store: AdminStore, ctx: HubContext, raw: string): Promise<string> {
-  const link = parseStoneLink(raw, ctx.env.STONE_RELAY_HOST);
-  let note = "Stone vinculado y en línea.";
-  try { await stoneRpc(ctx, link, "tools/list", {}, 8_000); } catch (error) {
-    if ((error as ToolError).code === "STONE_TOKEN") throw error;
-    note = "Stone vinculado. Ahora no responde: abre Stone con el Modo API activado.";
-  }
-  await store.setConfig("music.link", JSON.stringify(link)); await store.setConfig("music.tools", null);
-  return note;
-}
-
-export async function unlinkStone(store: AdminStore) {
-  await store.setConfig("music.link", null); await store.setConfig("music.tools", null);
 }
 
 export interface NewAgent { name: string; apps: string[]; readOnly: boolean; days: number }

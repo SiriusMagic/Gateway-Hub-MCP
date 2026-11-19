@@ -6,7 +6,7 @@ import { environmentState } from "../environment.ts";
 import { createDevice, deleteDevice } from "../channel/devices.ts";
 import { createPairing } from "../channel/pairing.ts";
 import { devicesView } from "./service.ts";
-import { type AdminStore, DAY, changeEnvironment, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
+import { type AdminStore, DAY, changeEnvironment, createAgent, overview, scan, setPaused } from "./service.ts";
 
 export interface ApiDeps {
   store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string;
@@ -36,8 +36,6 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
       return ok({ environment: await environmentState(store), ...await store.metricsSummary(since) });
     }
     if (path === "/scan" && method === "GET") return ok(await scan(ctx, modules));
-    if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
-    if (path === "/stone" && method === "DELETE") { await unlinkStone(store); return ok({ message: "Stone desvinculado." }); }
     if (path === "/environment" && method === "POST") return ok(await changeEnvironment(store, String(body.state ?? "")));
     if (path === "/pairing" && method === "POST") return ok(await createPairing(store));
     if (path === "/devices" && method === "GET") return ok({ devices: await devicesView(store, ctx) });

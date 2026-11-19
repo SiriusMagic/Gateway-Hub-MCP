@@ -15,10 +15,8 @@ class HubViewModel(
     private val sessions: SessionStore,
     private val defaultUrl: String,
     private val localApps: LocalAppSource = LocalAppSource { emptyList() },
-    private val linker: AppLinker = AppLinker { LinkAnswer(null, "NOT_SUPPORTED", null) },
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
     private val settingsStore: SettingsStore = MemorySettingsStore(),
-    private val modeSender: ModeSender = ModeSender { _, _ -> false },
     newCloudflare: (String) -> CloudflareApi = { CloudflareApi(it) },
     workerBundle: () -> WorkerBundle? = { null },
     bridge: BridgeConnector = BridgeConnector.None,
@@ -30,13 +28,12 @@ class HubViewModel(
     private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
     val state: StateFlow<UiState> = mutable
     private var api: HubApi? = null
-    private val sync = AppSync(localApps, linker) { requireApi() }
     private val providers = ProviderFlow(bridge, signer, ledger, localApps)
     private val cloudflare = CloudflareFlow(newCloudflare, workerBundle)
     private val phones = PhoneFlow(sessions, hubTransport)
 
     init {
-        mutable.update { it.copy(autoSync = sessions.flag("autoSync", true), packages = ledger.packages(), providerApps = providerApps(),
+        mutable.update { it.copy(packages = ledger.packages(), providerApps = providerApps(),
             satellite = phones.satelliteHub() != null, hubUrl = phones.satelliteHub() ?: it.hubUrl) }
         sendMode()
         sessions.load()?.let { (url, token) ->
@@ -69,30 +66,17 @@ class HubViewModel(
 
     override fun setPaused(id: String, paused: Boolean) = run { requireApi().setPaused(id, paused); reload(); UiText.Res(if (paused) R.string.note_paused else R.string.note_resumed) }
     override fun revoke(id: String) = run { requireApi().revoke(id); reload(); UiText.Res(R.string.note_revoked) }
-    override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); UiText.Raw(note) }
-    override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); UiText.Res(R.string.note_unlinked) }
 
-    /** Connect, pause or disconnect the MCP environment (the hub enforces it); reconnecting relinks Stone. */
+    /** Connect, pause or disconnect the MCP environment (the hub enforces it); connecting registers the phone's apps again. */
     override fun setEnvironment(target: String) = run {
-        val wasDisconnected = mutable.value.hub?.environment == ENV_DISCONNECTED
         requireApi().setEnvironment(target); providers.pushState(target, mutable.value.settings.mode.name.lowercase())
-        val relinked = if (target == ENV_ACTIVE && wasDisconnected && mutable.value.autoSync) sync.scanAndLink { scan -> mutable.update { it.copy(scan = scan) } } else emptyList()
+        if (target == ENV_ACTIVE) afterPackages()
         reload()
-        val note = UiText.Res(when (target) { ENV_PAUSED -> R.string.env_note_paused; ENV_DISCONNECTED -> R.string.env_note_disconnected; else -> R.string.env_note_active })
-        if (relinked.isEmpty()) note else UiText.Lines(listOf(note) + relinked)
+        UiText.Res(when (target) { ENV_PAUSED -> R.string.env_note_paused; ENV_DISCONNECTED -> R.string.env_note_disconnected; else -> R.string.env_note_active })
     }
 
-    /** Read-only scan; with [UiState.autoSync] it also links the apps that allow it (see [AppSync]). */
-    override fun scan() = run {
-        val notes = if (mutable.value.autoSync) sync.scanAndLink { scan -> mutable.update { it.copy(scan = scan) } } else { mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }; emptyList() }
-        notes.takeIf { it.isNotEmpty() }?.let { UiText.Lines(it) }
-    }
-
-    /** Links one app now (button "Vincular automáticamente"). */
-    override fun autoLink(packageName: String) = run {
-        val row = mutable.value.scan?.firstOrNull { it.local?.packageName == packageName }
-        sync.link(row?.local, row?.remote, force = true).also { mutable.update { s -> s.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) } }
-    }
+    /** Read-only: the apps on this phone that work with the hub, and what the hub says about each. */
+    override fun scan() = run { mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }; null }
 
     override fun testBridge(packageName: String) = providers(packageName) { providers.test(it) }
     override fun linkProvider(packageName: String) = providers(packageName) { providers.link(it, mutable.value.hub?.environment ?: ENV_ACTIVE, mutable.value.settings.mode.name.lowercase()) }
@@ -108,24 +92,22 @@ class HubViewModel(
     override fun revokeDevice(id: String) = run { requireApi().deleteDevice(id); reload(); UiText.Res(R.string.phone_revoked) }
     private fun providerApps() = runCatching { localApps.installed().filter { it.bridge && it.sameDeveloper } }.getOrDefault(emptyList())
 
-    override fun setAutoSync(on: Boolean) { sessions.setFlag("autoSync", on); mutable.update { it.copy(autoSync = on) } }
-
     override fun updateSettings(change: (AppSettings) -> AppSettings) {
         val next = change(mutable.value.settings)
         val modeChanged = next.mode != mutable.value.settings.mode
         settingsStore.save(next); mutable.update { it.copy(settings = next) }; if (modeChanged) sendMode()
     }
 
-    /** Tells Stone (same developer) the chosen mode, at start and on every change. */
+    /** Tells the linked apps (Stone) the chosen mode, at start and on every change, over the local bridge. */
     private fun sendMode() = mutable.value.let { s -> viewModelScope.launch(Dispatchers.IO) {
-        sync.sendMode(modeSender, s.settings.mode); providers.pushState(s.hub?.environment ?: ENV_ACTIVE, s.settings.mode.name.lowercase()) } }
+        providers.pushState(s.hub?.environment ?: ENV_ACTIVE, s.settings.mode.name.lowercase()) } }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }
     override fun dismissMessage() = mutable.update { it.copy(error = null, notice = null) }
 
     override fun logout() {
         sessions.clear(); api = null
-        mutable.update { UiState(hubUrl = it.hubUrl, autoSync = it.autoSync, settings = it.settings) }
+        mutable.update { UiState(hubUrl = it.hubUrl, settings = it.settings) }
     }
 
     private suspend fun reload() = mutable.update { it.copy(hub = requireApi().state()) }

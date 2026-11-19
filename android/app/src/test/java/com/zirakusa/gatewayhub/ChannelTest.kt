@@ -71,9 +71,9 @@ class ChannelTest {
             saveInstance(stone, "inst_1")
             savePackages(listOf(IssuedPackage("pkg_abcdefgh01", stone, "*", "Lectura", listOf("leer"), 99, "active")))
         }
-        val apps = listOf(LocalApp(stone, "Stone", "1", "music_", true, "x", bridge = true),
-            LocalApp("com.not.linked", "Otra", "1", "other_", true, "y", bridge = true),
-            LocalApp("com.stranger", "Ajena", "1", "evil_", false, "z", bridge = true))
+        val apps = listOf(LocalApp(stone, "Stone", "1", "music_", true, bridge = true),
+            LocalApp("com.not.linked", "Otra", "1", "other_", true, bridge = true),
+            LocalApp("com.stranger", "Ajena", "1", "evil_", false, bridge = true))
         val r = JSONObject(ChannelRunner.registration(ledger) { apps })
         assertEquals("register", r.getString("t"))
         val providers = r.getJSONArray("providers")

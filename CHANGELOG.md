@@ -1,3 +1,15 @@
+# Sin publicar (fase 7) · hub 0.0.5
+
+## Fase 7: adiós al relay
+
+- El hub ya no tiene el camino por el relay: `music_` llega a Stone solo por el canal del teléfono (Gateway). Sin
+  teléfono conectado responde `PROVIDER_OFFLINE`. Se quitan `STONE_RELAY_HOST`, `/api/admin/stone` y «Vincular Stone»
+  por enlace.
+- Gateway: fuera la vinculación por HubLink (Sincronización automática, «Vincular sola», pegar enlace de Stone) y el
+  envío del modo por `ContentProvider`. El modo y el entorno viajan solo por el puente (`gatewayhub/state`).
+- Stone: se borra la carpeta `relay/`. El Worker `stone-relay` se puede borrar en Cloudflare.
+- Para actualizar: Gateway › Ajustes › Cloudflare › «Actualizar mi hub» (o `npx wrangler deploy`).
+
 # Gateway Hub 0.0.8 (app) · hub 0.0.4
 
 Publica las fases 2 a 6. Necesita Stone 1.7.18.
@@ -7,7 +19,7 @@ Publica las fases 2 a 6. Necesita Stone 1.7.18.
 - Gateway envía el estado del entorno y el modo (seguro / segundo plano) a cada app vinculada por el puente
   (`gatewayhub/state`), al vincular, al cambiar el modo y al conectar, pausar o desconectar. Stone 1.7.18 ya no tiene
   HubLink: aplica el modo seguro sola (solo responde con Stone en pantalla).
-- El hub conserva el camino por el relay solo para Stone anteriores; se retirará con el Worker `stone-relay`.
+- El hub conserva el camino por el relay solo para Stone anteriores; se retiró en la fase 7.
 
 ## Fase 5: varios teléfonos
 

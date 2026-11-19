@@ -21,28 +21,20 @@ import com.zirakusa.gatewayhub.data.ScannedApp
 
 /** Finds compatible apps and their state without turning anything on (the hub only sends tools/list). */
 @OptIn(ExperimentalLayoutApi::class)
-@Composable fun ScannerList(apps: List<ScannedApp>?, busy: Boolean, autoSync: Boolean, scan: () -> Unit,
-    setAutoSync: (Boolean) -> Unit, autoLink: (String) -> Unit, providers: ProvidersUi = ProvidersUi()) {
+@Composable fun ScannerList(apps: List<ScannedApp>?, busy: Boolean, scan: () -> Unit, providers: ProvidersUi = ProvidersUi()) {
     HubCard {
         Text(stringResource(R.string.scanner_title), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         Text(stringResource(R.string.scanner_hint), Modifier.padding(top = 4.dp), color = HubColors.Muted, fontSize = 13.sp)
-        Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.scanner_sync), fontWeight = FontWeight.SemiBold)
-                Text(stringResource(R.string.scanner_sync_hint), color = HubColors.Muted, fontSize = 12.sp)
-            }
-            Switch(autoSync, setAutoSync, Modifier.padding(start = 8.dp))
-        }
         Button(scan, Modifier.fillMaxWidth().padding(top = 10.dp), enabled = !busy) {
             Icon(Icons.Default.Radar, null, Modifier.size(18.dp)); Text(stringResource(R.string.scanner_run), Modifier.padding(start = 6.dp))
         }
     }
-    apps?.forEach { ScannedCard(it, busy, autoLink, providers) }
+    apps?.forEach { ScannedCard(it, busy, providers) }
     if (apps?.isEmpty() == true) Text(stringResource(R.string.scanner_none), Modifier.padding(16.dp), color = HubColors.Muted)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun ScannedCard(app: ScannedApp, busy: Boolean, autoLink: (String) -> Unit, providers: ProvidersUi) {
+@Composable private fun ScannedCard(app: ScannedApp, busy: Boolean, providers: ProvidersUi) {
     val context = LocalContext.current
     val local = app.local; val remote = app.remote
     HubCard {
@@ -66,8 +58,6 @@ import com.zirakusa.gatewayhub.data.ScannedApp
         }
         remote?.detail?.takeIf { remote.remote }?.let { Text(it, Modifier.padding(top = 6.dp), color = HubColors.Muted, fontSize = 13.sp) }
         if (local != null) Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            if (local.sameDeveloper && local.linkAuthority != null && remote?.remote == true)
-                TextButton({ autoLink(local.packageName) }, enabled = !busy) { Text(stringResource(R.string.scan_auto_link)) }
             OutlinedButton({
                 // Opens the app's own "connect to the hub" screen; the app decides what to do (nothing is turned on here).
                 try { context.startActivity(Intent(PackageScanner.ACTION).addCategory(Intent.CATEGORY_DEFAULT).setPackage(local.packageName)

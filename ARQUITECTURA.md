@@ -21,7 +21,7 @@ gateway-hub-mcp/
 │   └── modules/            # UNA CARPETA POR APP
 │       ├── types.ts        # Contrato HubModule (lo único que un módulo necesita conocer)
 │       ├── index.ts        # Lista de apps: añadir una = una línea
-│       └── music/          # Stone a través de su relay (la única app hoy)
+│       └── music/          # Stone por el canal del teléfono (la única app hoy)
 ├── test/                   # node --test (sin dependencias)
 ├── android/                # App Android del propietario (Kotlin + Compose) → android/README.md
 │   └── app/src/main/java/com/zirakusa/gatewayhub/

@@ -106,10 +106,7 @@ __name(environmentState, "environmentState");
 async function setEnvironmentState(store, raw) {
   const state = raw;
   if (!ENVIRONMENT_STATES.includes(state)) throw new ToolError("INVALID_ARGUMENT", "Estado: active, paused o disconnected.");
-  if (state === "disconnected") {
-    await store.setConfig("music.link", null);
-    await store.setConfig("music.tools", null);
-  }
+  if (state === "disconnected") await store.setConfig("channel.providers", null);
   await store.setConfig(KEY, state === "active" ? null : state);
   return state;
 }
@@ -288,49 +285,6 @@ function createRouter(modules2) {
 }
 __name(createRouter, "createRouter");
 
-// src/modules/music/stone.ts
-var TOKEN = /^(stn_[A-Za-z0-9_-]{20,100}|[0-9a-f]{32,128})$/;
-var local = /* @__PURE__ */ __name((host) => /^(127\.0\.0\.1|localhost)(:\d+)?$/.test(host), "local");
-function parseStoneLink(link, relayHost) {
-  let url;
-  try {
-    url = new URL(link.trim());
-  } catch {
-    throw new ToolError("INVALID_LINK", "That is not a link.");
-  }
-  const scheme = local(relayHost) ? "http:" : "https:";
-  if (url.protocol !== scheme || url.host !== relayHost)
-    throw new ToolError("INVALID_LINK", `Only links of ${relayHost} (copied from Stone) are accepted.`);
-  if (!/^\/d\/[a-z0-9]{12,40}\/mcp$/.test(url.pathname))
-    throw new ToolError("INVALID_LINK", "The link must end in /d/<phone>/mcp?token=\u2026 (Stone \u203A Ajustes \u203A Modo API \u203A Copiar).");
-  const token = url.searchParams.get("token") ?? "";
-  if (!TOKEN.test(token)) throw new ToolError("INVALID_LINK", "The link has no valid Stone token (?token=stn_\u2026).");
-  return { endpoint: url.origin + url.pathname, token };
-}
-__name(parseStoneLink, "parseStoneLink");
-async function stoneRpc(ctx, link, method, params, timeoutMs) {
-  let response;
-  try {
-    response = await ctx.fetch(link.endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${link.token}` },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-      signal: AbortSignal.timeout(timeoutMs)
-    });
-  } catch {
-    throw new ToolError("STONE_UNREACHABLE", "Stone did not answer in time. Is Stone open with API mode on?");
-  }
-  if (response.status === 401 || response.status === 403)
-    throw new ToolError("STONE_TOKEN", "Stone rejected the token saved in the hub (revoked, paused or expired). Link Stone again in /admin.");
-  if (response.status === 503) throw new ToolError("STONE_OFFLINE", "Stone is not open on the phone, or API mode is off.");
-  if (response.status === 429) throw new ToolError("RATE_LIMITED", "Stone is limiting requests. Wait a minute.");
-  if (!response.ok) throw new ToolError("STONE_ERROR", `Stone answered HTTP ${response.status}.`);
-  const reply = await response.json();
-  if (reply.error) throw new ToolError("STONE_ERROR", reply.error.message ?? "Stone returned an error.");
-  return reply.result;
-}
-__name(stoneRpc, "stoneRpc");
-
 // src/channel/registry.ts
 var KEY2 = "channel.providers";
 var PREFIX2 = /^[a-z][a-z0-9]{0,15}_$/;
@@ -356,7 +310,10 @@ async function register(store, device, message) {
   const list = Array.isArray(message.providers) ? message.providers.slice(0, 10) : [];
   for (const raw of list) {
     const prefix = String(raw?.prefix ?? ""), app = String(raw?.app ?? "");
-    if (!PREFIX2.test(prefix) || !APP.test(app) || all[prefix] && all[prefix].device !== device) continue;
+    if (!PREFIX2.test(prefix) || !APP.test(app)) continue;
+    const base = prefix.slice(0, -1).slice(0, 14);
+    const free = [prefix, ...[2, 3, 4, 5, 6, 7, 8, 9].map((n) => `${base}${n}_`)].find((p) => !all[p] || all[p].device === device);
+    if (!free) continue;
     const packages = (Array.isArray(raw.packages) ? raw.packages : []).slice(0, MAX_PACKAGES).map((p) => ({
       id: String(p?.id ?? ""),
       agent: String(p?.agent ?? ""),
@@ -365,7 +322,7 @@ async function register(store, device, message) {
       exp: Number(p?.exp) || 0,
       status: String(p?.status ?? "")
     })).filter((p) => ID.test(p.id) && /^(\*|[A-Za-z0-9_-]{1,40})$/.test(p.agent));
-    all[prefix] = { device, app, prefix, title: String(raw.title ?? app).slice(0, 60), packages, seen: Date.now() };
+    all[free] = { device, app, prefix: free, title: String(raw.title ?? app).slice(0, 60), packages, seen: Date.now() };
   }
   await store.setConfig(KEY2, JSON.stringify(all));
 }
@@ -420,30 +377,9 @@ __name(channelCall, "channelCall");
 
 // src/modules/music/index.ts
 var MUSIC = "music_";
-var LIST_TTL_MS = 10 * 6e4;
-async function savedLink(ctx) {
-  const raw = await ctx.store.getConfig("music.link");
-  return raw ? JSON.parse(raw) : null;
-}
-__name(savedLink, "savedLink");
-async function stoneTools(ctx, link) {
-  const cached = await ctx.store.getConfig("music.tools");
-  const saved = cached ? JSON.parse(cached) : null;
-  if (saved && Date.now() - saved.at < LIST_TTL_MS) return saved.tools;
-  try {
-    const result = await stoneRpc(ctx, link, "tools/list", {}, 6e3);
-    const tools = (result.tools ?? []).map((t) => ({ ...t, name: MUSIC + t.name, description: `[Stone] ${t.description}` }));
-    await ctx.store.setConfig("music.tools", JSON.stringify({ at: Date.now(), tools }));
-    return tools;
-  } catch (error) {
-    if (saved) return saved.tools;
-    throw error;
-  }
-}
-__name(stoneTools, "stoneTools");
 var statusTool = {
   name: "music_status",
-  description: "Whether Stone is linked to the hub and reachable, and how many Stone tools there are.",
+  description: "Whether Stone is connected to the hub through its phone's Gateway Hub app.",
   inputSchema: { type: "object", properties: {} },
   annotations: { title: "Estado de Stone", readOnlyHint: true }
 };
@@ -457,49 +393,23 @@ var musicModule = {
   async status(ctx) {
     const route = await channelRoute(ctx, MUSIC);
     if (route) return { linked: true, online: true, tools: route.packages.length, detail: "En l\xEDnea por el canal de Gateway Hub." };
-    const link = await savedLink(ctx);
-    if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Stone, Modo API \u203A Gateway Hub \u203A Vincular." };
-    try {
-      const tools = (await stoneRpc(ctx, link, "tools/list", {}, 6e3)).tools?.length ?? 0;
-      return { linked: true, online: true, tools, detail: "Vinculado y en l\xEDnea." };
-    } catch (error) {
-      return { linked: true, online: false, tools: 0, detail: error.message };
-    }
+    const linked = !!await providerFor(ctx.store, MUSIC);
+    return { linked, online: false, tools: 0, detail: linked ? "Vinculada; abre Gateway Hub en el tel\xE9fono de Stone." : "Sin vincular: Gateway Hub \u203A Esc\xE1ner \u203A Stone \u203A Vincular." };
   },
   async tools(ctx) {
     const route = await channelRoute(ctx, MUSIC);
-    if (route) {
-      try {
-        return [statusTool, ...await channelTools(ctx, route)];
-      } catch {
-        return [statusTool];
-      }
-    }
-    const link = await savedLink(ctx);
-    if (!link) return [statusTool];
+    if (!route) return [statusTool];
     try {
-      return [statusTool, ...await stoneTools(ctx, link)];
+      return [statusTool, ...await channelTools(ctx, route)];
     } catch {
       return [statusTool];
     }
   },
   async call(name, args, ctx) {
     const route = await channelRoute(ctx, MUSIC);
-    if (name === "music_status" && route) return text("Stone is connected through Gateway Hub (phone channel).", { linked: true, online: true, via: "channel" });
-    if (route) return channelCall(ctx, route, name, args);
-    const link = await savedLink(ctx);
-    if (name === "music_status") {
-      if (!link) return text("Stone is not linked. The owner opens <hub>/admin and pastes the link copied from Stone.", { linked: false });
-      try {
-        const tools = (await stoneRpc(ctx, link, "tools/list", {}, 6e3)).tools?.length ?? 0;
-        return text(`Stone is linked and online (${tools} tools).`, { linked: true, online: true, tools });
-      } catch (error) {
-        return text(`Stone is linked but not reachable: ${error.message}`, { linked: true, online: false });
-      }
-    }
-    if (!link) throw new ToolError("NOT_LINKED", "Stone is not linked to the hub yet (owner: open /admin).");
-    const result = await stoneRpc(ctx, link, "tools/call", { name: name.slice(MUSIC.length), arguments: args }, 75e3);
-    return result;
+    if (name === "music_status") return route ? text("Stone is connected through Gateway Hub.", { linked: true, online: true }) : text("Stone is not connected: the owner opens Gateway Hub on the phone with Stone.", { linked: false, online: false });
+    if (!route) throw new ToolError("PROVIDER_OFFLINE", "Stone is not connected right now (open Gateway Hub on the phone).");
+    return channelCall(ctx, route, name, args);
   }
 };
 
@@ -549,11 +459,7 @@ ${message ? `<p class="bad">${esc(message)}</p>` : ""}
 var date = /* @__PURE__ */ __name((ms) => ms ? new Date(ms).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "nunca", "date");
 function appsCard(d) {
   const rows = d.modules.map((m) => `<li><b>${esc(m.title)}</b> <small>${esc(m.prefix)}*</small>${m.prefix === "music_" ? d.stoneLinked ? ' <span class="good">vinculado</span>' : ' <span class="bad">sin vincular</span>' : ' <span class="good">listo</span>'}</li>`).join("");
-  const stone = form(d.token, "link_stone", `<label for="l">Enlace de Stone</label>
-<input id="l" name="link" type="url" placeholder="https://\u2026/d/\u2026/mcp?token=stn_\u2026" required>
-<small>Stone \u203A Ajustes \u203A Modo API \u203A Gateway Hub \u203A Vincular (copia un enlace solo para el hub).</small><br><button>Vincular Stone</button>`);
-  const unlink = d.stoneLinked ? form(d.token, "unlink_stone", `<button class="ghost">Desvincular Stone</button>`) : "";
-  return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}</div>`;
+  return `<div class="card"><h2>Apps</h2><ul>${rows}</ul><small>Stone y las dem\xE1s apps se vinculan desde la app Gateway Hub del tel\xE9fono (Esc\xE1ner \u203A Vincular).</small></div>`;
 }
 __name(appsCard, "appsCard");
 var ENV_LABEL = {
@@ -660,7 +566,7 @@ async function overview(store, ctx, modules2, version) {
   return {
     version,
     modules: modules2.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary, androidPackage: m.androidPackage ?? null })),
-    stoneLinked: !!await savedLink(ctx),
+    stoneLinked: !!(await providers(store))["music_"],
     environment: await environmentState(store),
     devices: await devicesView(store, ctx),
     agents: (await store.agentsList()).map(publicAgent),
@@ -676,25 +582,6 @@ async function scan(ctx, modules2) {
   return { scannedAt: Date.now(), apps: results };
 }
 __name(scan, "scan");
-async function linkStone(store, ctx, raw) {
-  const link = parseStoneLink(raw, ctx.env.STONE_RELAY_HOST);
-  let note = "Stone vinculado y en l\xEDnea.";
-  try {
-    await stoneRpc(ctx, link, "tools/list", {}, 8e3);
-  } catch (error) {
-    if (error.code === "STONE_TOKEN") throw error;
-    note = "Stone vinculado. Ahora no responde: abre Stone con el Modo API activado.";
-  }
-  await store.setConfig("music.link", JSON.stringify(link));
-  await store.setConfig("music.tools", null);
-  return note;
-}
-__name(linkStone, "linkStone");
-async function unlinkStone(store) {
-  await store.setConfig("music.link", null);
-  await store.setConfig("music.tools", null);
-}
-__name(unlinkStone, "unlinkStone");
 async function createAgent(store, modules2, origin, input) {
   const name = String(input.name ?? "").trim().slice(0, 40);
   if (!name) throw new ToolError("INVALID_ARGUMENT", "Ponle un nombre al agente.");
@@ -760,7 +647,7 @@ async function handleAdmin(request, url, deps) {
   const form2 = await request.formData();
   const pasted = String(form2.get("token") ?? "");
   if (/stn_[A-Za-z0-9_-]{10,}|\/d\/[a-z0-9]{12,40}\/mcp/.test(pasted))
-    return html(400, loginPage("Eso es un enlace de Stone. Aqu\xED va el token del propietario (hub_\u2026); el enlace de Stone se pega luego en Apps."), security);
+    return html(400, loginPage("Eso es un enlace de Stone. Aqu\xED va el token del propietario (hub_\u2026); Stone se vincula desde la app Gateway Hub."), security);
   const token = ownerTokenFrom(pasted);
   if (!await deps.isOwner(token)) return html(401, loginPage("Token del propietario incorrecto."), security);
   const view = /* @__PURE__ */ __name(async (extra = {}, status = 200) => {
@@ -769,7 +656,7 @@ async function handleAdmin(request, url, deps) {
       token,
       origin: url.origin,
       modules: modules2,
-      stoneLinked: !!await savedLink(ctx),
+      stoneLinked: !!(await providers(store))["music_"],
       environment: await environmentState(store),
       agents: await store.agentsList(),
       day: await store.metricsSummary(now - DAY),
@@ -784,13 +671,8 @@ async function handleAdmin(request, url, deps) {
     switch (field("action")) {
       case "login":
         return view();
-      case "link_stone":
-        return view({ notice: { text: await linkStone(store, ctx, field("link")) } });
       case "environment":
         return view({ notice: { text: (await changeEnvironment(store, field("state"))).message } });
-      case "unlink_stone":
-        await unlinkStone(store);
-        return view({ notice: { text: "Stone desvinculado." } });
       case "agent_create": {
         const made = await createAgent(
           store,
@@ -816,6 +698,32 @@ async function handleAdmin(request, url, deps) {
 }
 __name(handleAdmin, "handleAdmin");
 
+// src/channel/pairing.ts
+var KEY4 = "channel.pairing";
+var ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+var PAIRING_MS = 5 * 6e4;
+async function createPairing(store, now = Date.now()) {
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  const code = [...bytes].map((b) => ALPHABET[b % ALPHABET.length]).join("");
+  await store.setConfig(KEY4, JSON.stringify({ hash: await sha256Hex(code), expiresAt: now + PAIRING_MS }));
+  return { code, expiresAt: now + PAIRING_MS };
+}
+__name(createPairing, "createPairing");
+async function redeemPairing(store, rawCode, name, now = Date.now()) {
+  const code = String(rawCode ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const saved = await store.getConfig(KEY4);
+  if (!saved || code.length !== 10) return null;
+  const { hash, expiresAt } = JSON.parse(saved);
+  if (now > expiresAt) {
+    await store.setConfig(KEY4, null);
+    return null;
+  }
+  if (!await sameSecret(await sha256Hex(code), hash)) return null;
+  await store.setConfig(KEY4, null);
+  return createDevice(store, name);
+}
+__name(redeemPairing, "redeemPairing");
+
 // src/admin/api.ts
 var send2 = /* @__PURE__ */ __name((status, body, security) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...security } }), "send");
 async function handleAdminApi(request, url, deps) {
@@ -840,12 +748,8 @@ async function handleAdminApi(request, url, deps) {
       return ok({ environment: await environmentState(store), ...await store.metricsSummary(since) });
     }
     if (path === "/scan" && method === "GET") return ok(await scan(ctx, modules2));
-    if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
-    if (path === "/stone" && method === "DELETE") {
-      await unlinkStone(store);
-      return ok({ message: "Stone desvinculado." });
-    }
     if (path === "/environment" && method === "POST") return ok(await changeEnvironment(store, String(body.state ?? "")));
+    if (path === "/pairing" && method === "POST") return ok(await createPairing(store));
     if (path === "/devices" && method === "GET") return ok({ devices: await devicesView(store, ctx) });
     if (path === "/devices" && method === "POST") return ok(await createDevice(store, String(body.name ?? "")));
     const device = /^\/devices\/([0-9a-f]{12})$/.exec(path);
@@ -876,8 +780,39 @@ async function handleAdminApi(request, url, deps) {
 }
 __name(handleAdminApi, "handleAdminApi");
 
+// src/channel/dynamic.ts
+var overlaps = /* @__PURE__ */ __name((a, b) => a.startsWith(b) || b.startsWith(a), "overlaps");
+async function channelModules(ctx, builtIn) {
+  const taken = builtIn.map((m) => m.prefix);
+  const out = [];
+  for (const record of Object.values(await providers(ctx.store))) {
+    if (taken.some((p) => overlaps(p, record.prefix))) continue;
+    taken.push(record.prefix);
+    const online = /* @__PURE__ */ __name(() => !!ctx.channel?.online(record.device), "online");
+    out.push({
+      prefix: record.prefix,
+      title: record.title,
+      summary: `${record.title} on another phone (through Gateway Hub).`,
+      androidPackage: record.app,
+      validatesOwnArgs: true,
+      async status() {
+        return { linked: true, online: online(), tools: record.packages.length, detail: online() ? "En l\xEDnea por el canal." : "Tel\xE9fono sin conectar." };
+      },
+      async tools(c) {
+        return online() ? channelTools(c, record) : [];
+      },
+      async call(name, args, c) {
+        if (!online()) throw new ToolError("PROVIDER_OFFLINE", "That phone is not connected to the hub right now.");
+        return channelCall(c, record, name, args);
+      }
+    });
+  }
+  return out;
+}
+__name(channelModules, "channelModules");
+
 // src/serve.ts
-var VERSION = "0.0.4";
+var VERSION = "0.0.5";
 var MAX_BODY = 1 << 20;
 var SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
@@ -927,6 +862,20 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
   if (store.failures.blocked(caller)) return rpcError2(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError2(413, "Gateway Hub: body larger than 1 MiB.");
   const ctx = { store, env, channel: store.channel, fetch: /* @__PURE__ */ __name((input, init) => fetcher(input, init), "fetch") };
+  if (url.pathname === "/pair") {
+    if (request.method !== "POST") return rpcError2(405, "Gateway Hub: POST the pairing code.", { Allow: "POST" });
+    let body = {};
+    try {
+      body = await request.json();
+    } catch {
+    }
+    const made = await redeemPairing(store, String(body.code ?? ""), String(body.name ?? ""));
+    if (!made) {
+      rejected(store, caller, !body.code);
+      return rpcError2(401, "Gateway Hub: wrong or expired pairing code.");
+    }
+    return json(200, made);
+  }
   if (url.pathname === "/channel") {
     const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
     const device = bearer ? await deviceFor(store, bearer) : null;
@@ -949,9 +898,10 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError2(413, "Gateway Hub: body larger than 1 MiB.");
     ctx.agent = principal.id;
+    const dynamic = ctx.channel ? await channelModules(ctx, modules2) : [];
     const reply = await handleRpc(
       body,
-      routerFor(modules2),
+      dynamic.length ? createRouter([...modules2, ...dynamic]) : routerFor(modules2),
       ctx,
       VERSION,
       { principal, record: /* @__PURE__ */ __name((tool, ok, ms) => store.metricsRecord(principal.id, tool, ok, ms), "record") }
@@ -975,7 +925,8 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
         { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } }
       );
     }
-    return handleAdminApi(request, url, { store, ctx, modules: modules2, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
+    const all = ctx.channel ? [...modules2, ...await channelModules(ctx, modules2)] : modules2;
+    return handleAdminApi(request, url, { store, ctx, modules: all, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
   }
   return rpcError2(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }
@@ -1186,11 +1137,11 @@ var HubStore = class extends DurableObject {
 };
 
 // src/index.ts
-var local2 = /* @__PURE__ */ __name((url) => url.hostname === "127.0.0.1" || url.hostname === "localhost", "local");
+var local = /* @__PURE__ */ __name((url) => url.hostname === "127.0.0.1" || url.hostname === "localhost", "local");
 var index_default = {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.protocol !== "https:" && !local2(url)) return json(400, { error: "Gateway Hub: use https://" });
+    if (url.protocol !== "https:" && !local(url)) return json(400, { error: "Gateway Hub: use https://" });
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...CORS, ...SECURITY } });
     if (url.pathname === "/") return new Response("Gateway Hub OK\n", { headers: { "Content-Type": "text/plain", ...SECURITY } });
     return env.HUB.get(env.HUB.idFromName("main")).fetch(request);

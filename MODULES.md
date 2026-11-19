@@ -49,15 +49,6 @@ declara esto en una Activity exportada:
   conexión**: no puede leer extras ni activar nada por sí sola (ver `HubDiscovery.kt` en Stone).
 - En el hub, el módulo declara `androidPackage` y un `status(ctx)` de solo lectura. El escáner lo llama
   sin cambiar nada.
-- **Vinculación automática (opcional):**
-  - Declara `<meta-data android:name="com.zirakusa.gatewayhub.link" android:value="${applicationId}.hublink"/>`
-    y un `ContentProvider` exportado con `android:permission="com.zirakusa.gatewayhub.permission.LINK"`.
-    Ese permiso se declara también en la app, con `protectionLevel="signature"`.
-  - Su método `call("link")` devuelve `link`, o `error` + `message`.
-  - Antes de responder, la app comprueba la firma de quien llama **y** un interruptor del usuario. Ver
-    `HubLink.kt` en Stone.
-  - Opcional: `call("mode", "safe"|"background")` aplica el modo de Gateway (en `safe`, la app solo atiende MCP
-    mientras está en pantalla) y responde `mode`. Ver `HubLink.answerMode` en Stone.
 - **Puente local MCP (fase 1, opcional):** un `Service` exportado con la acción `com.zirakusa.gatewayhub.action.MCP`,
   protegido con `com.zirakusa.gatewayhub.permission.LINK` (`signature`), que responde por `Messenger`:
   - Mensaje `what = 1`, `arg1` = id de petición, `Bundle` con `message` = un objeto JSON-RPC MCP (sin lotes); la

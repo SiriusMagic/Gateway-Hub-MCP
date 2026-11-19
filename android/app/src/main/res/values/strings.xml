@@ -24,9 +24,6 @@
     </plurals>
     <string name="scan_offline">Vinculada, apagada</string>
     <string name="scan_open">Abrir</string>
-    <string name="scan_auto_link">Vincular automáticamente</string>
-    <string name="scanner_sync">Sincronización automática</string>
-    <string name="scanner_sync_hint">Al escanear, vincula solas las apps del mismo desarrollador que tengan «Redirección hub» activada.</string>
     <string name="link_permission">vincular apps con Gateway Hub</string>
     <string name="tab_metrics">Métricas</string>
     <string name="refresh">Actualizar</string>
@@ -68,12 +65,8 @@
     <string name="app_ready">Lista</string>
     <string name="app_linked">Vinculado</string>
     <string name="app_unlinked">Sin vincular</string>
-    <string name="stone_title">Vincular Stone</string>
     <string name="stone_hint">En Stone: Ajustes › Modo API › Gateway Hub › Vincular. Eso copia un enlace solo para el hub; pégalo aquí.</string>
-    <string name="stone_link">Enlace de Stone</string>
     <string name="paste">Pegar</string>
-    <string name="link">Vincular</string>
-    <string name="unlink">Desvincular Stone</string>
     <string name="metrics_day">Últimas 24 h</string>
     <string name="metrics_week">Últimos 7 días</string>
     <string name="metrics_calls">llamadas</string>
@@ -90,7 +83,6 @@
     <string name="note_paused">Enlace pausado.</string>
     <string name="note_resumed">Enlace reanudado.</string>
     <string name="note_revoked">Enlace revocado: deja de funcionar ya.</string>
-    <string name="note_unlinked">Stone desvinculado.</string>
     <string name="err_network">No se pudo conectar con el hub. Revisa la dirección y tu conexión.</string>
     <string name="err_unauthorized">Token del propietario incorrecto.</string>
     <string name="err_rate_limited">Demasiados intentos. Espera un minuto.</string>

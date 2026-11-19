@@ -13,10 +13,9 @@ web `/admin`, pero en el teléfono:
   agente, la app explica qué es.
 - **Escáner:** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
   muestra su estado en el hub (sin vincular, apagada, en línea). El escaneo solo lee.
-- **Sincronización automática:** vincula sola cada app del mismo desarrollador que tenga **Redirección hub**
-  activada (Stone 1.7.13 o posterior). Usa un permiso `signature` y la app comprueba la firma otra vez.
-- **Apps:** ver el estado de cada app y vincular o desvincular Stone (pegando el enlace de Stone ›
-  Modo API › Gateway Hub › Vincular).
+- **Vincular:** Escáner › Vincular conecta por el puente local cada app del mismo desarrollador (Stone 1.7.18 o
+  posterior) y le ofrece sus paquetes de ejecución.
+- **Apps:** ver el estado de cada app en el hub.
 - **Ajustes:** entorno MCP (Conectar, Pausar, Desconectar), Modo seguro o MCP en segundo plano,
   notificaciones de actividad, bloqueo de capturas, tema (Noche dorada, Océano, Bosque, Rubí, Claro),
   idioma (español o inglés, se elige al abrir la app por primera vez), permisos y ayuda.

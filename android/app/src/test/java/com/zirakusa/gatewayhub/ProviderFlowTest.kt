@@ -27,7 +27,7 @@ import java.util.Base64
 /** Phase 2: linking a provider and issuing execution packages it can verify (Stone's rules, played by a fake). */
 @RunWith(RobolectricTestRunner::class)
 class ProviderFlowTest {
-    private val stone = LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.17", "music_", true, "x.hublink", bridge = true)
+    private val stone = LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.17", "music_", true, bridge = true)
 
     /** A provider that keeps the link and checks every package like Stone does (signature, env, audience). */
     private class FakeStone : McpPipe {

@@ -6,13 +6,13 @@ conectarlas una por una. Cada herramienta lleva el prefijo de su app, y el enrut
 
 | Prefijo | App | Qué hace |
 |---|---|---|
-| `music_` | [Stone](https://github.com/SiriusMagic/Stone) (en el teléfono) | Todas las herramientas de Stone, a través de su relay |
+| `music_` | [Stone](https://github.com/SiriusMagic/Stone) (en el teléfono) | Todas las herramientas de Stone, por el canal de Gateway en el teléfono |
 
 Calculadora, Notas y Utilidades se quitaron en la 0.0.3: el hub queda solo para apps reales. Para añadir
 otra, ver [`MODULES.md`](MODULES.md).
 
 **Entorno MCP** (app o `/admin`): *Conectar*, *Pausar* (conserva enlaces y ajustes, pero no ejecuta nada) o
-*Desconectar* (además desvincula Stone). Lo aplica el propio hub: con el entorno en pausa o desconectado,
+*Desconectar* (además olvida las apps registradas). Lo aplica el propio hub: con el entorno en pausa o desconectado,
 toda llamada responde `PAUSED` o `DISCONNECTED`.
 
 ```text
@@ -20,7 +20,7 @@ Claude / ChatGPT ──https──▶ Gateway Hub (Cloudflare Worker, TypeScript
    (un enlace por agente)     │ enlace del agente → apps permitidas · lectura/escritura · caducidad
                               │ 120/min · 1 MiB · validación de argumentos · métricas
                               ▼
-                          router.ts ── prefijo ──▶ music_ ──https──▶ relay de Stone ──wss──▶ Stone (teléfono)
+                          router.ts ── prefijo ──▶ music_ ──wss /channel──▶ Gateway (teléfono) ──IPC──▶ Stone
 ```
 
 ## Quién hace qué
@@ -67,8 +67,8 @@ agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `an
   cuerpo de 1 MiB como máximo; lotes de 20.
 - **Datos:** argumentos validados en el servidor con el esquema de cada herramienta, SQL siempre
   parametrizado, HTML siempre escapado y sin cookies (sin riesgo de CSRF).
-- **Red:** el módulo de música solo acepta enlaces del relay configurado (`STONE_RELAY_HOST`), así que
-  el hub no puede usarse para llamar a otras webs. El token de Stone viaja en la cabecera.
+- **Red:** el hub no hace `fetch` a ninguna web: las apps llegan solo por el canal `/channel` de cada teléfono,
+  autenticado con su credencial de dispositivo.
 - **Aislamiento:** un módulo que falla no tumba a los demás.
 - **Sin dependencias en ejecución:** MCP y validación están escritos a mano; `wrangler`
   solo sirve para publicar.

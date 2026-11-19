@@ -44,7 +44,7 @@ export interface HubAdminStore {
   metricsSummary(since: number): Promise<MetricsSummary>;
 }
 
-export interface HubEnv { STONE_RELAY_HOST: string; HUB_TOKEN?: string }
+export interface HubEnv { HUB_TOKEN?: string }
 
 export interface HubContext {
   store: HubStoreApi;

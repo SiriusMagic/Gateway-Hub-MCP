@@ -5,7 +5,7 @@ pegar y sin depender de la cuenta de Cloudflare de otra persona**.
 
 ## Aclaraciones
 
-- **Ningún túnel caduca.** El relay y el hub son Workers permanentes de Cloudflare. Lo que caduca es el
+- **Ningún túnel caduca.** El hub es un Worker permanentes de Cloudflare. Lo que caduca es el
   enlace de un agente, si al crearlo eliges una duración (7, 30 o 90 días…).
 - Hoy todo usa la cuenta de Cloudflare del autor. Eso está bien para él, pero no para otras personas: cada
   uno debe usar **la suya** (plan gratuito).
@@ -30,9 +30,9 @@ pegar y sin depender de la cuenta de Cloudflare de otra persona**.
 ## Gateway centralizado (fases 1–6) ✅ sin publicar
 
 Un solo endpoint MCP por usuario (`stone-hub`), canal por teléfono, paquetes de ejecución firmados en el teléfono,
-despliegue con un token de Cloudflare temporal, teléfonos satélite y Stone solo proveedor. Pendiente: herramientas de
-Stone sin la interfaz abierta (2b, medir en teléfono real) y retirar el Worker `stone-relay` y el camino del relay en
-`modules/music` (7).
+despliegue con un token de Cloudflare temporal, teléfonos satélite y Stone solo proveedor. Fase 7 hecha (sin publicar):
+el relay se retiró del hub, de Gateway y de Stone. Pendiente: herramientas de Stone sin la interfaz abierta (2b, medir
+en teléfono real).
 
 ## Fase 2: «Mi Cloudflare» (instalación en un toque)
 

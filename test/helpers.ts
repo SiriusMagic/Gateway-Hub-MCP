@@ -4,8 +4,6 @@ import { serve } from "../src/serve.ts";
 import { TEST_MODULES } from "./demo-module.ts";
 
 export const TOKEN = "hub_test_token_0123456789abcdefghijklmnop";
-export const RELAY = "stone-relay.example.workers.dev";
-export const STONE_LINK = `https://${RELAY}/d/abcdefghijkl12/mcp?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345`;
 
 export class MemoryStore implements HubStoreApi, HubAdminStore {
   channel?: import("../src/channel/core.ts").Channel;
@@ -37,24 +35,8 @@ export class MemoryStore implements HubStoreApi, HubAdminStore {
   }
 }
 
-/** A fake Stone behind the relay: records what it receives. */
-export function fakeStone(options: { status?: number } = {}) {
-  const calls: { url: string; auth: string | null; body: any }[] = [];
-  const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
-    const body = JSON.parse(String(init?.body));
-    calls.push({ url: String(input), auth: new Headers(init?.headers).get("authorization"), body });
-    if (options.status) return new Response("{}", { status: options.status });
-    const result = body.method === "tools/list"
-      ? { tools: [{ name: "player_state", description: "What is playing", inputSchema: { type: "object" } },
-                  { name: "playlist_delete", description: "Delete a playlist", inputSchema: { type: "object" } }] }
-      : { content: [{ type: "text", text: `ran ${body.params.name}` }], isError: false };
-    return new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, result }), { status: 200 });
-  }) as typeof fetch;
-  return { calls, fetcher };
-}
-
-export function hub(store = new MemoryStore(), fetcher: typeof fetch = fakeStone().fetcher) {
-  const env = { HUB_TOKEN: TOKEN, STONE_RELAY_HOST: RELAY };
+export function hub(store = new MemoryStore(), fetcher: typeof fetch = fetch) {
+  const env = { HUB_TOKEN: TOKEN };
   return {
     store,
     async rpc(method: string, params: unknown = {}, token: string | null = TOKEN, ip = "1.1.1.1") {

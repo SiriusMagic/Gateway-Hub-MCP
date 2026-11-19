@@ -9,7 +9,7 @@ const mod = (prefix: string, names: string[], fail = false): HubModule => ({
   async tools() { if (fail) throw new Error("down"); return names.map((name) => ({ name, description: "", inputSchema: { type: "object", properties: {} } })); },
   async call(name) { return text(`${prefix}:${name}`); },
 });
-const ctx = { store: new MemoryStore(), env: { STONE_RELAY_HOST: "x" }, fetch };
+const ctx = { store: new MemoryStore(), env: {}, fetch };
 
 test("routes by prefix and lists every module", async () => {
   const router = createRouter([mod("a_", ["a_one"]), mod("bb_", ["bb_two"])]);

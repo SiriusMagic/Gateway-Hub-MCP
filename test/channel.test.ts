@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ChannelCore } from "../src/channel/core.ts";
 import { candidates, register, providerFor } from "../src/channel/registry.ts";
-import { MemoryStore, STONE_LINK, TOKEN, fakeStone, hub } from "./helpers.ts";
+import { MemoryStore, TOKEN, hub } from "./helpers.ts";
 
 test("channel core: answers by id, from the right phone; timeouts cancel; a closed phone fails at once", async () => {
   const sent: any[] = [];
@@ -76,28 +76,24 @@ function phone(store: MemoryStore, online = true) {
   return seen;
 }
 
-test("music goes through the phone's channel with the agent's packages; the relay is only the fallback", async () => {
-  const stone = fakeStone();
+test("music goes through the phone's channel with the agent's packages", async () => {
   const store = new MemoryStore();
-  const h = hub(store, stone.fetcher);
-  await h.api("POST", "/stone", { link: STONE_LINK });
+  const h = hub(store);
   const device = (await h.api("POST", "/devices", { name: "Pixel" })).body.device.id;
   await register(store, device, { providers: [{ app: "com.zirakusa.stone", prefix: "music_", title: "Stone", packages: [pkg("pkg_all0000001", "*")] }] });
   const seen = phone(store);
-  const relayCalls = stone.calls.length;
   const names = (await h.rpc("tools/list")).body.result.tools.map((t: any) => t.name);
   assert.ok(names.includes("music_player_state"));
   const ran = await h.rpc("tools/call", { name: "music_player_state", arguments: {} });
   assert.equal(ran.body.result.content[0].text, "ran player_state for owner");
   assert.equal(seen.at(-1).app, "com.zirakusa.stone");
   assert.deepEqual(seen.at(-1).message.params._meta["com.zirakusa.gatewayhub/grant"].packages, ["pkg_all0000001"]);
-  assert.equal(stone.calls.length, relayCalls);                                           // nothing went to the relay
   // An agent with no package for it is refused by the hub before reaching the phone.
   await register(store, device, { providers: [{ app: "com.zirakusa.stone", prefix: "music_", title: "Stone", packages: [pkg("pkg_other00001", "someone")] }] });
   const denied = await h.rpc("tools/call", { name: "music_player_state", arguments: {} });
   assert.equal(denied.body.result.structuredContent.error.code, "NO_PACKAGE");
-  // Phone offline: back to the relay, as today.
+  // Phone offline: there is no other way to Stone (the relay is gone), and the agent is told why.
   phone(store, false);
-  const viaRelay = await h.rpc("tools/call", { name: "music_player_state", arguments: {} });
-  assert.equal(viaRelay.body.result.content[0].text, "ran player_state");
+  const offline = await h.rpc("tools/call", { name: "music_player_state", arguments: {} });
+  assert.equal(offline.body.result.structuredContent.error.code, "PROVIDER_OFFLINE");
 });

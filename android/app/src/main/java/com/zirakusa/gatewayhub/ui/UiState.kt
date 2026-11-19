@@ -18,8 +18,6 @@ data class UiState(
     val created: CreatedAgent? = null,
     /** Last scan of compatible apps (phone + hub); null until the first scan. */
     val scan: List<ScannedApp>? = null,
-    /** Scan also links compatible apps by themselves (they must have "Redirección hub" on). */
-    val autoSync: Boolean = true,
     val settings: AppSettings = AppSettings(),
     /** Execution packages this Gateway issued (status as the provider app last reported). */
     val packages: List<IssuedPackage> = emptyList(),
@@ -36,8 +34,7 @@ interface HubActions {
     fun refresh(); fun logout(); fun dismissMessage(); fun dismissCreated()
     fun setPaused(id: String, paused: Boolean); fun revoke(id: String)
     fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int)
-    fun linkStone(link: String); fun unlinkStone()
-    fun scan(); fun autoLink(packageName: String); fun setAutoSync(on: Boolean)
+    fun scan()
     /** "active", "paused" or "disconnected". */
     fun setEnvironment(target: String)
     fun updateSettings(change: (AppSettings) -> AppSettings)

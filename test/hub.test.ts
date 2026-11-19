@@ -1,7 +1,7 @@
 // End to end through serve(): auth, limits, MCP protocol, the modules, Stone link and /setup.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { RELAY, STONE_LINK, TOKEN, MemoryStore, fakeStone, hub } from "./helpers.ts";
+import { TOKEN, hub } from "./helpers.ts";
 
 test("token required, compared exactly, and wrong tokens throttled", async () => {
   const h = hub();
@@ -55,36 +55,19 @@ test("the hub ships with Stone only", async () => {
   assert.deepEqual(modules.map((m) => m.prefix), ["music_"]);
 });
 
-test("music: Stone tools appear as music_* and calls go to Stone with the token in the header", async () => {
-  const stone = fakeStone();
-  const h = hub(new MemoryStore(), stone.fetcher);
-  const before = await h.rpc("tools/list");
-  assert.deepEqual(before.body.result.tools.filter((t: any) => t.name.startsWith("music_")).map((t: any) => t.name), ["music_status"]);
-  assert.match((await h.admin({ token: TOKEN, action: "link_stone", link: STONE_LINK })).html, /vinculado y en línea/);
-  const names = (await h.rpc("tools/list")).body.result.tools.map((t: any) => t.name);
-  assert.ok(names.includes("music_player_state") && names.includes("music_playlist_delete"));
-  const played = await h.rpc("tools/call", { name: "music_player_state", arguments: {} });
-  assert.equal(played.body.result.content[0].text, "ran player_state");
-  const last = stone.calls.at(-1)!;
-  assert.equal(last.url, `https://${RELAY}/d/abcdefghijkl12/mcp`);            // no token in the URL
-  assert.equal(last.auth, "Bearer stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345");
-});
-
-test("admin: needs the hub token, accepts only links of the relay, refuses tokens Stone rejects", async () => {
-  const h = hub();
-  assert.equal((await h.admin({ token: "wrong", action: "link_stone", link: STONE_LINK })).status, 401);
-  for (const link of ["https://evil.example/d/abcdefghijkl12/mcp?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345",
-    `http://${RELAY}/d/abcdefghijkl12/mcp?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345`,
-    `https://${RELAY}/d/abcdefghijkl12/mcp`, `https://${RELAY}/admin?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345`]) {
-    assert.equal((await h.admin({ token: TOKEN, action: "link_stone", link })).status, 400, link);
-  }
-  const rejected = hub(new MemoryStore(), fakeStone({ status: 401 }).fetcher);
-  assert.equal((await rejected.admin({ token: TOKEN, action: "link_stone", link: STONE_LINK })).status, 400);
-  assert.equal(await rejected.store.getConfig("music.link"), null);
-});
-
 test("admin panel escapes what it shows", async () => {
   const h = hub();
   const page = await h.admin({ token: TOKEN, action: "agent_create", name: "<script>alert(1)</script>", apps: "demo_", days: "1" });
   assert.doesNotMatch(page.html, /<script>alert/);
+});
+
+test("music: without its phone connected, only music_status, and calls say why", async () => {
+  const h = hub();
+  const names = (await h.rpc("tools/list")).body.result.tools.filter((t: any) => t.name.startsWith("music_")).map((t: any) => t.name);
+  assert.deepEqual(names, ["music_status"]);
+  const status = await h.rpc("tools/call", { name: "music_status", arguments: {} });
+  assert.equal(status.body.result.structuredContent.online, false);
+  const call = await h.rpc("tools/call", { name: "music_player_state", arguments: {} });
+  assert.equal(call.body.result.structuredContent.error.code, "PROVIDER_OFFLINE");
+  assert.equal((await h.admin({ token: TOKEN, action: "link_stone", link: "https://x" })).status, 400);   // no relay links any more
 });
