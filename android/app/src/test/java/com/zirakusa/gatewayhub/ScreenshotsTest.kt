@@ -52,6 +52,9 @@ class ScreenshotsTest {
         listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.13", "music_", true, bridge = true),
             LocalApp("com.example.lookalike", "Stone Pro", "9.9", "music_", false)),
         HubJson.scan(SCAN_JSON))), NoActions, HubTab.SCANNER) }
+    @Test fun simpleHome() = shot("simple") { HomeScreen(connected.copy(providerApps = listOf(
+        LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.18", "music_", true, bridge = true))), NoActions) }
+    @Test fun simpleHomeReady() = shot("simple-ready") { HomeScreen(connected.copy(hub = hub.copy(stoneLinked = true)), NoActions) }
     @Test fun apps() = shot("apps") { HomeScreen(connected, NoActions, HubTab.APPS) }
     @Test fun metrics() = shot("metrics") { HomeScreen(connected, NoActions, HubTab.METRICS) }
     @Test fun createdLink() = shot("created") {

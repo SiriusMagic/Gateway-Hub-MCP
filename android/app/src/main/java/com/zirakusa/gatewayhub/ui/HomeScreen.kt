@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -24,8 +25,11 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun HomeScreen(state: UiState, vm: HubActions, initialTab: HubTab = HubTab.AGENTS) {
-    var tab by remember { mutableStateOf(initialTab) }
+@Composable fun HomeScreen(state: UiState, vm: HubActions, initialTab: HubTab? = null) {
+    var tab by remember { mutableStateOf(initialTab ?: HubTab.AGENTS) }
+    // Simple view by default; the technical tabs are behind "Advanced options".
+    var advanced by remember { mutableStateOf(initialTab != null) }
+    androidx.activity.compose.BackHandler(advanced) { advanced = false }
     var creating by remember { mutableStateOf(false) }
     var leaving by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
@@ -37,19 +41,20 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
         topBar = { TopAppBar(
             title = { Column {
                 Text(stringResource(R.string.app_name))
-                Text(state.hubUrl.removePrefix("https://"), color = HubColors.Muted, fontSize = 12.sp, maxLines = 1)
+                if (advanced) Text(state.hubUrl.removePrefix("https://"), color = HubColors.Muted, fontSize = 12.sp, maxLines = 1)
             } },
+            navigationIcon = { if (advanced) IconButton({ advanced = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.simple_back)) } },
             actions = {
                 IconButton(vm::refresh, enabled = !state.loading) { Icon(Icons.Default.Refresh, stringResource(R.string.refresh)) }
                 IconButton({ leaving = true }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.logout)) }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = HubColors.Background)) },
-        bottomBar = { NavigationBar(containerColor = HubColors.Card) {
+        bottomBar = { if (advanced) NavigationBar(containerColor = HubColors.Card) {
             HubTab.entries.forEach { t -> NavigationBarItem(tab == t, { tab = t }, { Icon(t.icon, null) },
                 label = { Text(stringResource(t.label), maxLines = 1, fontSize = 11.sp) },
                 colors = NavigationBarItemDefaults.colors(indicatorColor = HubColors.Gold.copy(alpha = 0.25f))) }
         } },
-        floatingActionButton = { if (tab == HubTab.AGENTS && state.hub != null) ExtendedFloatingActionButton(onClick = { creating = true }, containerColor = HubColors.Gold, contentColor = HubColors.OnGold,
+        floatingActionButton = { if (advanced && tab == HubTab.AGENTS && state.hub != null) ExtendedFloatingActionButton(onClick = { creating = true }, containerColor = HubColors.Gold, contentColor = HubColors.OnGold,
             icon = { Icon(Icons.Default.Add, null) }, text = { Text(stringResource(R.string.agent_new)) }) },
         snackbarHost = { SnackbarHost(snackbar) },
         containerColor = HubColors.Background,
@@ -58,7 +63,7 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
             if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = HubColors.Gold)
             val hub = state.hub
             if (hub == null) { if (!state.loading) Text(state.error?.text() ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
-            when (tab) {
+            if (!advanced) SimpleHome(state, hub, vm) { advanced = true } else when (tab) {
                 HubTab.AGENTS -> AgentsList(hub.agents, hub.modules, vm::setPaused, vm::revoke)
                 HubTab.SCANNER -> ScannerList(state.scan, state.loading, vm::scan,
                     ProvidersUi(state.packages, hub.agents, vm))
@@ -72,7 +77,7 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
     }
     if (creating) state.hub?.let { hub -> NewAgentDialog(hub.modules, { creating = false }) { name, apps, ro, days ->
         creating = false; vm.createAgent(name, apps, ro, days) } }
-    state.created?.let { CreatedDialog(it, vm::dismissCreated) }
+    state.created?.let { CreatedDialog(it, vm::dismissCreated, showToken = advanced) }
     if (leaving) AlertDialog(onDismissRequest = { leaving = false }, title = { Text(stringResource(R.string.logout)) },
         text = { Text(stringResource(R.string.logout_confirm)) },
         confirmButton = { TextButton({ leaving = false; vm.logout() }) { Text(stringResource(R.string.logout), color = HubColors.Bad) } },

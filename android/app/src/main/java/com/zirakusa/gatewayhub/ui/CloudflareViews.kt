@@ -40,7 +40,7 @@ import com.zirakusa.gatewayhub.data.CloudflareApi
         CreateCloudflareTokenButton()
         Spacer(Modifier.height(8.dp))
         CloudflareField(token) { token = it }
-        Button({ createAccess(token); token = "" }, Modifier.fillMaxWidth().padding(top = 10.dp), enabled = !loading && token.isNotBlank()) {
+        Button({ createAccess(token); token = "" }, Modifier.fillMaxWidth().padding(top = 10.dp).height(52.dp), enabled = !loading && token.isNotBlank()) {
             Text(stringResource(R.string.cf_create_access), fontWeight = FontWeight.Bold)
         }
     }

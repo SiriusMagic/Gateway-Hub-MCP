@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">Gateway Hub</string>
     <string name="login_title">Gateway Hub</string>
-    <string name="login_subtitle">Un solo enlace MCP para que tu IA use Stone y otras apps.</string>
-    <string name="login_access">Acceso al hub (dirección + token)</string>
-    <string name="login_access_hint">Pega el acceso completo o solo el token del propietario (hub_…). Sin dirección se usa %1$s.</string>
-    <string name="login_token_hint">Se guarda cifrado en este teléfono (Android Keystore) y solo viaja por HTTPS.</string>
-    <string name="login_connect">Conectar</string>
+    <string name="login_subtitle">Conecta tu IA (Claude, ChatGPT…) con Stone.</string>
+    <string name="login_access">Pega tu acceso aquí</string>
+    <string name="login_access_hint">Es el texto que empieza por https:// o hub_. Si no lo tienes, usa «Empieza aquí».</string>
+    <string name="login_token_hint">Se guarda cifrado solo en este teléfono.</string>
+    <string name="login_connect">Entrar</string>
     <string name="tab_agents">Agentes</string>
     <string name="tab_apps">Apps</string>
     <string name="tab_scanner">Escáner</string>
@@ -57,7 +57,7 @@
     <string name="days_never">Sin caducidad</string>
     <string name="create">Crear enlace</string>
     <string name="created_title">Enlace de «%1$s»</string>
-    <string name="created_hint">Cópialo ahora: no se vuelve a mostrar. Pégalo en Claude o ChatGPT como conector personalizado.</string>
+    <string name="created_hint">1. Toca «Copiar enlace».\n2. En Claude o ChatGPT ve a Ajustes › Conectores › Añadir conector personalizado.\n3. Pega el enlace y guarda.\nEste enlace solo se muestra ahora.</string>
     <string name="copy_link">Copiar enlace</string>
     <string name="copy_token">Copiar solo el token (para la cabecera Authorization: Bearer)</string>
     <string name="copied">Copiado</string>
@@ -179,14 +179,14 @@
     <string name="err_no_hub">No encuentro tu hub en esa cuenta de Cloudflare y esta versión de la app no trae el Worker para publicarlo.</string>
     <string name="cf_title">Cloudflare</string>
     <string name="cf_hint">Pega un token de la API de Cloudflare (Workers Scripts › Editar). Se usa solo para esta acción y se olvida: no se guarda en este teléfono ni en Stone.</string>
-    <string name="cf_token">Token de la API de Cloudflare</string>
-    <string name="cf_create_token">Crear token en Cloudflare</string>
+    <string name="cf_token">Pega aquí el código de Cloudflare</string>
+    <string name="cf_create_token">Abrir Cloudflare</string>
     <string name="cf_rotate_owner">Generar nuevo token del propietario</string>
     <string name="cf_rotate_confirm">La app crea un token hub_ nuevo, lo guarda en tu hub de Cloudflare y entra con él. El anterior deja de funcionar. Los enlaces de las IA siguen funcionando.</string>
     <string name="cf_owner_done">Token del propietario creado y guardado en tu hub. Ya has entrado.</string>
-    <string name="cf_login_title">¿No tienes el token hub_?</string>
-    <string name="cf_login_hint">La app lo crea por ti en tu cuenta de Cloudflare: 1) Crea un token en Cloudflare (ya viene con el permiso Workers Scripts › Editar). 2) Pégalo aquí y pulsa Generar mi acceso. Si no tienes hub, se publica; si ya lo tienes, se actualiza. El token de Cloudflare no se guarda.</string>
-    <string name="cf_create_access">Generar mi acceso</string>
+    <string name="cf_login_title">Empieza aquí (gratis)</string>
+    <string name="cf_login_hint">1. Toca «Abrir Cloudflare», entra o crea tu cuenta gratis y toca «Crear token».\n2. Copia el código que te da, pégalo abajo y toca «Crear mi hub».\nSolo se usa una vez y no se guarda.</string>
+    <string name="cf_create_access">Crear mi hub</string>
     <string name="bridge_test">Probar puente local</string>
     <string name="bridge_ok">Puente local con %1$s: %2$s · herramientas de lectura: %3$d, prueba «%4$s» correcta.</string>
     <string name="bridge_no_probe">Puente local con %1$s: %2$s · herramientas de lectura: %3$d. La app no marca ninguna herramienta de prueba: solo se comprobaron initialize y tools/list.</string>
@@ -254,4 +254,21 @@
     <string name="satellite_apps_none">No hay apps compatibles en este teléfono.</string>
     <string name="satellite_leave">Salir del hub</string>
     <string name="satellite_leave_confirm">Este teléfono deja de servir sus apps. Para volver hará falta un código nuevo.</string>
+    <string name="login_have_access">¿Ya tienes un acceso?</string>
+    <string name="simple_ready">Todo listo. Tu IA ya puede usar Stone.</string>
+    <string name="simple_missing">Te falta un paso</string>
+    <string name="simple_off">Está apagado</string>
+    <string name="simple_turn_on">Encender</string>
+    <string name="simple_step_stone">Conecta Stone</string>
+    <string name="simple_stone_done">Stone está conectado.</string>
+    <string name="simple_stone_install">Instala Stone en este teléfono y vuelve aquí.</string>
+    <string name="simple_stone_connect">Conectar Stone</string>
+    <string name="simple_step_ai">Conecta tu IA</string>
+    <string name="simple_ai_hint">¿Dónde usas la IA? Toca uno y te daremos un enlace para pegar allí.</string>
+    <string name="simple_ai_add">Conectar %1$s</string>
+    <string name="simple_ai_other">Otra IA</string>
+    <string name="simple_ai_other_name">Mi IA</string>
+    <string name="simple_ai_remove">Quitar</string>
+    <string name="simple_advanced">Opciones avanzadas</string>
+    <string name="simple_back">Volver</string>
 </resources>

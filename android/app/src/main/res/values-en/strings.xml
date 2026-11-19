@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">Gateway Hub</string>
     <string name="login_title">Gateway Hub</string>
-    <string name="login_subtitle">One MCP link so your AI can use Stone and other apps.</string>
-    <string name="login_access">Hub access (address + token)</string>
-    <string name="login_access_hint">Paste the full access or only the owner token (hub_…). Without an address, %1$s is used.</string>
-    <string name="login_token_hint">Stored encrypted on this phone (Android Keystore) and sent only over HTTPS.</string>
-    <string name="login_connect">Connect</string>
+    <string name="login_subtitle">Connect your AI (Claude, ChatGPT…) to Stone.</string>
+    <string name="login_access">Paste your access here</string>
+    <string name="login_access_hint">It is the text that starts with https:// or hub_. If you do not have one, use \"Start here\".</string>
+    <string name="login_token_hint">Stored encrypted on this phone only.</string>
+    <string name="login_connect">Sign in</string>
     <string name="tab_agents">Agents</string>
     <string name="tab_apps">Apps</string>
     <string name="tab_scanner">Scanner</string>
@@ -57,7 +57,7 @@
     <string name="days_never">No expiry</string>
     <string name="create">Create link</string>
     <string name="created_title">Link of \"%1$s\"</string>
-    <string name="created_hint">Copy it now: it is not shown again. Paste it in Claude or ChatGPT as a custom connector.</string>
+    <string name="created_hint">1. Tap \"Copy link\".\n2. In Claude or ChatGPT go to Settings › Connectors › Add custom connector.\n3. Paste the link and save.\nThis link is only shown now.</string>
     <string name="copy_link">Copy link</string>
     <string name="copy_token">Copy only the token (for the Authorization: Bearer header)</string>
     <string name="copied">Copied</string>
@@ -179,14 +179,14 @@
     <string name="err_no_hub">I cannot find your hub in that Cloudflare account and this app version does not carry the Worker to publish it.</string>
     <string name="cf_title">Cloudflare</string>
     <string name="cf_hint">Paste a Cloudflare API token (Workers Scripts › Edit). It is used only for this action and forgotten: it is not stored on this phone or in Stone.</string>
-    <string name="cf_token">Cloudflare API token</string>
-    <string name="cf_create_token">Create token in Cloudflare</string>
+    <string name="cf_token">Paste the Cloudflare code here</string>
+    <string name="cf_create_token">Open Cloudflare</string>
     <string name="cf_rotate_owner">Make a new owner token</string>
     <string name="cf_rotate_confirm">The app makes a new hub_ token, stores it in your Cloudflare hub and logs in with it. The previous one stops working. The AI links keep working.</string>
     <string name="cf_owner_done">Owner token created and stored in your hub. You are logged in.</string>
-    <string name="cf_login_title">No hub_ token?</string>
-    <string name="cf_login_hint">The app makes it for you in your Cloudflare account: 1) Create a token in Cloudflare (it comes with the Workers Scripts › Edit permission). 2) Paste it here and tap Create my access. With no hub, it is published; with one, it is updated. The Cloudflare token is not stored.</string>
-    <string name="cf_create_access">Create my access</string>
+    <string name="cf_login_title">Start here (free)</string>
+    <string name="cf_login_hint">1. Tap \"Open Cloudflare\", sign in or create your free account and tap \"Create token\".\n2. Copy the code it gives you, paste it below and tap \"Create my hub\".\nIt is used once and not stored.</string>
+    <string name="cf_create_access">Create my hub</string>
     <string name="bridge_test">Test local bridge</string>
     <string name="bridge_ok">Local bridge with %1$s: %2$s · read tools: %3$d, test \"%4$s\" passed.</string>
     <string name="bridge_no_probe">Local bridge with %1$s: %2$s · read tools: %3$d. The app marks no test tool: only initialize and tools/list were checked.</string>
@@ -254,4 +254,21 @@
     <string name="satellite_apps_none">No compatible apps on this phone.</string>
     <string name="satellite_leave">Leave the hub</string>
     <string name="satellite_leave_confirm">This phone stops serving its apps. Coming back needs a new code.</string>
+    <string name="login_have_access">Already have an access?</string>
+    <string name="simple_ready">All set. Your AI can use Stone now.</string>
+    <string name="simple_missing">One step left</string>
+    <string name="simple_off">It is turned off</string>
+    <string name="simple_turn_on">Turn on</string>
+    <string name="simple_step_stone">Connect Stone</string>
+    <string name="simple_stone_done">Stone is connected.</string>
+    <string name="simple_stone_install">Install Stone on this phone and come back here.</string>
+    <string name="simple_stone_connect">Connect Stone</string>
+    <string name="simple_step_ai">Connect your AI</string>
+    <string name="simple_ai_hint">Where do you use AI? Tap one and you will get a link to paste there.</string>
+    <string name="simple_ai_add">Connect %1$s</string>
+    <string name="simple_ai_other">Another AI</string>
+    <string name="simple_ai_other_name">My AI</string>
+    <string name="simple_ai_remove">Remove</string>
+    <string name="simple_advanced">Advanced options</string>
+    <string name="simple_back">Back</string>
 </resources>

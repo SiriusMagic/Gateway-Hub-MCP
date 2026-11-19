@@ -1,5 +1,15 @@
 # Sin publicar (fase 7) · hub 0.0.5
 
+## App más simple para gente sin conocimientos técnicos
+
+- Al entrar se ve **una sola pantalla**: un estado grande («Todo listo» / «Te falta un paso» / «Está apagado») y dos
+  pasos: **1. Conecta Stone** (un botón) y **2. Conecta tu IA** (botones «Conectar Claude» / «Conectar ChatGPT», con
+  valores por defecto: todas las apps, lectura y escritura, sin caducidad). Cada IA conectada se puede «Quitar».
+- Las pestañas Agentes, Escáner, Apps, Métricas y Ajustes pasan a **Opciones avanzadas** (con botón Volver).
+- Inicio de sesión: primero «Empieza aquí (gratis)» con pasos numerados; el campo de pegar acceso queda debajo, en
+  «¿Ya tienes un acceso?». Textos sin jerga (sin «token hub_», «Workers Scripts», «Android Keystore»).
+- El enlace nuevo explica en 3 pasos dónde pegarlo en Claude o ChatGPT; «Copiar solo el token» solo en avanzadas.
+
 ## Fase 7: adiós al relay
 
 - El hub ya no tiene el camino por el relay: `music_` llega a Stone solo por el canal del teléfono (Gateway). Sin

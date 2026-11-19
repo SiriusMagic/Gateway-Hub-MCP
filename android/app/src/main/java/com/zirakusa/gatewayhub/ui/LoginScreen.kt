@@ -30,7 +30,11 @@ import com.zirakusa.gatewayhub.R
         Spacer(Modifier.height(40.dp))
         Icon(Icons.Default.Hub, null, Modifier.size(64.dp), tint = HubColors.Gold)
         Text(stringResource(R.string.login_title), Modifier.padding(top = 12.dp), fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Text(stringResource(R.string.login_subtitle), Modifier.padding(top = 4.dp, bottom = 24.dp), color = HubColors.Muted)
+        Text(stringResource(R.string.login_subtitle), Modifier.padding(top = 4.dp, bottom = 8.dp), color = HubColors.Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        state.error?.let { Text(it.text(), Modifier.fillMaxWidth().padding(top = 4.dp), color = HubColors.Bad) }
+        // New users start here; the paste field is only for someone who already has an access.
+        CreateAccessCard(state.loading, createAccess)
+        Text(stringResource(R.string.login_have_access), Modifier.fillMaxWidth().padding(top = 28.dp, bottom = 8.dp), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         OutlinedTextField(access, { access = it }, Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.login_access)) },
             singleLine = true, visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
@@ -39,13 +43,11 @@ import com.zirakusa.gatewayhub.R
             }) { Text(stringResource(R.string.paste)) } })
         Text(stringResource(R.string.login_access_hint, state.hubUrl.removePrefix("https://")), Modifier.fillMaxWidth().padding(top = 6.dp),
             color = HubColors.Muted, fontSize = 13.sp)
-        state.error?.let { Text(it.text(), Modifier.fillMaxWidth().padding(top = 12.dp), color = HubColors.Bad) }
-        Button({ connect(access) }, Modifier.fillMaxWidth().padding(top = 20.dp).height(50.dp), enabled = !state.loading && access.isNotBlank()) {
+        OutlinedButton({ connect(access) }, Modifier.fillMaxWidth().padding(top = 12.dp).height(50.dp), enabled = !state.loading && access.isNotBlank()) {
             if (state.loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
             else Text(stringResource(R.string.login_connect), fontWeight = FontWeight.Bold)
         }
         Text(stringResource(R.string.login_token_hint), Modifier.fillMaxWidth().padding(top = 16.dp), color = HubColors.Muted, fontSize = 12.sp)
-        CreateAccessCard(state.loading, createAccess)
         JoinHubCard(state.loading, join)
     }
     }
