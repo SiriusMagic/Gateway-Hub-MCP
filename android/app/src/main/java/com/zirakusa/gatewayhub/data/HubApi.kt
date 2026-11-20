@@ -28,6 +28,9 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     suspend fun revoke(id: String) { call("DELETE", "/agents/$id") }
     suspend fun linkStone(link: String): String = JSONObject(call("POST", "/stone", JSONObject().put("link", link.trim()))).getString("message")
     suspend fun unlinkStone() { call("DELETE", "/stone") }
+    /** Other apps with Modo MCP (Luma: gallery_). */
+    suspend fun linkApp(prefix: String, link: String): String =
+        JSONObject(call("POST", "/apps/$prefix", JSONObject().put("link", link.trim()))).getString("message")
     /** Read-only: the hub asks each remote app whether it is linked and online. */
     suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 

@@ -84,6 +84,6 @@ test("the panel accepts the combined access and explains Stone links", async () 
   assert.equal(ownerTokenFrom("  plain  "), "plain");
   const stone = await h.admin({ token: "https://relay.example/d/3e6076f88b2ae131ea6e/mcp?token=stn_abcdefghijklmnop", action: "login" });
   assert.equal(stone.status, 400);
-  assert.match(stone.html, /enlace de Stone/);
+  assert.match(stone.html, /enlace de una app/);
   assert.equal(h.store.failures.blocked("1.1.1.1"), false);
 });

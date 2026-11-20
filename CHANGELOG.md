@@ -1,3 +1,11 @@
+# Gateway 0.0.12 · hub con Luma (gallery_)
+
+- **Luma (Galería) en el hub:** módulo `gallery_` para cualquier app con Modo MCP como el de Stone. Se vincula igual:
+  «Redireccionar a Hub» en Luma (Gateway la vincula sola al escanear) o un token tipo Hub pegado en Apps.
+- API: `POST/DELETE /api/admin/apps/<prefijo>`; el panel tiene su formulario para el enlace de Luma.
+- Los tokens de las apps pueden ser `stn_` (Stone), `lum_` (Luma) u otro prefijo de 3 letras.
+- Para publicarlo: `npx wrangler deploy`. 29 pruebas en Node y 23 en Android.
+
 # Gateway 0.0.11 · hub 0.0.2 + Stone 1.7.22
 
 - **Dos formas de conectar Stone:**

@@ -23,7 +23,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
   const { body } = await h.api("GET", "/state");
   assert.equal(body.version, "0.0.2");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
-  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "notes_", "calc_", "utils_"]);
+  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "notes_", "calc_", "utils_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
   assert.equal(body.agents[0].tokenHash, undefined);
@@ -89,7 +89,7 @@ test("scan tells who manages Stone: a bridge for LLM/Hub tokens, the hub when St
   let music = (await bridge.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
   assert.equal(music.managedBy, "app");
   assert.deepEqual(music.token, { name: "Casa", kind: "hub", usage: "Hub de casa", mode: "read" });
-  assert.match(music.detail, /Stone.*Casa.*solo lectura.*Hub de casa/);
+  assert.match(music.detail, /Puente.*Casa.*solo lectura.*Hub de casa/);
   const managed = hub(bridge.store, fakeStone({ token: { name: "Gateway Hub", kind: "redirect", usage: "", mode: "full" } }).fetcher);
   music = (await managed.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
   assert.equal(music.managedBy, "hub");
@@ -99,4 +99,26 @@ test("scan tells who manages Stone: a bridge for LLM/Hub tokens, the hub when St
   music = (await odd.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
   assert.equal(music.token.name.length, 60);
   assert.equal(music.token.kind, "");
+});
+
+test("Luma (gallery_): linked by its own link, tools keep their names, calls reach the app with its token", async () => {
+  const { fakeStone, MemoryStore } = await import("./helpers.ts");
+  const luma = fakeStone({ token: { name: "Hub", kind: "hub", usage: "Fotos", mode: "read" } });
+  const h = hub(new MemoryStore(), luma.fetcher);
+  const { RELAY } = await import("./helpers.ts");
+  const link = `https://${RELAY}/d/abcdefabcdefabcdefabcdef/mcp?token=lum_` + "x".repeat(43);
+  assert.equal((await h.api("POST", "/apps/notes_", { link })).body.error.code, "NOT_FOUND");
+  assert.equal((await h.api("POST", "/apps/gallery_", { link: "https://evil.example/d/x/mcp" })).body.error.code, "INVALID_LINK");
+  assert.match((await h.api("POST", "/apps/gallery_", { link })).body.message, /Luma vinculada.*Puente/);
+  const names = (await h.rpc("tools/list")).body.result.tools.map((t: any) => t.name);
+  assert.ok(names.includes("gallery_player_state"));                 // prefixed once, not twice
+  assert.ok(names.includes("gallery_status"));
+  await h.rpc("tools/call", { name: "gallery_player_state", arguments: {} });
+  const last = luma.calls.at(-1)!;
+  assert.equal(last.body.params.name, "player_state");               // the app's own name
+  assert.equal(last.auth, "Bearer lum_" + "x".repeat(43));          // its token, in the header
+  const scan = (await h.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "gallery_");
+  assert.ok(scan.linked && scan.online && scan.managedBy === "app");
+  await h.api("DELETE", "/apps/gallery_");
+  assert.equal((await h.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "gallery_").linked, false);
 });

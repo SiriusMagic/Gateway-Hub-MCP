@@ -46,6 +46,25 @@ class AutoLinkTest {
         assertEquals("Stone vinculado y en línea.", vm.state.value.notice)
     }
 
+    @Test fun lumaIsLinkedByItselfThroughItsOwnRoute() {
+        val luma = LocalApp("app.luma.gallery", "Luma", "0.5.0", "gallery_", true, "app.luma.gallery.hublink")
+        val lumaLink = "https://relay.example/d/abcdefabcdefabcdefabcdef/mcp?token=lum_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"
+        val sent = mutableListOf<String>()
+        val transport = FakeTransport { r ->
+            sent += "${r.method} ${r.url.substringAfter("/api/admin")}"
+            when {
+                r.url.endsWith("/scan") -> 200 to SCAN_JSON.replace("]}", """,{"prefix":"gallery_","title":"Galería (Luma)","androidPackage":"app.luma.gallery","remote":true,"linked":false,"online":false,"tools":0,"detail":"Sin vincular"}]}""")
+                r.url.endsWith("/apps/gallery_") -> { assertEquals(lumaLink, JSONObject(r.body!!).getString("link")); 200 to """{"message":"Luma vinculada."}""" }
+                else -> 200 to STATE_JSON
+            }
+        }
+        val vm = HubViewModel(MemorySessions("https://hub.example" to "owner"), "https://hub.example", { listOf(luma) },
+            { LinkAnswer(lumaLink, null, null) }, newApi = { url, token -> HubApi(url, token, transport) })
+        vm.settle(); vm.scan(); vm.settle()
+        assertTrue(sent.contains("POST /apps/gallery_"))
+        assertTrue("POST /stone" !in sent)
+    }
+
     @Test fun nothingIsAskedFromStrangersOrWithSyncOff() {
         val stranger = stone.copy(packageName = "com.example.fake", sameDeveloper = false, linkAuthority = "com.example.fake.hublink")
         val hub = Hub(); val asked = mutableListOf<String>()

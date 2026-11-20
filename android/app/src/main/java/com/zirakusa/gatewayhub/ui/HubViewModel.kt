@@ -112,9 +112,10 @@ class HubViewModel(
         if (app == null || remote == null || !remote.remote || !app.sameDeveloper || app.linkAuthority == null) return null
         val revoked = remote.linked && !remote.online && remote.detail.contains("rejected")
         if (!force && remote.linked && !revoked) return null
-        if (remote.prefix != "music_") return null // the hub links Stone today; other apps will follow the same path
         val answer = linker.requestLink(app)
-        return answer.link?.let { requireApi().linkStone(it) } ?: "${app.label}: ${answer.message ?: answer.error}"
+        val link = answer.link ?: return "${app.label}: ${answer.message ?: answer.error}"
+        // Stone has its own route; every other app with Modo MCP (Luma…) goes through /apps/<prefix>.
+        return if (remote.prefix == "music_") requireApi().linkStone(link) else requireApi().linkApp(remote.prefix, link)
     }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }

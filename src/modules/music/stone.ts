@@ -4,7 +4,8 @@ import { type HubContext, ToolError } from "../types.ts";
 
 export interface StoneLink { endpoint: string; token: string }
 
-const TOKEN = /^(stn_[A-Za-z0-9_-]{20,100}|[0-9a-f]{32,128})$/;
+// stn_ (Stone), lum_ (Luma) or any app's 3-letter prefix; old hex tokens too.
+const TOKEN = /^([a-z]{3}_[A-Za-z0-9_-]{20,100}|[0-9a-f]{32,128})$/;
 const local = (host: string) => /^(127\.0\.0\.1|localhost)(:\d+)?$/.test(host);
 
 /** Checks a link copied from Stone (…/d/<device>/mcp?token=…) and splits it into endpoint + token. */
@@ -13,7 +14,7 @@ export function parseStoneLink(link: string, relayHost: string): StoneLink {
   try { url = new URL(link.trim()); } catch { throw new ToolError("INVALID_LINK", "That is not a link."); }
   const scheme = local(relayHost) ? "http:" : "https:";
   if (url.protocol !== scheme || url.host !== relayHost)
-    throw new ToolError("INVALID_LINK", `Only links of ${relayHost} (copied from Stone) are accepted.`);
+    throw new ToolError("INVALID_LINK", `Only links of ${relayHost} (copied from the app's Modo MCP) are accepted.`);
   if (!/^\/d\/[a-z0-9]{12,40}\/mcp$/.test(url.pathname))
     throw new ToolError("INVALID_LINK", "The link must end in /d/<phone>/mcp?token=… (Stone › Ajustes › Modo MCP › Copiar).");
   const token = url.searchParams.get("token") ?? "";

@@ -5,6 +5,7 @@ import { ADMIN_HEADERS } from "./layout.ts";
 import { type PanelData, loginPage, panelPage } from "./views.ts";
 import { type AdminStore, DAY, createAgent, linkStone, setPaused, unlinkStone } from "./service.ts";
 import { musicModule, savedLink } from "../modules/music/index.ts";
+import { REMOTE_APPS, linkRemote, remoteLink, unlinkRemote } from "../modules/remote/index.ts";
 
 /** Accepts the access as people paste it: "https://hub#hub_…", "…?token=hub_…" or only the token. */
 export function ownerTokenFrom(pasted: string): string {
@@ -27,8 +28,8 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
   const form = await request.formData();
   const pasted = String(form.get("token") ?? "");
   // A Stone link/token opens Stone, not the hub: say so instead of counting a wrong token.
-  if (/stn_[A-Za-z0-9_-]{10,}|\/d\/[a-z0-9]{12,40}\/mcp/.test(pasted))
-    return html(400, loginPage("Eso es un enlace de Stone. Aquí va el token del propietario (hub_…); el enlace de Stone se pega luego en Apps."), security);
+  if (/(stn|lum)_[A-Za-z0-9_-]{10,}|\/d\/[a-z0-9]{12,40}\/mcp/.test(pasted))
+    return html(400, loginPage("Eso es un enlace de una app (Stone, Luma…). Aquí va el token del propietario (hub_…); el enlace de la app se pega luego en Apps."), security);
   const token = ownerTokenFrom(pasted);
   if (!await deps.isOwner(token)) return html(401, loginPage("Token del propietario incorrecto."), security);
 
@@ -36,6 +37,8 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
     const now = Date.now();
     const data: PanelData = { token, origin: url.origin, modules, stoneLinked: !!await savedLink(ctx),
       stoneDetail: await musicModule.status?.(ctx).then((st) => st.detail).catch(() => undefined),
+      remote: await Promise.all(REMOTE_APPS.map(async (app) => ({ app, linked: !!await remoteLink(ctx, app.prefix),
+        detail: await modules.find((m) => m.prefix === app.prefix)?.status?.(ctx).then((st) => st.detail).catch(() => undefined) }))),
       agents: await store.agentsList(), day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY), ...extra };
     return html(status, panelPage(data), security);
   };
@@ -47,6 +50,12 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
       case "login": return view();
       case "link_stone": return view({ notice: { text: await linkStone(store, ctx, field("link")) } });
       case "unlink_stone": await unlinkStone(store); return view({ notice: { text: "Stone desvinculado." } });
+      case "link_app": case "unlink_app": {
+        const app = REMOTE_APPS.find((a) => a.prefix === field("prefix"));
+        if (!app) return fail("Esa app no está en este hub.");
+        if (field("action") === "unlink_app") { await unlinkRemote(ctx, app.prefix); return view({ notice: { text: `${app.label} desvinculada.` } }); }
+        return view({ notice: { text: await linkRemote(ctx, app, field("link")) } });
+      }
       case "agent_create": {
         const made = await createAgent(store, modules, url.origin,
           { name: field("name"), apps: form.getAll("apps").map(String), readOnly: form.get("readonly") === "1", days: Number(field("days")) });

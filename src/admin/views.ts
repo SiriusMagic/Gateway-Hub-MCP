@@ -1,4 +1,5 @@
 // Sections of the admin panel. Every value shown goes through esc().
+import type { RemoteApp } from "../modules/remote/index.ts";
 import type { Agent, CallStat, HubModule, MetricsSummary } from "../modules/types.ts";
 import { agentStatus } from "../agents.ts";
 import { esc, form, page } from "./layout.ts";
@@ -7,6 +8,8 @@ export interface PanelData {
   token: string; origin: string; modules: HubModule[]; stoneLinked: boolean;
   /** Who manages Stone and with which token (from the module's status); shown under its row. */
   stoneDetail?: string;
+  /** Other apps with Modo MCP (Luma): linked or not, and who manages them. */
+  remote?: { app: RemoteApp; linked: boolean; detail?: string }[];
   agents: Agent[]; day: MetricsSummary; week: MetricsSummary;
   notice?: { text: string; error?: boolean }; newLink?: { name: string; url: string; token: string };
 }
@@ -20,14 +23,22 @@ ${message ? `<p class="bad">${esc(message)}</p>` : ""}
 const date = (ms: number) => ms ? new Date(ms).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "nunca";
 
 function appsCard(d: PanelData): string {
+  const remote = new Map((d.remote ?? []).map((r) => [r.app.prefix, r.linked]));
+  const state = (linked: boolean) => linked ? ' <span class="good">vinculado</span>' : ' <span class="bad">sin vincular</span>';
   const rows = d.modules.map((m) => `<li><b>${esc(m.title)}</b> <small>${esc(m.prefix)}*</small>${m.prefix === "music_"
-    ? (d.stoneLinked ? ' <span class="good">vinculado</span>' : ' <span class="bad">sin vincular</span>') + (d.stoneLinked && d.stoneDetail ? `<br><small>${esc(d.stoneDetail)}</small>` : "")
-    : ' <span class="good">listo</span>'}</li>`).join("");
+    ? state(d.stoneLinked) + (d.stoneLinked && d.stoneDetail ? `<br><small>${esc(d.stoneDetail)}</small>` : "")
+    : remote.has(m.prefix) ? state(remote.get(m.prefix)!) : ' <span class="good">listo</span>'}</li>`).join("");
   const stone = form(d.token, "link_stone", `<label for="l">Enlace de Stone</label>
 <input id="l" name="link" type="url" placeholder="https://…/d/…/mcp?token=stn_…" required>
 <small>Stone › Ajustes › Modo MCP: «Redireccionar a Hub» › Ir al Hub (el hub administra todo), o un token tipo Hub › Copiar (Stone pone los permisos).</small><br><button>Vincular Stone</button>`);
   const unlink = d.stoneLinked ? form(d.token, "unlink_stone", `<button class="ghost">Desvincular Stone</button>`) : "";
-  return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}</div>`;
+  const others = (d.remote ?? []).map(({ app, linked, detail }) => `<h2>${esc(app.title)}</h2>` +
+    (linked ? `<p><span class="good">vinculada</span>${detail ? `<br><small>${esc(detail)}</small>` : ""}</p>` : "") +
+    form(d.token, "link_app", `<input type="hidden" name="prefix" value="${esc(app.prefix)}"><label for="l-${esc(app.prefix)}">Enlace de ${esc(app.label)}</label>
+<input id="l-${esc(app.prefix)}" name="link" type="url" placeholder="https://…/d/…/mcp?token=…" required>
+<small>${esc(app.label)} › Ajustes › Modo MCP: «Redireccionar a Hub» › Ir al Hub, o un token tipo Hub › Copiar enlace.</small><br><button>Vincular ${esc(app.label)}</button>`) +
+    (linked ? form(d.token, "unlink_app", `<input type="hidden" name="prefix" value="${esc(app.prefix)}"><button class="ghost">Desvincular ${esc(app.label)}</button>`) : "")).join("");
+  return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}${others}</div>`;
 }
 
 function agentRow(d: PanelData, a: Agent): string {

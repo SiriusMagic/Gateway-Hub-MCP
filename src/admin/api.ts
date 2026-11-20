@@ -2,6 +2,7 @@
 // travels only in the Authorization header (never in the URL), and these answers carry no CORS
 // headers, so no web page can call them from a browser.
 import { type HubContext, type HubModule, ToolError } from "../modules/types.ts";
+import { REMOTE_APPS, linkRemote, unlinkRemote } from "../modules/remote/index.ts";
 import { type AdminStore, createAgent, linkStone, overview, scan, setPaused, unlinkStone } from "./service.ts";
 
 export interface ApiDeps { store: AdminStore; ctx: HubContext; modules: HubModule[]; security: Record<string, string>; version: string }
@@ -25,6 +26,12 @@ export async function handleAdminApi(request: Request, url: URL, deps: ApiDeps):
     if (path === "/scan" && method === "GET") return ok(await scan(ctx, modules));
     if (path === "/stone" && method === "POST") return ok({ message: await linkStone(store, ctx, String(body.link ?? "")) });
     if (path === "/stone" && method === "DELETE") { await unlinkStone(store); return ok({ message: "Stone desvinculado." }); }
+    // Other apps with Modo MCP (Luma): /apps/gallery_ — the same as /stone for Stone.
+    const app = /^\/apps\/([a-z][a-z0-9]{0,15}_)$/.exec(path);
+    const remote = app ? REMOTE_APPS.find((a) => a.prefix === app[1]) : undefined;
+    if (app && !remote) return error(404, "NOT_FOUND", "Esa app no está en este hub.");
+    if (remote && method === "POST") return ok({ message: await linkRemote(ctx, remote, String(body.link ?? "")) });
+    if (remote && method === "DELETE") { await unlinkRemote(ctx, remote.prefix); return ok({ message: `${remote.label} desvinculada.` }); }
     if (path === "/agents" && method === "POST") return ok(await createAgent(store, modules, url.origin,
       { name: String(body.name ?? ""), apps: body.apps as string[], readOnly: body.readOnly === true, days: Number(body.days) }));
     const agent = /^\/agents\/([0-9a-f]{12})(\/pause|\/resume)?$/.exec(path);

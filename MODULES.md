@@ -80,3 +80,10 @@ export const weatherModule: HubModule = {
   },
 };
 ```
+
+## Apps remotas con Modo MCP (como Luma)
+
+`src/modules/remote/index.ts` crea un módulo para cualquier app del teléfono con Modo MCP (relay + token):
+`remoteModule({ prefix, title, label, androidPackage, summary })` y añadirlo a `REMOTE_APPS` y a `modules`.
+Sus herramientas conservan el nombre si ya llevan el prefijo; si no, se les antepone. La app manda en `initialize`
+`_meta["com.zirakusa/token"]` (nombre, tipo, uso, modo) para que el hub diga quién administra los permisos.
