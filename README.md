@@ -8,7 +8,8 @@ conectarlas una por una. Cada herramienta lleva el prefijo de su app, y el enrut
 |---|---|---|
 | `music_` | [Stone](https://github.com/SiriusMagic/Stone) (en el teléfono) | Todas las herramientas de Stone, a través de su relay |
 | `notes_` | Notas | Crear, buscar, leer, editar y borrar |
-| `calc_` | Calculadora | Expresiones y porcentajes, sin ejecutar código |
+| `gallery_` | [Luma](https://github.com/SiriusMagic/Galer-a-mcp) (en el teléfono) | Buscar fotos sin verlas, álbumes, fechas, favoritas |
+| `calc_` | [Calculadora](https://github.com/SiriusMagic/Calculadora.mcp) (en el teléfono) | Cálculo exacto y científico, historial, divisas y unidades |
 | `utils_` | Utilidades | Hora en cualquier zona horaria y números al azar |
 
 ```text
@@ -16,7 +17,8 @@ Claude / ChatGPT ──https──▶ Gateway Hub (Cloudflare Worker, TypeScript
    (un enlace por agente)     │ enlace del agente → apps permitidas · lectura/escritura · caducidad
                               │ 120/min · 1 MiB · validación de argumentos · métricas
                               ▼
-                          router.ts ── prefijo ──▶ notes_ · calc_ · utils_   (dentro del hub)
+                          router.ts ── prefijo ──▶ notes_ · utils_   (dentro del hub)
+                              ├── gallery_ · calc_ ──https──▶ relay ──wss──▶ Luma · Calculadora (teléfono)
                               └── music_ ──https──▶ relay de Stone ──wss──▶ Stone (teléfono)
 ```
 

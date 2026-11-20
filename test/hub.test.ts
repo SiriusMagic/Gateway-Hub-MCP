@@ -29,17 +29,15 @@ test("initialize names every module; notifications get 202", async () => {
   assert.equal(init.response.headers.get("x-content-type-options"), "nosniff");
 });
 
-test("calculator and utils through MCP, with server-side validation", async () => {
+test("utils through MCP, with server-side validation", async () => {
   const h = hub();
-  const ok = await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "(150 * 0.15) + 20" } });
-  assert.equal(ok.body.result.structuredContent.result, 42.5);
-  const bad = await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: 5 } });
+  const bad = await h.rpc("tools/call", { name: "utils_random", arguments: { min: "1", max: 6 } });
   assert.equal(bad.body.result.isError, true);
   assert.equal(bad.body.result.structuredContent.error.code, "INVALID_ARGUMENT");
-  const extra = await h.rpc("tools/call", { name: "calc_percentage", arguments: { percent: 15, value: 80, evil: 1 } });
+  const extra = await h.rpc("tools/call", { name: "utils_random", arguments: { min: 1, max: 6, evil: 1 } });
   assert.equal(extra.body.result.structuredContent.error.code, "INVALID_ARGUMENT");
-  const pct = await h.rpc("tools/call", { name: "calc_percentage", arguments: { percent: 15, value: 80 } });
-  assert.equal(pct.body.result.structuredContent.result, 12);
+  const unlinked = await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "1+1" } });
+  assert.equal(unlinked.body.result.structuredContent.error.code, "NOT_LINKED");   // calc_ is the phone's Calculadora now
   const tz = await h.rpc("tools/call", { name: "utils_time", arguments: { timezone: "Not/AZone" } });
   assert.equal(tz.body.result.isError, true);
   const r = await h.rpc("tools/call", { name: "utils_random", arguments: { min: 1, max: 6 } });
@@ -91,6 +89,6 @@ test("admin: needs the hub token, accepts only links of the relay, refuses token
 
 test("admin panel escapes what it shows", async () => {
   const h = hub();
-  const page = await h.admin({ token: TOKEN, action: "agent_create", name: "<script>alert(1)</script>", apps: "calc_", days: "1" });
+  const page = await h.admin({ token: TOKEN, action: "agent_create", name: "<script>alert(1)</script>", apps: "utils_", days: "1" });
   assert.doesNotMatch(page.html, /<script>alert/);
 });

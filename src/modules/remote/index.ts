@@ -85,4 +85,7 @@ export function remoteModule(app: RemoteApp): HubModule {
 export const LUMA: RemoteApp = { prefix: "gallery_", title: "Galería (Luma)", label: "Luma", androidPackage: "app.luma.gallery",
   summary: "Luma on the phone: search the user's photos by what they show or the text in them (never the images), albums, favorites." };
 export const galleryModule = remoteModule(LUMA);
-export const REMOTE_APPS = [LUMA];
+export const CALCULADORA: RemoteApp = { prefix: "calc_", title: "Calculadora", label: "Calculadora", androidPackage: "com.zirakusa.calculadora",
+  summary: "The user's calculator on the phone: exact arithmetic and scientific expressions, history, currency and unit conversion." };
+export const calculatorAppModule = remoteModule(CALCULADORA);
+export const REMOTE_APPS = [LUMA, CALCULADORA];

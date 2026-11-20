@@ -7,7 +7,7 @@ test("only the owner token, and only in the header", async () => {
   const h = hub();
   assert.equal((await h.api("GET", "/state", undefined, null)).status, 401);
   assert.equal((await h.api("GET", "/state", undefined, "nope")).status, 401);
-  const { body } = await h.api("POST", "/agents", { name: "A", apps: ["calc_"], days: 1 });
+  const { body } = await h.api("POST", "/agents", { name: "A", apps: ["utils_"], days: 1 });
   assert.equal((await h.api("GET", "/state", undefined, body.token)).status, 401);   // agent links never administer
   const viaQuery = await h.api("GET", `/state?token=${TOKEN}`, undefined, null);
   assert.equal(viaQuery.status, 401);
@@ -19,11 +19,11 @@ test("only the owner token, and only in the header", async () => {
 
 test("state lists modules, agents without hashes and metrics", async () => {
   const h = hub();
-  await h.api("POST", "/agents", { name: "Claude", apps: ["calc_", "notes_"], readOnly: true, days: 30 });
+  await h.api("POST", "/agents", { name: "Claude", apps: ["utils_", "notes_"], readOnly: true, days: 30 });
   const { body } = await h.api("GET", "/state");
   assert.equal(body.version, "0.0.2");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
-  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "notes_", "calc_", "utils_"]);
+  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "calc_", "notes_", "utils_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
   assert.equal(body.agents[0].tokenHash, undefined);
@@ -32,7 +32,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
 
 test("create returns the link once; it works on /mcp; pause, resume and revoke", async () => {
   const h = hub();
-  const made = await h.api("POST", "/agents", { name: "ChatGPT", apps: ["calc_"], days: 0 });
+  const made = await h.api("POST", "/agents", { name: "ChatGPT", apps: ["utils_"], days: 0 });
   assert.match(made.body.url, /^https:\/\/hub\.example\/mcp\?token=gw_/);
   assert.equal(made.body.agent.expiresAt, 0);
   const id = made.body.agent.id;
@@ -48,7 +48,7 @@ test("create returns the link once; it works on /mcp; pause, resume and revoke",
 
 test("validation: no name, no apps, unknown apps, bad JSON, unknown route", async () => {
   const h = hub();
-  assert.equal((await h.api("POST", "/agents", { name: "", apps: ["calc_"] })).body.error.code, "INVALID_ARGUMENT");
+  assert.equal((await h.api("POST", "/agents", { name: "", apps: ["utils_"] })).body.error.code, "INVALID_ARGUMENT");
   assert.equal((await h.api("POST", "/agents", { name: "X", apps: ["evil_"] })).body.error.code, "INVALID_ARGUMENT");
   assert.equal((await h.api("POST", "/agents", ["x"])).status, 400);
   assert.equal((await h.api("GET", "/nothing")).status, 404);
@@ -69,7 +69,7 @@ test("scan: built-in apps ready, Stone unlinked / online / offline, read-only", 
   const stone = fakeStone();
   const h = hub(new MemoryStore(), stone.fetcher);
   let apps = (await h.api("GET", "/scan")).body.apps;
-  assert.equal(apps.find((a: any) => a.prefix === "calc_").online, true);
+  assert.equal(apps.find((a: any) => a.prefix === "utils_").online, true);
   assert.deepEqual(apps.find((a: any) => a.prefix === "music_").linked, false);
   await h.api("POST", "/stone", { link: STONE_LINK });
   apps = (await h.api("GET", "/scan")).body.apps;
@@ -121,4 +121,15 @@ test("Luma (gallery_): linked by its own link, tools keep their names, calls rea
   assert.ok(scan.linked && scan.online && scan.managedBy === "app");
   await h.api("DELETE", "/apps/gallery_");
   assert.equal((await h.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "gallery_").linked, false);
+});
+
+test("the Calculadora app is calc_: its own tool names, its token, read through the relay", async () => {
+  const { fakeStone, MemoryStore, RELAY } = await import("./helpers.ts");
+  const calc = fakeStone({ token: { name: "Hub", kind: "redirect", usage: "", mode: "write" } });
+  const h = hub(new MemoryStore(), calc.fetcher);
+  const link = `https://${RELAY}/d/abcdefabcdefabcdefabcdef/mcp?token=cal_` + "y".repeat(43);
+  assert.match((await h.api("POST", "/apps/calc_", { link })).body.message, /Calculadora vinculada.*Administrado por el hub/);
+  await h.rpc("tools/call", { name: "calc_player_state", arguments: {} });
+  assert.equal(calc.calls.at(-1)!.body.params.name, "player_state");
+  assert.equal(calc.calls.at(-1)!.auth, "Bearer cal_" + "y".repeat(43));
 });

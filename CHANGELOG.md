@@ -1,3 +1,11 @@
+# Hub: la Calculadora del teléfono es calc_
+
+- `calc_` ahora es tu app **Calculadora** (Modo MCP, por el relay), como Luma es `gallery_`. Se quita la calculadora
+  interna del hub, para que la IA vea una sola calculadora. Se vincula igual: «Redireccionar a Hub» en la Calculadora o
+  su enlace en Apps (`/api/admin/apps/calc_`).
+- Las pruebas de agentes usan `utils_` como módulo local. 28 pruebas en Node.
+- Para publicarlo: `npx wrangler deploy`.
+
 # Gateway 0.0.12 · hub con Luma (gallery_)
 
 - **Luma (Galería) en el hub:** módulo `gallery_` para cualquier app con Modo MCP como el de Stone. Se vincula igual:
