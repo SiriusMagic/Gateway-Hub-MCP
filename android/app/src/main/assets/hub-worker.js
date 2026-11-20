@@ -31,17 +31,17 @@ var Limiter = class {
     this.windowMs = windowMs;
   }
   /** Counts one hit; true when [key] is over the limit. */
-  hit(key, now = Date.now()) {
+  hit(key2, now = Date.now()) {
     if (this.hits.size > 5e3) this.hits.clear();
-    let entry = this.hits.get(key);
+    let entry = this.hits.get(key2);
     if (!entry || now - entry.since > this.windowMs) {
       entry = { since: now, count: 0 };
-      this.hits.set(key, entry);
+      this.hits.set(key2, entry);
     }
     return ++entry.count > this.max;
   }
-  blocked(key, now = Date.now()) {
-    const entry = this.hits.get(key);
+  blocked(key2, now = Date.now()) {
+    const entry = this.hits.get(key2);
     return !!entry && now - entry.since <= this.windowMs && entry.count >= this.max;
   }
 };
@@ -54,17 +54,18 @@ async function sha256Hex(value) {
   return [...new Uint8Array(digest2)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 __name(sha256Hex, "sha256Hex");
-function newAgentToken() {
+function newSecret(prefix, space = null) {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return "gw_" + btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const random = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return `${prefix}_${space ? `s${space}_` : ""}${random}`;
 }
-__name(newAgentToken, "newAgentToken");
+__name(newSecret, "newSecret");
 function newId() {
   return [...crypto.getRandomValues(new Uint8Array(6))].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 __name(newId, "newId");
-async function principalFor(token, ownerToken, store, now = Date.now()) {
-  if (await sameSecret(token, ownerToken)) return OWNER;
+async function principalFor(token, isOwner, store, now = Date.now()) {
+  if (await isOwner(token)) return OWNER;
   if (!token.startsWith("gw_")) return null;
   const agent = await store.agentByHash(await sha256Hex(token));
   if (!agent || agent.paused || agent.expiresAt && agent.expiresAt <= now) return null;
@@ -201,22 +202,22 @@ __name(call, "call");
 // src/validate.ts
 function validateArgs(schema, args) {
   const properties = schema.properties ?? {};
-  for (const key of schema.required ?? []) {
-    if (args[key] === void 0 || args[key] === null) throw new ToolError("INVALID_ARGUMENT", `'${key}' is required.`);
+  for (const key2 of schema.required ?? []) {
+    if (args[key2] === void 0 || args[key2] === null) throw new ToolError("INVALID_ARGUMENT", `'${key2}' is required.`);
   }
-  for (const [key, value] of Object.entries(args)) {
-    const rule = properties[key];
+  for (const [key2, value] of Object.entries(args)) {
+    const rule = properties[key2];
     if (!rule) {
-      if (schema.additionalProperties === false) throw new ToolError("INVALID_ARGUMENT", `Unknown argument '${key}'.`);
+      if (schema.additionalProperties === false) throw new ToolError("INVALID_ARGUMENT", `Unknown argument '${key2}'.`);
       continue;
     }
-    check(key, rule, value);
+    check(key2, rule, value);
   }
 }
 __name(validateArgs, "validateArgs");
-function check(key, rule, value) {
+function check(key2, rule, value) {
   const fail = /* @__PURE__ */ __name((why) => {
-    throw new ToolError("INVALID_ARGUMENT", `'${key}' ${why}.`);
+    throw new ToolError("INVALID_ARGUMENT", `'${key2}' ${why}.`);
   }, "fail");
   switch (rule.type) {
     case "string":
@@ -526,8 +527,7 @@ async function createDevice(store, rawName) {
   const name = String(rawName ?? "").trim().slice(0, 40) || "Tel\xE9fono";
   const devices = await listDevices(store);
   if (devices.length >= MAX_DEVICES) throw new ToolError("LIMIT", `M\xE1ximo ${MAX_DEVICES} tel\xE9fonos.`);
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  const secret = "dev_" + btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const secret = newSecret("dev", await store.getConfig("space.id"));
   const device = { id: newId(), name, hash: await sha256Hex(secret), created: Date.now() };
   await store.setConfig(KEY3, JSON.stringify([...devices, device]));
   return { device: { id: device.id, name, created: device.created }, secret };
@@ -590,7 +590,7 @@ async function createAgent(store, modules2, origin, input) {
   const apps = [...new Set((Array.isArray(input.apps) ? input.apps : []).map(String))].filter((p) => known.has(p));
   if (!apps.length) throw new ToolError("INVALID_ARGUMENT", "Elige al menos una app.");
   const days = Math.min(365, Math.max(0, Math.floor(Number(input.days) || 0)));
-  const secret = newAgentToken(), now = Date.now();
+  const secret = newSecret("gw", await store.getConfig("space.id")), now = Date.now();
   const agent = {
     id: newId(),
     name,
@@ -644,8 +644,8 @@ async function handleAdmin(request, url, deps) {
   const { store, ctx, modules: modules2, security } = deps;
   if (request.method === "GET") return html(200, loginPage(), security);
   if (request.method !== "POST") return html(405, loginPage("M\xE9todo no permitido."), security);
-  const form2 = await request.formData();
-  const pasted = String(form2.get("token") ?? "");
+  const form3 = await request.formData();
+  const pasted = String(form3.get("token") ?? "");
   if (/stn_[A-Za-z0-9_-]{10,}|\/d\/[a-z0-9]{12,40}\/mcp/.test(pasted))
     return html(400, loginPage("Eso es un enlace de Stone. Aqu\xED va el token del propietario (hub_\u2026); Stone se vincula desde la app Gateway Hub."), security);
   const token = ownerTokenFrom(pasted);
@@ -666,7 +666,7 @@ async function handleAdmin(request, url, deps) {
     return html(status, panelPage(data), security);
   }, "view");
   const fail = /* @__PURE__ */ __name((text2) => view({ notice: { text: text2, error: true } }, 400), "fail");
-  const field = /* @__PURE__ */ __name((name) => String(form2.get(name) ?? "").trim(), "field");
+  const field = /* @__PURE__ */ __name((name) => String(form3.get(name) ?? "").trim(), "field");
   try {
     switch (field("action")) {
       case "login":
@@ -678,7 +678,7 @@ async function handleAdmin(request, url, deps) {
           store,
           modules2,
           url.origin,
-          { name: field("name"), apps: form2.getAll("apps").map(String), readOnly: form2.get("readonly") === "1", days: Number(field("days")) }
+          { name: field("name"), apps: form3.getAll("apps").map(String), readOnly: form3.get("readonly") === "1", days: Number(field("days")) }
         );
         return view({ newLink: { name: made.agent.name, url: made.url, token: made.token } });
       }
@@ -742,7 +742,15 @@ async function handleAdminApi(request, url, deps) {
     if (typeof body !== "object" || body === null || Array.isArray(body)) return error(400, "INVALID_JSON", "El cuerpo debe ser un objeto JSON.");
   }
   try {
-    if (path === "/state" && method === "GET") return ok(await overview(store, ctx, modules2, deps.version));
+    if (path === "/state" && method === "GET") return ok({
+      ...await overview(store, ctx, modules2, deps.version),
+      shared: deps.shared === true,
+      publicUrl: `${url.origin}/mcp`
+    });
+    if (path === "/connect-code" && method === "POST") {
+      if (!deps.connectCode) return error(404, "NOT_FOUND", "Este hub no tiene enlace p\xFAblico.");
+      return ok(await deps.connectCode());
+    }
     if (path === "/activity" && method === "GET") {
       const since = Math.max(Date.now() - 7 * DAY, Math.floor(Number(url.searchParams.get("since")) || 0));
       return ok({ environment: await environmentState(store), ...await store.metricsSummary(since) });
@@ -780,6 +788,56 @@ async function handleAdminApi(request, url, deps) {
 }
 __name(handleAdminApi, "handleAdminApi");
 
+// src/spaces.ts
+var SPACE_IN_TOKEN = /^(?:hub|gw|dev)_s([0-9a-f]{16})_[A-Za-z0-9_-]{20,}$/;
+var SPACE_KEY = "space.id";
+var OWNER_KEY = "space.owner";
+var spaceOf = /* @__PURE__ */ __name((token) => token ? SPACE_IN_TOKEN.exec(token)?.[1] ?? null : null, "spaceOf");
+var newSpaceId = /* @__PURE__ */ __name(() => [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join(""), "newSpaceId");
+async function setupSpace(store, space, phone) {
+  if (!/^[0-9a-f]{16}$/.test(space)) throw new Error("bad space id");
+  if (await store.getConfig(SPACE_KEY)) throw new Error("space already set up");
+  await store.setConfig(SPACE_KEY, space);
+  const owner = newSecret("hub", space);
+  await store.setConfig(OWNER_KEY, await sha256Hex(owner));
+  const device = await createDevice(store, phone);
+  return { owner, device: device.device, secret: device.secret };
+}
+__name(setupSpace, "setupSpace");
+async function isSpaceOwner(store, token) {
+  const saved = await store.getConfig(OWNER_KEY);
+  if (!saved || spaceOf(token) !== await store.getConfig(SPACE_KEY)) return false;
+  const given = await sha256Hex(token);
+  let diff = 0;
+  for (let i = 0; i < saved.length; i++) diff |= saved.charCodeAt(i) ^ given.charCodeAt(i);
+  return diff === 0 && saved.length === given.length;
+}
+__name(isSpaceOwner, "isSpaceOwner");
+async function issueAgent(store, rawName) {
+  const space = await store.getConfig(SPACE_KEY);
+  if (!space) throw new Error("space not set up");
+  const agents = await store.agentsList();
+  if (agents.length >= MAX_AGENTS) {
+    const oldest = [...agents].sort((a, b) => Math.max(a.lastUsed, a.created) - Math.max(b.lastUsed, b.created))[0];
+    await store.agentsDelete(oldest.id);
+  }
+  const secret = newSecret("gw", space), now = Date.now();
+  const agent = {
+    id: newId(),
+    name: String(rawName ?? "").trim().slice(0, 40) || "IA",
+    tokenHash: await sha256Hex(secret),
+    modules: ["*"],
+    readOnly: false,
+    paused: false,
+    expiresAt: 0,
+    created: now,
+    lastUsed: 0
+  };
+  await store.agentsCreate(agent);
+  return secret;
+}
+__name(issueAgent, "issueAgent");
+
 // src/channel/dynamic.ts
 var overlaps = /* @__PURE__ */ __name((a, b) => a.startsWith(b) || b.startsWith(a), "overlaps");
 async function channelModules(ctx, builtIn) {
@@ -812,7 +870,7 @@ async function channelModules(ctx, builtIn) {
 __name(channelModules, "channelModules");
 
 // src/serve.ts
-var VERSION = "0.0.5";
+var VERSION = "0.1.0";
 var MAX_BODY = 1 << 20;
 var SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
@@ -850,7 +908,7 @@ function rejected(store, caller, missing) {
   console.warn(JSON.stringify({ event: "auth_rejected", caller, missing }));
 }
 __name(rejected, "rejected");
-async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
+async function serve(request, env, store, fetcher = fetch, modules2 = modules, opts = {}) {
   const url = new URL(request.url);
   const caller = request.headers.get("CF-Connecting-IP") || "local";
   if (store.requests.hit(caller)) {
@@ -858,7 +916,13 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
     return rpcError2(429, "Gateway Hub: too many requests. Wait a minute.", { "Retry-After": "60" });
   }
   const owner = env.HUB_TOKEN;
-  if (!owner) return rpcError2(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
+  const space = opts.tenant ? await store.getConfig(SPACE_KEY) : null;
+  if (opts.tenant && !space) {
+    rejected(store, caller, false);
+    return rpcError2(401, "Gateway Hub: unknown link.");
+  }
+  if (!opts.tenant && !owner) return rpcError2(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
+  const isOwner = /* @__PURE__ */ __name(async (token) => opts.tenant ? isSpaceOwner(store, token) : !!owner && sameSecret(token, owner), "isOwner");
   if (store.failures.blocked(caller)) return rpcError2(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError2(413, "Gateway Hub: body larger than 1 MiB.");
   const ctx = { store, env, channel: store.channel, fetch: /* @__PURE__ */ __name((input, init) => fetcher(input, init), "fetch") };
@@ -890,10 +954,14 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
     if (request.method === "DELETE") return json(200, null);
     if (request.method !== "POST") return rpcError2(405, "Gateway Hub: send MCP requests with POST.", { Allow: "POST, DELETE" });
     const token = givenToken(request, url);
-    const principal = token ? await principalFor(token, owner, store) : null;
+    const principal = token ? await principalFor(token, isOwner, store) : null;
     if (!principal) {
       rejected(store, caller, !token);
-      return rpcError2(401, "Gateway Hub: missing, wrong, paused or expired link.", { "WWW-Authenticate": "Bearer" });
+      return rpcError2(
+        401,
+        "Gateway Hub: missing, wrong, paused or expired link.",
+        { "WWW-Authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource"` }
+      );
     }
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError2(413, "Gateway Hub: body larger than 1 MiB.");
@@ -911,14 +979,14 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
   }
   if (url.pathname === "/admin" || url.pathname === "/setup") {
     return handleAdmin(request, url, { store, ctx, modules: modules2, security: SECURITY, async isOwner(token) {
-      if (token && await sameSecret(token, owner)) return true;
+      if (token && await isOwner(token)) return true;
       rejected(store, caller, !token);
       return false;
     } });
   }
   if (url.pathname.startsWith("/api/admin/")) {
     const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
-    if (!bearer || !await sameSecret(bearer, owner)) {
+    if (!bearer || !await isOwner(bearer)) {
       rejected(store, caller, !bearer);
       return new Response(
         JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
@@ -926,11 +994,264 @@ async function serve(request, env, store, fetcher = fetch, modules2 = modules) {
       );
     }
     const all = ctx.channel ? [...modules2, ...await channelModules(ctx, modules2)] : modules2;
-    return handleAdminApi(request, url, { store, ctx, modules: all, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store) });
+    return handleAdminApi(request, url, {
+      store,
+      ctx,
+      modules: all,
+      security: SECURITY,
+      version: VERSION,
+      dropDevice: store.dropChannel?.bind(store),
+      shared: !!space,
+      connectCode: opts.connectCode
+    });
   }
   return rpcError2(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }
 __name(serve, "serve");
+
+// src/oauth/connect.ts
+var KEY5 = "oauth.connect";
+var CONNECT_MS = 10 * 6e4;
+var MAX_LIVE = 2e4;
+async function live(store, now) {
+  let all = {};
+  try {
+    all = JSON.parse(await store.getConfig(KEY5) ?? "{}");
+  } catch {
+  }
+  for (const [hash, entry] of Object.entries(all)) if (entry.exp <= now) delete all[hash];
+  return all;
+}
+__name(live, "live");
+async function createConnectCode(store, space, now = Date.now()) {
+  const all = await live(store, now);
+  for (const [hash2, entry] of Object.entries(all)) if (entry.space === space) delete all[hash2];
+  if (Object.keys(all).length >= MAX_LIVE) throw new Error("too many live codes");
+  let code = "", hash = "";
+  do {
+    const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1e8;
+    code = String(n).padStart(8, "0");
+    hash = await sha256Hex(code);
+  } while (all[hash]);
+  all[hash] = { space, exp: now + CONNECT_MS };
+  await store.setConfig(KEY5, JSON.stringify(all));
+  return { code, expiresAt: now + CONNECT_MS };
+}
+__name(createConnectCode, "createConnectCode");
+async function redeemConnectCode(store, raw, now = Date.now()) {
+  const code = String(raw ?? "").replace(/[\s-]/g, "");
+  if (!/^\d{8}$/.test(code)) return null;
+  const all = await live(store, now);
+  const hash = await sha256Hex(code);
+  const entry = all[hash];
+  if (!entry) return null;
+  delete all[hash];
+  await store.setConfig(KEY5, JSON.stringify(all));
+  return entry.space;
+}
+__name(redeemConnectCode, "redeemConnectCode");
+
+// src/oauth/page.ts
+var PAGE_HEADERS = {
+  "Content-Type": "text/html; charset=utf-8",
+  // No form-action: after the code, the answer redirects back to the AI app (another site).
+  "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'"
+};
+function authorizePage(v) {
+  const hidden = Object.entries(v.fields).map(([k, x]) => `<input type="hidden" name="${esc(k)}" value="${esc(x)}">`).join("");
+  return page(`<h1>Conectar con tu tel\xE9fono</h1>
+<div class="card"><h2>\xAB${esc(v.client)}\xBB quiere usar tus apps</h2>
+<p class="muted">Abre <b>Gateway Hub</b> en tu tel\xE9fono y escribe aqu\xED el c\xF3digo de 8 n\xFAmeros que ves.</p>
+<form method="post" action="/oauth/authorize">${hidden}
+<label for="code">C\xF3digo</label>
+<input type="text" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="1234 5678" autofocus required>
+${v.error ? `<p class="bad">${esc(v.error)}</p>` : ""}
+<button type="submit">Conectar</button></form>
+<p class="muted"><small>Despu\xE9s vuelves a ${esc(v.host)}. Si no pediste esto, cierra la p\xE1gina.</small></p></div>`);
+}
+__name(authorizePage, "authorizePage");
+function messagePage(title, text2) {
+  return page(`<h1>${esc(title)}</h1><div class="card"><p>${esc(text2)}</p></div>`);
+}
+__name(messagePage, "messagePage");
+
+// src/oauth/seal.ts
+var KEY6 = "oauth.key";
+var b64 = /* @__PURE__ */ __name((bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""), "b64");
+var unb64 = /* @__PURE__ */ __name((text2) => Uint8Array.from(atob(text2.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)), "unb64");
+async function key(store) {
+  let raw = await store.getConfig(KEY6);
+  if (!raw) {
+    raw = b64(crypto.getRandomValues(new Uint8Array(32)));
+    await store.setConfig(KEY6, raw);
+  }
+  return crypto.subtle.importKey("raw", unb64(raw), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+__name(key, "key");
+async function seal(store, kind, data) {
+  const body = b64(new TextEncoder().encode(JSON.stringify(data)));
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", await key(store), new TextEncoder().encode(`${kind}.${body}`)));
+  return `${kind}.${body}.${b64(sig)}`;
+}
+__name(seal, "seal");
+async function unseal(store, kind, value) {
+  if (typeof value !== "string" || value.length > 4096) return null;
+  const [k, body, sig] = value.split(".");
+  if (k !== kind || !body || !sig) return null;
+  try {
+    const ok = await crypto.subtle.verify("HMAC", await key(store), unb64(sig), new TextEncoder().encode(`${kind}.${body}`));
+    return ok ? JSON.parse(new TextDecoder().decode(unb64(body))) : null;
+  } catch {
+    return null;
+  }
+}
+__name(unseal, "unseal");
+async function pkceMatches(verifier, challenge) {
+  if (typeof verifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(verifier)) return false;
+  return b64(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)))) === challenge;
+}
+__name(pkceMatches, "pkceMatches");
+
+// src/oauth/directory.ts
+var CODE_MS = 5 * 6e4;
+var OAUTH_PATHS = [
+  "/register",
+  "/oauth/register",
+  "/oauth/authorize",
+  "/oauth/token",
+  "/.well-known/oauth-authorization-server",
+  "/.well-known/oauth-protected-resource",
+  "/.well-known/oauth-protected-resource/mcp"
+];
+var html2 = /* @__PURE__ */ __name((status, body, extra = {}) => new Response(body, { status, headers: { ...SECURITY, ...PAGE_HEADERS, ...extra } }), "html");
+var oauthError = /* @__PURE__ */ __name((status, error, description) => json(status, { error, error_description: description }), "oauthError");
+var goodRedirect = /* @__PURE__ */ __name((raw) => {
+  if (typeof raw !== "string" || raw.length > 512) return false;
+  try {
+    const u = new URL(raw);
+    return !u.hash && (u.protocol === "https:" || u.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname));
+  } catch {
+    return false;
+  }
+}, "goodRedirect");
+async function form2(request) {
+  const type = request.headers.get("content-type") ?? "";
+  try {
+    if (type.includes("application/json")) return Object.fromEntries(Object.entries(await request.json()).map(([k, v]) => [k, String(v)]));
+    return Object.fromEntries(new URLSearchParams(await request.text()));
+  } catch {
+    return {};
+  }
+}
+__name(form2, "form");
+async function handleDirectory(request, url, store, deps) {
+  const caller = request.headers.get("CF-Connecting-IP") || "local";
+  const origin = url.origin, path = url.pathname, method = request.method;
+  if (store.requests.hit(caller)) return json(429, { error: "slow_down", error_description: "Too many requests. Wait a minute." }, { "Retry-After": "60" });
+  if (path.startsWith("/.well-known/oauth-protected-resource") && method === "GET")
+    return json(200, { resource: `${origin}/mcp`, authorization_servers: [origin], bearer_methods_supported: ["header"] });
+  if (path === "/.well-known/oauth-authorization-server" && method === "GET") return json(200, {
+    issuer: origin,
+    authorization_endpoint: `${origin}/oauth/authorize`,
+    token_endpoint: `${origin}/oauth/token`,
+    registration_endpoint: `${origin}/oauth/register`,
+    response_types_supported: ["code"],
+    grant_types_supported: ["authorization_code"],
+    code_challenge_methods_supported: ["S256"],
+    token_endpoint_auth_methods_supported: ["none"],
+    scopes_supported: ["mcp"]
+  });
+  if (path === "/register" && method === "POST") {
+    if (store.signups.hit(caller)) return json(429, { error: { code: "SLOW_DOWN", message: "Demasiados registros desde esta red. Prueba en una hora." } }, { "Retry-After": "3600" });
+    const body = await form2(request);
+    const made = await deps.setupSpace(newSpaceId(), String(body.name ?? "").slice(0, 40));
+    return json(200, { hub: origin, ...made });
+  }
+  if (path === "/oauth/register" && method === "POST") {
+    const body = await (async () => {
+      try {
+        return await request.json();
+      } catch {
+        return {};
+      }
+    })();
+    const uris = Array.isArray(body.redirect_uris) ? body.redirect_uris.slice(0, 5) : [];
+    if (!uris.length || !uris.every(goodRedirect)) return oauthError(400, "invalid_redirect_uri", "redirect_uris must be https (or http to localhost).");
+    const name = String(body.client_name ?? "").trim().slice(0, 60) || "IA";
+    const client_id = await seal(store, "cl", { u: uris, n: name });
+    return json(201, {
+      client_id,
+      client_name: name,
+      redirect_uris: uris,
+      token_endpoint_auth_method: "none",
+      grant_types: ["authorization_code"],
+      response_types: ["code"],
+      client_id_issued_at: Math.floor(Date.now() / 1e3)
+    });
+  }
+  if (path === "/oauth/authorize" && (method === "GET" || method === "POST")) {
+    const p = method === "GET" ? Object.fromEntries(url.searchParams) : await form2(request);
+    const client = await unseal(store, "cl", p.client_id);
+    if (!client) return html2(400, messagePage("Enlace no v\xE1lido", "Esta app no se registr\xF3 bien. Vuelve a a\xF1adir el conector en tu IA."));
+    const redirect = p.redirect_uri || (client.u.length === 1 ? client.u[0] : "");
+    if (!client.u.includes(redirect)) return html2(400, messagePage("Enlace no v\xE1lido", "La direcci\xF3n de vuelta no coincide. Vuelve a a\xF1adir el conector."));
+    const back = /* @__PURE__ */ __name((params) => {
+      const target = new URL(redirect);
+      for (const [k, v] of Object.entries({ ...params, ...p.state ? { state: p.state } : {} })) target.searchParams.set(k, v);
+      return new Response(null, { status: 302, headers: { ...SECURITY, Location: target.toString() } });
+    }, "back");
+    if ((p.response_type ?? "code") !== "code") return back({ error: "unsupported_response_type" });
+    if (!/^[A-Za-z0-9_-]{43}$/.test(p.code_challenge ?? "") || (p.code_challenge_method ?? "S256") !== "S256")
+      return back({ error: "invalid_request", error_description: "PKCE S256 is required." });
+    const fields = { client_id: p.client_id, redirect_uri: redirect, code_challenge: p.code_challenge, ...p.state ? { state: p.state } : {} };
+    const view = { client: client.n, host: new URL(redirect).host, fields };
+    if (method === "GET") return html2(200, authorizePage(view));
+    if (store.failures.blocked(caller)) return html2(429, authorizePage({ ...view, error: "Demasiados intentos. Espera un minuto." }));
+    const space = await redeemConnectCode(store, p.code);
+    if (!space) {
+      store.failures.hit(caller);
+      return html2(401, authorizePage({ ...view, error: "Ese c\xF3digo no sirve. Mira el c\xF3digo de Gateway Hub (cambia cada 10 minutos)." }));
+    }
+    const code = await seal(store, "co", {
+      s: space,
+      c: p.client_id,
+      r: redirect,
+      ch: p.code_challenge,
+      n: client.n,
+      e: Date.now() + CODE_MS,
+      id: newSpaceId()
+    });
+    return back({ code });
+  }
+  if (path === "/oauth/token" && method === "POST") {
+    const p = await form2(request);
+    if (p.grant_type !== "authorization_code") return oauthError(400, "unsupported_grant_type", "Only authorization_code.");
+    const code = await unseal(store, "co", p.code);
+    if (!code || code.e < Date.now() || code.c !== p.client_id || p.redirect_uri && p.redirect_uri !== code.r) {
+      store.failures.hit(caller);
+      return oauthError(400, "invalid_grant", "The code is wrong, expired or for another app.");
+    }
+    if (!await pkceMatches(p.code_verifier, code.ch)) return oauthError(400, "invalid_grant", "PKCE check failed.");
+    if (!await useOnce(store, code.id, code.e)) return oauthError(400, "invalid_grant", "The code was already used.");
+    const token = await deps.issueAgent(code.s, code.n);
+    return json(200, { access_token: token, token_type: "Bearer", scope: "mcp" });
+  }
+  return json(404, { error: "not_found" });
+}
+__name(handleDirectory, "handleDirectory");
+async function useOnce(store, id, exp, now = Date.now()) {
+  let used = {};
+  try {
+    used = JSON.parse(await store.getConfig("oauth.used") ?? "{}");
+  } catch {
+  }
+  for (const [k, e] of Object.entries(used)) if (e < now) delete used[k];
+  if (used[id]) return false;
+  used[id] = exp;
+  await store.setConfig("oauth.used", JSON.stringify(used));
+  return true;
+}
+__name(useOnce, "useOnce");
 
 // src/store.ts
 import { DurableObject } from "cloudflare:workers";
@@ -1028,6 +1349,8 @@ var HubStore = class extends DurableObject {
   // per caller and minute
   failures = new Limiter(20);
   // wrong tokens per caller and minute
+  signups = new Limiter(5, 36e5);
+  // new spaces per caller and hour (directory only)
   sql;
   constructor(ctx, env) {
     super(ctx, env);
@@ -1041,8 +1364,37 @@ var HubStore = class extends DurableObject {
     this.sql.exec("CREATE INDEX IF NOT EXISTS calls_at ON calls(at)");
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
   }
+  /** "main": the single-owner hub (HUB_TOKEN). */
   fetch(request) {
     return serve(request, this.env, this);
+  }
+  // ---- the shared hub (called by the Worker over RPC, never reachable from outside) ----
+  hub(name) {
+    return this.env.HUB.get(this.env.HUB.idFromName(name));
+  }
+  /** u_<space>: one person's hub. Its sign-in codes come from the directory. */
+  tenant(request) {
+    return serve(request, this.env, this, fetch, void 0, { tenant: true, connectCode: /* @__PURE__ */ __name(async () => {
+      const space = await this.getConfig(SPACE_KEY);
+      if (!space) throw new Error("space not set up");
+      return this.hub("directory").createConnect(space);
+    }, "connectCode") });
+  }
+  /** "directory": new spaces and the public link's sign-in. */
+  directory(request) {
+    return handleDirectory(request, new URL(request.url), this, {
+      setupSpace: /* @__PURE__ */ __name((space, phone) => this.hub(`u_${space}`).setupSpace(space, phone), "setupSpace"),
+      issueAgent: /* @__PURE__ */ __name((space, name) => this.hub(`u_${space}`).issueAgent(name), "issueAgent")
+    });
+  }
+  setupSpace(space, phone) {
+    return setupSpace(this, space, phone);
+  }
+  issueAgent(name) {
+    return issueAgent(this, name);
+  }
+  createConnect(space) {
+    return createConnectCode(this, space);
   }
   // ---- phones' channel (WebSocket hibernation: one socket per device, tagged with its id) ----
   channel = new ChannelCore((device) => this.ctx.getWebSockets(device)[0], (device, message) => register(this, device, message));
@@ -1076,13 +1428,13 @@ var HubStore = class extends DurableObject {
     } catch {
     }
   }
-  async getConfig(key) {
-    const rows = this.sql.exec("SELECT value FROM config WHERE key = ?", key).toArray();
+  async getConfig(key2) {
+    const rows = this.sql.exec("SELECT value FROM config WHERE key = ?", key2).toArray();
     return rows.length ? String(rows[0].value) : null;
   }
-  async setConfig(key, value) {
-    if (value === null) this.sql.exec("DELETE FROM config WHERE key = ?", key);
-    else this.sql.exec("INSERT INTO config(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", key, value);
+  async setConfig(key2, value) {
+    if (value === null) this.sql.exec("DELETE FROM config WHERE key = ?", key2);
+    else this.sql.exec("INSERT INTO config(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", key2, value);
   }
   // ---- agents (only the SHA-256 of each token is stored) ----
   async agentsCreate(a) {
@@ -1144,7 +1496,17 @@ var index_default = {
     if (url.protocol !== "https:" && !local(url)) return json(400, { error: "Gateway Hub: use https://" });
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...CORS, ...SECURITY } });
     if (url.pathname === "/") return new Response("Gateway Hub OK\n", { headers: { "Content-Type": "text/plain", ...SECURITY } });
-    return env.HUB.get(env.HUB.idFromName("main")).fetch(request);
+    const hub = /* @__PURE__ */ __name((name) => env.HUB.get(env.HUB.idFromName(name)), "hub");
+    if (OAUTH_PATHS.includes(url.pathname)) return hub("directory").directory(request);
+    const token = givenToken(request, url);
+    const space = spaceOf(token);
+    if (space) return hub(`u_${space}`).tenant(request);
+    if (url.pathname === "/mcp" && !token && request.method === "POST") return json(
+      401,
+      { jsonrpc: "2.0", id: null, error: { code: -32001, message: "Gateway Hub: sign in first." } },
+      { "WWW-Authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource"` }
+    );
+    return hub("main").fetch(request);
   }
 };
 export {

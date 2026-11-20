@@ -15,7 +15,7 @@ import { redeemPairing } from "./channel/pairing.ts";
 import { SPACE_KEY, isSpaceOwner } from "./spaces.ts";
 import { channelModules } from "./channel/dynamic.ts";
 
-export const VERSION = "0.0.5";
+export const VERSION = "0.1.0";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",

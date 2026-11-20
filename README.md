@@ -11,6 +11,21 @@ conectarlas una por una. Cada herramienta lleva el prefijo de su app, y el enrut
 Calculadora, Notas y Utilidades se quitaron en la 0.0.3: el hub queda solo para apps reales. Para añadir
 otra, ver [`MODULES.md`](MODULES.md).
 
+## Hub compartido (0.1.0): copiar, pegar y escribir un código
+
+El mismo Worker sirve a **muchas personas**, cada una en su propio espacio (un Durable Object `u_<espacio>`):
+
+1. Instala **Gateway Hub** (y Stone). Al abrirlo se une solo al hub: sin Cloudflare, sin tokens ni registro.
+   Stone se vincula solo.
+2. Copia el enlace público **`https://<hub>/mcp`** (el mismo para todos) y pégalo en Claude o ChatGPT como conector
+   personalizado.
+3. Cuando la IA lo pida, escribe el **código de 8 cifras** que muestra Gateway (sirve una vez y cambia cada 10 minutos).
+
+Cada secreto nombra su espacio (`gw_s<espacio>_…`), así que el Worker manda cada llamada **solo** al teléfono de su
+dueño: nunca a todos. El inicio de sesión es OAuth 2.1 con PKCE y registro dinámico de clientes (`src/oauth/`).
+Quien tenga su propio hub (Cloudflare) lo sigue usando con «Tengo mi propio hub»; ese hub de un solo dueño
+(`HUB_TOKEN`) funciona igual que antes.
+
 **Entorno MCP** (app o `/admin`): *Conectar*, *Pausar* (conserva enlaces y ajustes, pero no ejecuta nada) o
 *Desconectar* (además olvida las apps registradas). Lo aplica el propio hub: con el entorno en pausa o desconectado,
 toda llamada responde `PAUSED` o `DISCONNECTED`.
@@ -37,8 +52,8 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.3**, la app nativa del propietario:
-agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.3.apk`. Próximas fases: [`ROADMAP.md`](ROADMAP.md). Usa la API JSON
+[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.9**, la app nativa del propietario:
+agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.9.apk`. Próximas fases: [`ROADMAP.md`](ROADMAP.md). Usa la API JSON
 `/api/admin/*`, que solo acepta el token del propietario en la cabecera y no responde a navegadores
 (sin CORS).
 
@@ -77,7 +92,7 @@ agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `an
 
 ```sh
 npm ci
-npm test                 # 27 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
+npm test                 # 41 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
 npm run dev              # http://127.0.0.1:8790 (secretos locales en .dev.vars, ignorado por Git)
 npx wrangler secret put HUB_TOKEN
 npx wrangler deploy

@@ -3,7 +3,11 @@
 ```text
 gateway-hub-mcp/
 ├── src/
-│   ├── index.ts            # Worker: solo HTTPS → Durable Object único ("main")
+│   ├── index.ts            # Worker: solo HTTPS → "directory" (alta y OAuth), u_<espacio> (el secreto lo
+│   │                       #   nombra) o "main" (hub de un solo dueño, HUB_TOKEN)
+│   ├── spaces.ts           # Hub compartido: espacios, secretos que nombran su espacio, alta y agentes por OAuth
+│   ├── oauth/              # Enlace público: registro dinámico, página del código, /oauth/token con PKCE,
+│   │                       #   códigos de 8 cifras (connect.ts) y valores firmados con HMAC (seal.ts)
 │   ├── store.ts            # Durable Object: SQLite (config, agentes, métricas) + límites
 │   ├── serve.ts            # Límites, tamaño, quién llama → /mcp o /admin
 │   ├── agents.ts           # Propietario y agentes: tokens, apps permitidas, solo lectura

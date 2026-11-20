@@ -1,3 +1,14 @@
+# Hub 0.1.0 · Gateway 0.0.9 (hub compartido)
+
+- **Un hub para todos, cada uno en su espacio.** Gateway se une solo al abrirse: sin Cloudflare, sin tokens, sin
+  registro. Cada llamada de una IA llega solo al teléfono de su dueño.
+- **Enlace público + código:** se pega `https://<hub>/mcp` en Claude o ChatGPT y, cuando lo pide, se escribe el código
+  de 8 cifras de Gateway (OAuth 2.1 con PKCE; el código sirve una vez y cambia cada 10 minutos).
+- Stone se vincula solo con el paquete completo (todo, un año, se renueva solo). Requiere Stone 1.7.19.
+- Gateway funciona en segundo plano por defecto, para que la IA llegue a Stone sin abrir la app.
+- Corregido: Gateway no guardaba la credencial del teléfono y creaba un teléfono nuevo cada vez que se abría.
+- Para publicarlo: `npx wrangler deploy` (mismo Worker `stone-hub`; tus datos actuales siguen en «main»).
+
 # Sin publicar (fase 7) · hub 0.0.5
 
 ## App más simple para gente sin conocimientos técnicos

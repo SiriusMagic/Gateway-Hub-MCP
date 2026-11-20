@@ -34,6 +34,17 @@ despliegue con un token de Cloudflare temporal, teléfonos satélite y Stone sol
 el relay se retiró del hub, de Gateway y de Stone. Pendiente: herramientas de Stone sin la interfaz abierta (2b, medir
 en teléfono real).
 
+## Hub compartido ✅ (hub 0.1.0 · Gateway 0.0.9 · Stone 1.7.19)
+
+Lo que pidieron los usuarios: instalar, copiar un enlace, pegarlo en la IA y listo, sin Cloudflare.
+
+- Un solo Worker para todos; cada persona en su espacio (`u_<espacio>`). Las llamadas van solo a su teléfono.
+- Gateway se une solo (`/register`), vincula Stone y muestra el enlace público `/mcp` y un código de 8 cifras (OAuth).
+- Stone activa solos los paquetes de Gateway y no pide confirmaciones. Lo crítico lo confirma la IA, si quiere.
+- Pendiente: publicar con `npx wrangler deploy` (o Gateway › Ajustes › Cloudflare › Actualizar mi hub), probar con
+  Claude y ChatGPT reales, y política de privacidad (el tráfico de todos pasa por el hub del autor).
+- Pendiente: otros teléfonos («satélites») en un espacio compartido; hoy solo funcionan en el hub de un solo dueño.
+
 ## Fase 2: «Mi Cloudflare» (instalación en un toque)
 
 Hecho (Hub app 0.0.6 · Stone 1.7.15): pegar y actualizar el token de Cloudflare en las dos apps (compartido), y la app

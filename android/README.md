@@ -1,8 +1,11 @@
-# Gateway Hub para Android (0.0.8)
+# Gateway Hub para Android (0.0.9)
 
 App nativa (Kotlin, Jetpack Compose) del **propietario** del Gateway Hub. Hace lo mismo que el panel
 web `/admin`, pero en el teléfono:
 
+- **Sin nada que escribir (0.0.9):** al abrirla por primera vez se une sola al hub compartido, vincula Stone con el
+  paquete completo y muestra el enlace público y el código de 8 cifras. «Tengo mi propio hub» abre el acceso de siempre.
+  Todo lo técnico está en «Opciones avanzadas».
 - **Agentes:** crear un enlace por IA (apps permitidas, solo lectura, duración), copiarlo una sola
   vez, y pausar, reanudar o revocar.
 - **Sin token `hub_`:** la app publica o actualiza tu hub con un token de Cloudflare que se usa una vez y no se guarda, y
@@ -22,7 +25,7 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.8.apk`](GatewayHub-0.0.8.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.9.apk`](GatewayHub-0.0.9.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 
