@@ -3,7 +3,7 @@
 import { type Agent, type HubAdminStore, type HubContext, type HubModule, type HubStoreApi, ToolError } from "../modules/types.ts";
 import { MAX_AGENTS, agentStatus, newAgentToken, newId, sha256Hex } from "../agents.ts";
 import { parseStoneLink, stoneRpc } from "../modules/music/stone.ts";
-import { savedLink } from "../modules/music/index.ts";
+import { describe, savedLink, tokenInfo } from "../modules/music/index.ts";
 
 export type AdminStore = HubStoreApi & HubAdminStore;
 export const DAY = 86_400_000;
@@ -25,7 +25,7 @@ export async function overview(store: AdminStore, ctx: HubContext, modules: HubM
 
 /**
  * Read-only scan of every app: built-in ones are always ready; remote ones (Stone) get one harmless
- * request (tools/list) in parallel. Nothing is turned on or changed.
+ * requests (initialize and tools/list) in parallel. Nothing is turned on or changed.
  */
 export async function scan(ctx: HubContext, modules: HubModule[]) {
   const results = await Promise.all(modules.map(async (m) => {
@@ -40,7 +40,10 @@ export async function scan(ctx: HubContext, modules: HubModule[]) {
 export async function linkStone(store: AdminStore, ctx: HubContext, raw: string): Promise<string> {
   const link = parseStoneLink(raw, ctx.env.STONE_RELAY_HOST);
   let note = "Stone vinculado y en línea.";
-  try { await stoneRpc(ctx, link, "tools/list", {}, 8_000); } catch (error) {
+  try {
+    const token = tokenInfo(await stoneRpc(ctx, link, "initialize", { protocolVersion: "2025-06-18" }, 8_000));
+    if (token) note = "Stone vinculado. " + describe(token);
+  } catch (error) {
     if ((error as ToolError).code === "STONE_TOKEN") throw error;
     note = "Stone vinculado. Ahora no responde: abre Stone con el Modo MCP activado.";
   }

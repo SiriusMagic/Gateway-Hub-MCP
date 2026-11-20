@@ -28,6 +28,7 @@ class ScreenshotsTest {
         override fun setPaused(id: String, paused: Boolean) {}; override fun revoke(id: String) {}
         override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) {}
         override fun linkStone(link: String) {}; override fun unlinkStone() {}; override fun scan() {}
+        override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}
     }
 
     private fun shot(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {
@@ -38,7 +39,7 @@ class ScreenshotsTest {
     @Test fun login() = shot("login") { LoginScreen(UiState(hubUrl = "https://stone-hub.example.workers.dev")) { } }
     @Test fun agents() = shot("agents") { HomeScreen(connected, NoActions, HubTab.AGENTS) }
     @Test fun scanner() = shot("scanner") { HomeScreen(connected.copy(scan = ScanMerge.merge(
-        listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.12", "music_", true),
+        listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.13", "music_", true, "com.zirakusa.stone.kotlin.preview.hublink"),
             LocalApp("com.example.lookalike", "Stone Pro", "9.9", "music_", false)),
         HubJson.scan(SCAN_JSON))), NoActions, HubTab.SCANNER) }
     @Test fun apps() = shot("apps") { HomeScreen(connected, NoActions, HubTab.APPS) }

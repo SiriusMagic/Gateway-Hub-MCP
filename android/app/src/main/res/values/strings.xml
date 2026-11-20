@@ -23,7 +23,11 @@
         <item quantity="other">En línea · %1$d herramientas</item>
     </plurals>
     <string name="scan_offline">Vinculada, apagada</string>
-    <string name="scan_open">Abrir y vincular</string>
+    <string name="scan_open">Abrir</string>
+    <string name="scan_auto_link">Vincular automáticamente</string>
+    <string name="scanner_sync">Sincronización automática</string>
+    <string name="scanner_sync_hint">Al escanear, vincula solas las apps del mismo desarrollador que tengan «Redireccionar a Hub» activada.</string>
+    <string name="link_permission">vincular apps con Gateway Hub</string>
     <string name="tab_metrics">Métricas</string>
     <string name="refresh">Actualizar</string>
     <string name="logout">Cerrar sesión</string>
@@ -65,7 +69,7 @@
     <string name="app_linked">Vinculado</string>
     <string name="app_unlinked">Sin vincular</string>
     <string name="stone_title">Vincular Stone</string>
-    <string name="stone_hint">En Stone: Ajustes › Modo MCP › Copiar. Eso copia un enlace solo para el hub; pégalo aquí.</string>
+    <string name="stone_hint">En Stone › Ajustes › Modo MCP: activa «Redireccionar a Hub» (se vincula solo al escanear y el hub administra todo), o crea un token tipo Hub, toca Copiar y pégalo aquí (Stone pone los permisos).</string>
     <string name="stone_link">Enlace de Stone</string>
     <string name="paste">Pegar</string>
     <string name="link">Vincular</string>

@@ -4,7 +4,7 @@ import type { HubContext, HubModule } from "../modules/types.ts";
 import { ADMIN_HEADERS } from "./layout.ts";
 import { type PanelData, loginPage, panelPage } from "./views.ts";
 import { type AdminStore, DAY, createAgent, linkStone, setPaused, unlinkStone } from "./service.ts";
-import { savedLink } from "../modules/music/index.ts";
+import { musicModule, savedLink } from "../modules/music/index.ts";
 
 /** Accepts the access as people paste it: "https://hub#hub_…", "…?token=hub_…" or only the token. */
 export function ownerTokenFrom(pasted: string): string {
@@ -35,6 +35,7 @@ export async function handleAdmin(request: Request, url: URL, deps: AdminDeps): 
   const view = async (extra: Partial<PanelData> = {}, status = 200) => {
     const now = Date.now();
     const data: PanelData = { token, origin: url.origin, modules, stoneLinked: !!await savedLink(ctx),
+      stoneDetail: await musicModule.status?.(ctx).then((st) => st.detail).catch(() => undefined),
       agents: await store.agentsList(), day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY), ...extra };
     return html(status, panelPage(data), security);
   };

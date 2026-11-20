@@ -1,3 +1,15 @@
+# Gateway 0.0.11 · hub 0.0.2 + Stone 1.7.22
+
+- **Dos formas de conectar Stone:**
+  - **Puente:** en Stone creas un token tipo **Hub**, tocas Copiar y lo pegas en Apps. El hub solo junta los enlaces;
+    los permisos, la caducidad y las herramientas los pone Stone.
+  - **Administrado por el hub:** en Stone activas **«Redireccionar a Hub»**. Al escanear, Gateway vincula Stone sola
+    (solo apps firmadas por el mismo desarrollador) y desde ese momento los permisos se ponen aquí, en el hub.
+- El panel, el escáner y `music_status` dicen quién manda en Stone, con qué token (nombre, modo) y su uso. El secreto
+  nunca se muestra.
+- Vuelve «Sincronización automática» y «Vincular automáticamente» en el Escáner.
+- Para publicar el hub: `npx wrangler deploy`.
+
 # Hub 0.0.2 restaurado · Gateway 0.0.10
 
 - **Vuelve el hub de antes:** el hub solo reenvía. Cada llamada de `music_` va a Stone por el relay `stone-relay`, con

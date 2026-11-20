@@ -5,6 +5,8 @@ import { esc, form, page } from "./layout.ts";
 
 export interface PanelData {
   token: string; origin: string; modules: HubModule[]; stoneLinked: boolean;
+  /** Who manages Stone and with which token (from the module's status); shown under its row. */
+  stoneDetail?: string;
   agents: Agent[]; day: MetricsSummary; week: MetricsSummary;
   notice?: { text: string; error?: boolean }; newLink?: { name: string; url: string; token: string };
 }
@@ -19,10 +21,11 @@ const date = (ms: number) => ms ? new Date(ms).toISOString().slice(0, 16).replac
 
 function appsCard(d: PanelData): string {
   const rows = d.modules.map((m) => `<li><b>${esc(m.title)}</b> <small>${esc(m.prefix)}*</small>${m.prefix === "music_"
-    ? (d.stoneLinked ? ' <span class="good">vinculado</span>' : ' <span class="bad">sin vincular</span>') : ' <span class="good">listo</span>'}</li>`).join("");
+    ? (d.stoneLinked ? ' <span class="good">vinculado</span>' : ' <span class="bad">sin vincular</span>') + (d.stoneLinked && d.stoneDetail ? `<br><small>${esc(d.stoneDetail)}</small>` : "")
+    : ' <span class="good">listo</span>'}</li>`).join("");
   const stone = form(d.token, "link_stone", `<label for="l">Enlace de Stone</label>
 <input id="l" name="link" type="url" placeholder="https://…/d/…/mcp?token=stn_…" required>
-<small>Stone › Ajustes › Modo MCP › Copiar (copia un enlace solo para el hub).</small><br><button>Vincular Stone</button>`);
+<small>Stone › Ajustes › Modo MCP: «Redireccionar a Hub» › Ir al Hub (el hub administra todo), o un token tipo Hub › Copiar (Stone pone los permisos).</small><br><button>Vincular Stone</button>`);
   const unlink = d.stoneLinked ? form(d.token, "unlink_stone", `<button class="ghost">Desvincular Stone</button>`) : "";
   return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}</div>`;
 }

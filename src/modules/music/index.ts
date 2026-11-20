@@ -1,6 +1,6 @@
 // Stone (music and video player on the phone) as a hub module: every Stone tool appears as
 // music_<tool>. Stone keeps checking its own token, permissions and on-screen confirmations.
-import { type HubContext, type HubModule, type Tool, ToolError, type ToolResult, text } from "../types.ts";
+import { type HubContext, type HubModule, type LinkedToken, type Tool, ToolError, type ToolResult, text } from "../types.ts";
 import { type StoneLink, stoneRpc } from "./stone.ts";
 
 export const MUSIC = "music_";
@@ -27,6 +27,28 @@ async function stoneTools(ctx: HubContext, link: StoneLink): Promise<Tool[]> {
   }
 }
 
+const TOKEN_META = "com.zirakusa.stone/token";
+const clip = (value: unknown, max: number) => typeof value === "string" ? value.slice(0, max) : "";
+
+/** The token details Stone gives in initialize (name, type, use, mode); unknown or missing fields stay empty. */
+export function tokenInfo(result: unknown): LinkedToken | undefined {
+  const meta = (result as { _meta?: Record<string, unknown> } | null)?._meta?.[TOKEN_META] as Record<string, unknown> | undefined;
+  if (!meta || typeof meta !== "object") return undefined;
+  return { name: clip(meta.name, 60), kind: clip(meta.kind, 20), usage: clip(meta.usage, 300), mode: clip(meta.mode, 20) };
+}
+
+export const managedBy = (token: LinkedToken): "app" | "hub" => token.kind === "redirect" ? "hub" : "app";
+
+const MODES: Record<string, string> = { read: "solo lectura", write: "lectura y escritura", full: "acceso completo" };
+
+/** One line for the panel and the app: who manages Stone, with which token and what for. */
+export function describe(token: LinkedToken | undefined): string {
+  if (!token) return "Vinculado y en línea.";
+  if (token.kind === "redirect") return "En línea · Administrado por el hub (Redireccionar a Hub): los permisos los pones aquí.";
+  const use = token.usage ? ` · Uso: ${token.usage}` : "";
+  return `En línea · Puente: los permisos los pone Stone (token «${token.name}», ${MODES[token.mode] ?? token.mode})${use}`;
+}
+
 const statusTool: Tool = { name: "music_status", description: "Whether Stone is linked to the hub and reachable, and how many Stone tools there are.",
   inputSchema: { type: "object", properties: {} }, annotations: { title: "Estado de Stone", readOnlyHint: true } };
 
@@ -38,10 +60,11 @@ export const musicModule: HubModule = {
   androidPackage: "com.zirakusa.stone.kotlin.preview",
   async status(ctx) {
     const link = await savedLink(ctx);
-    if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Stone, Modo MCP › Copiar." };
+    if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Stone, Modo MCP › Copiar, o «Redireccionar a Hub»." };
     try {
+      const token = tokenInfo(await stoneRpc(ctx, link, "initialize", { protocolVersion: "2025-06-18" }, 6_000));
       const tools = (await stoneRpc(ctx, link, "tools/list", {}, 6_000) as { tools?: unknown[] }).tools?.length ?? 0;
-      return { linked: true, online: true, tools, detail: "Vinculado y en línea." };
+      return { linked: true, online: true, tools, detail: describe(token), ...(token ? { token, managedBy: managedBy(token) } : {}) };
     } catch (error) {
       return { linked: true, online: false, tools: 0, detail: (error as Error).message };
     }

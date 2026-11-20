@@ -75,9 +75,28 @@ test("scan: built-in apps ready, Stone unlinked / online / offline, read-only", 
   apps = (await h.api("GET", "/scan")).body.apps;
   const music = apps.find((a: any) => a.prefix === "music_");
   assert.ok(music.linked && music.online && music.tools === 2 && music.remote);
-  assert.ok(stone.calls.every((c) => c.body.method === "tools/list"));          // the scan only reads
+  assert.ok(stone.calls.every((c) => ["initialize", "tools/list"].includes(c.body.method))); // the scan only reads
   const offline = hub(h.store, fakeStone({ status: 503 }).fetcher);
   const down = (await offline.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
   assert.ok(down.linked && !down.online);
   assert.match(down.detail, /not open/);
+});
+
+test("scan tells who manages Stone: a bridge for LLM/Hub tokens, the hub when Stone redirects", async () => {
+  const { fakeStone, MemoryStore } = await import("./helpers.ts");
+  const bridge = hub(new MemoryStore(), fakeStone({ token: { name: "Casa", kind: "hub", usage: "Hub de casa", mode: "read" } }).fetcher);
+  assert.match((await bridge.api("POST", "/stone", { link: STONE_LINK })).body.message, /Puente/);
+  let music = (await bridge.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
+  assert.equal(music.managedBy, "app");
+  assert.deepEqual(music.token, { name: "Casa", kind: "hub", usage: "Hub de casa", mode: "read" });
+  assert.match(music.detail, /Stone.*Casa.*solo lectura.*Hub de casa/);
+  const managed = hub(bridge.store, fakeStone({ token: { name: "Gateway Hub", kind: "redirect", usage: "", mode: "full" } }).fetcher);
+  music = (await managed.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
+  assert.equal(music.managedBy, "hub");
+  assert.match(music.detail, /Administrado por el hub/);
+  // Odd values from the app are cut to size, never trusted as markup.
+  const odd = hub(bridge.store, fakeStone({ token: { name: "x".repeat(500), kind: 3, usage: "<b>hola</b>", mode: "write" } }).fetcher);
+  music = (await odd.api("GET", "/scan")).body.apps.find((a: any) => a.prefix === "music_");
+  assert.equal(music.token.name.length, 60);
+  assert.equal(music.token.kind, "");
 });

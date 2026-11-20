@@ -35,6 +35,9 @@ class FakeTransport(var reply: (Recorded) -> Pair<Int, String> = { 200 to STATE_
 }
 
 class MemorySessions(var saved: Pair<String, String>? = null) : SessionStore {
+    val flags = mutableMapOf<String, Boolean>()
+    override fun flag(name: String, default: Boolean) = flags[name] ?: default
+    override fun setFlag(name: String, value: Boolean) { flags[name] = value }
     override fun load() = saved
     override fun save(hubUrl: String, token: String) { saved = hubUrl to token }
     override fun clear() { saved = null }

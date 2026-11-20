@@ -52,13 +52,16 @@ export class MemoryStore implements HubStoreApi, HubAdminStore {
 }
 
 /** A fake Stone behind the relay: records what it receives. */
-export function fakeStone(options: { status?: number } = {}) {
+export function fakeStone(options: { status?: number; token?: Record<string, unknown> } = {}) {
   const calls: { url: string; auth: string | null; body: any }[] = [];
   const fetcher = (async (input: string | URL | Request, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body));
     calls.push({ url: String(input), auth: new Headers(init?.headers).get("authorization"), body });
     if (options.status) return new Response("{}", { status: options.status });
-    const result = body.method === "tools/list"
+    const result = body.method === "initialize"
+      ? { protocolVersion: "2025-06-18", serverInfo: { name: "stone" },
+          ...(options.token ? { _meta: { "com.zirakusa.stone/token": options.token } } : {}) }
+      : body.method === "tools/list"
       ? { tools: [{ name: "player_state", description: "What is playing", inputSchema: { type: "object" } },
                   { name: "playlist_delete", description: "Delete a playlist", inputSchema: { type: "object" } }] }
       : { content: [{ type: "text", text: `ran ${body.params.name}` }], isError: false };

@@ -16,6 +16,9 @@ interface SessionStore {
     fun load(): Pair<String, String>?
     fun save(hubUrl: String, token: String)
     fun clear()
+    /** Non-secret preferences (kept after logout). */
+    fun flag(name: String, default: Boolean): Boolean = default
+    fun setFlag(name: String, value: Boolean) {}
 }
 
 /**
@@ -49,6 +52,10 @@ class KeystoreSessionStore(context: Context) : SessionStore {
     }
 
     override fun clear() { prefs.edit { clear() } }
+
+    private val flags = context.getSharedPreferences("hub_prefs", Context.MODE_PRIVATE)
+    override fun flag(name: String, default: Boolean) = flags.getBoolean(name, default)
+    override fun setFlag(name: String, value: Boolean) { flags.edit { putBoolean(name, value) } }
 
     private companion object {
         const val ALIAS = "gateway_hub_owner"

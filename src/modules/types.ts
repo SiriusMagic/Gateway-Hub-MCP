@@ -80,7 +80,21 @@ export interface HubModule {
   call(name: string, args: Record<string, unknown>, ctx: HubContext): Promise<ToolResult>;
 }
 
-export interface ModuleStatus { linked: boolean; online: boolean; tools: number; detail: string }
+/** What a remote app says about the token the hub uses (Stone: initialize › _meta), never the secret. */
+export interface LinkedToken {
+  name: string;
+  /** "llm" or "hub": the app keeps the permissions (the hub is a bridge). "redirect": the hub manages them. */
+  kind: string;
+  usage: string;
+  mode: string;
+}
+
+export interface ModuleStatus {
+  linked: boolean; online: boolean; tools: number; detail: string;
+  token?: LinkedToken;
+  /** Who decides permissions for this app: the app itself ("app") or the hub ("hub", «Redireccionar a Hub»). */
+  managedBy?: "app" | "hub";
+}
 
 /** An expected failure with a stable code the LLM can read and act on. */
 export class ToolError extends Error {
