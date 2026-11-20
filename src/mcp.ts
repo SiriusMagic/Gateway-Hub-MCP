@@ -3,7 +3,6 @@
 import { type HubContext, ToolError, type ToolResult } from "./modules/types.ts";
 import { type Router } from "./router.ts";
 import { type Principal, allows } from "./agents.ts";
-import { requireActive } from "./environment.ts";
 
 const VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const MAX_BATCH = 20;
@@ -60,7 +59,6 @@ async function call(params: Record<string, unknown>, router: Router, ctx: HubCon
   try {
     if (typeof name !== "string") throw new ToolError("INVALID_REQUEST", "params.name must be the tool name.");
     if (typeof args !== "object" || args === null || Array.isArray(args)) throw new ToolError("INVALID_ARGUMENT", "arguments must be an object.");
-    await requireActive(ctx.store);
     const tool = await router.describe(name, ctx);
     // Not shown to this agent = not callable by it (app not allowed, or a change on a read-only link).
     if (tool && !allows(caller.principal, tool)) throw new ToolError("FORBIDDEN",

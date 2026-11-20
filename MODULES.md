@@ -9,7 +9,7 @@ objeto `HubModule` (contrato en `src/modules/types.ts`). El enrutador (`src/rout
 
 1. Elige un prefijo único: letras minúsculas o cifras terminadas en `_` (`gallery_`, `weather_`).
    No puede empezar por otro prefijo ya usado (`music_` y `musicx_` chocan, y el hub no arranca).
-2. Copia la **plantilla mínima** de abajo en `src/modules/<app>/index.ts` (o mira `src/modules/music/` para una app remota).
+2. Copia `src/modules/calculator/index.ts` como plantilla en `src/modules/<app>/index.ts`.
 3. Añade el módulo a la lista de `src/modules/index.ts`. Nada más cambia.
 4. Escribe una prueba en `test/` y ejecuta `npm test`.
 
@@ -49,31 +49,6 @@ declara esto en una Activity exportada:
   conexión**: no puede leer extras ni activar nada por sí sola (ver `HubDiscovery.kt` en Stone).
 - En el hub, el módulo declara `androidPackage` y un `status(ctx)` de solo lectura. El escáner lo llama
   sin cambiar nada.
-- **Puente local MCP (fase 1, opcional):** un `Service` exportado con la acción `com.zirakusa.gatewayhub.action.MCP`,
-  protegido con `com.zirakusa.gatewayhub.permission.LINK` (`signature`), que responde por `Messenger`:
-  - Mensaje `what = 1`, `arg1` = id de petición, `Bundle` con `message` = un objeto JSON-RPC MCP (sin lotes); la
-    respuesta va a `replyTo` con el mismo `arg1`. Máximo 200 000 caracteres por mensaje.
-  - La app identifica a Gateway con `Message.sendingUid` → paquete `com.zirakusa.gatewayhub` + misma firma; nunca con
-    datos del mensaje.
-  - Permisos delegados (fase 1b): cada petición puede llevar
-    `params._meta["com.zirakusa.gatewayhub/grant"] = {"mode": "read"|"write"|"full", "blockedTools": [...], "agent": "id"}`.
-    La app lo acepta solo porque ya verificó al remitente por uid y firma, lo recorta a su propio tope y trata un valor
-    ausente o mal formado como «nada extra». Las herramientas bloqueadas no se listan ni se ejecutan.
-  - En esta fase el tope de Stone es solo lectura: `tools/list` y `tools/call` solo con herramientas que la app
-    clasifica como de lectura (su riesgo declarado, nunca el nombre).
-  - Para «Probar puente local», la app puede marcar **una** herramienta de lectura sin efectos con
-    `_meta["com.zirakusa.gatewayhub/probe"] = true`. Si no marca ninguna, Gateway solo prueba `initialize` y `tools/list`.
-  - Errores con el código al principio de `error.message` (`REDIRECT_OFF`, `NOT_SAME_DEVELOPER`, `BUSY`,
-    `RESPONSE_TOO_LARGE`…). Implementación de referencia: `automation/provider/` en Stone (`ProviderService`, `ProviderBridge`, `GatewayGrant`, `McpDispatcher`).
-- **Proveedor con paquetes de ejecución (fase 2):** sobre el mismo canal, métodos propios con prefijo:
-  - `gatewayhub/link {env, publicKey, contract}` → `{instance, contract, prefix, packages}`. `publicKey` es la clave
-    ECDSA P-256 (X.509, Base64) del entorno; su privada vive en el Keystore de Gateway y nunca sale de él.
-  - `gatewayhub/packages/offer {packages:[{pkg, sig}]}`, `…/revoke {id}`, `…/list`, y `gatewayhub/state {environment, mode}`.
-  - Paquete: bytes JSON firmados (`v`, `id`, `env`, `aud = <paquete>#<instancia>`, `agent`, `label`, `acts`, `tools`,
-    `nbf`, `exp`). Acciones: `leer`, `revisar`, `escribir`, `modificar`, `revertir`; la app las aplica sobre el riesgo
-    que declara cada herramienta y pide confirmación en pantalla para lo irreversible.
-  - Cada llamada nombra sus paquetes candidatos en `_meta["com.zirakusa.gatewayhub/grant"].packages` (o uno en `.package`); la app aprueba en su pantalla
-    todo paquete que no sea solo de lectura. Referencia: `automation/provider/` en Stone.
 - La app del hub solo marca «Mismo desarrollador» si la firma coincide (`checkSignatures`). Una app de
   otro desarrollador aparece con «Firma desconocida».
 

@@ -1,14 +1,13 @@
 {
   "name": "gateway-hub-mcp",
-  "version": "0.1.0",
+  "version": "0.0.2",
   "private": true,
   "description": "Gateway Hub MCP: one MCP link for several apps, routed by tool prefix, with a link per agent and metrics.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --local --port 8790",
     "deploy": "wrangler deploy",
-    "test": "node --test test/*.test.ts",
-    "bundle:android": "node scripts/bundle-android.mjs"
+    "test": "node --test test/*.test.ts"
   },
   "devDependencies": {
     "wrangler": "4.162.0"

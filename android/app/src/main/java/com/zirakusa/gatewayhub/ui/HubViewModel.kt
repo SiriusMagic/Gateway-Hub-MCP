@@ -2,164 +2,100 @@ package com.zirakusa.gatewayhub.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zirakusa.gatewayhub.R
-import com.zirakusa.gatewayhub.data.*
-import kotlinx.coroutines.Dispatchers
+import com.zirakusa.gatewayhub.data.AccessParser
+import com.zirakusa.gatewayhub.data.CreatedAgent
+import com.zirakusa.gatewayhub.data.LocalAppSource
+import com.zirakusa.gatewayhub.data.ScanMerge
+import com.zirakusa.gatewayhub.data.ScannedApp
+import com.zirakusa.gatewayhub.data.HubApi
+import com.zirakusa.gatewayhub.data.HubException
+import com.zirakusa.gatewayhub.data.HubState
+import com.zirakusa.gatewayhub.data.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+data class UiState(
+    val hubUrl: String = "",
+    val connected: Boolean = false,
+    val loading: Boolean = false,
+    val hub: HubState? = null,
+    val error: String? = null,
+    val notice: String? = null,
+    /** Shown once in a dialog right after creation; never stored. */
+    val created: CreatedAgent? = null,
+    /** Last scan of compatible apps (phone + hub); null until the first scan. */
+    val scan: List<ScannedApp>? = null,
+)
+
 /** The single owner of the app's state; screens only read [state] and call these actions. */
 class HubViewModel(
     private val sessions: SessionStore,
-    private val defaultUrl: String,
+    defaultUrl: String,
     private val localApps: LocalAppSource = LocalAppSource { emptyList() },
     private val newApi: (String, String) -> HubApi = { url, token -> HubApi(url, token) },
-    private val settingsStore: SettingsStore = MemorySettingsStore(),
-    newCloudflare: (String) -> CloudflareApi = { CloudflareApi(it) },
-    workerBundle: () -> WorkerBundle? = { null },
-    bridge: BridgeConnector = BridgeConnector.None,
-    signer: () -> PackageSigner = SoftwareSigner().let { key -> { key } },
-    ledger: PackageLedger = MemoryLedger(),
-    private val afterPackages: () -> Unit = {},
-    private val hubTransport: HubTransport = HttpTransport,
-    /** First launch with no hub: join the shared hub on its own (the app passes true; tests choose). */
-    autoStart: Boolean = false,
-    private val phoneName: String = "Android",
 ) : ViewModel(), HubActions {
-    private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl, settings = settingsStore.load()))
+    private val defaultUrl = defaultUrl
+    private val mutable = MutableStateFlow(UiState(hubUrl = defaultUrl))
     val state: StateFlow<UiState> = mutable
     private var api: HubApi? = null
-    private val providers = ProviderFlow(bridge, signer, ledger, localApps)
-    private val cloudflare = CloudflareFlow(newCloudflare, workerBundle)
-    private val phones = PhoneFlow(sessions, hubTransport)
 
     init {
-        mutable.update { it.copy(packages = ledger.packages(), providerApps = providerApps(),
-            satellite = phones.satelliteHub() != null, hubUrl = phones.satelliteHub() ?: it.hubUrl) }
-        sendMode()
-        val saved = sessions.load()
-        if (saved != null) {
-            api = newApi(saved.first, saved.second)
-            mutable.update { it.copy(hubUrl = saved.first, connected = true) }
-            run { reload(); setUp(); null }
-        } else if (autoStart && !mutable.value.satellite && defaultUrl.isNotBlank()) start()
-    }
-
-    /**
-     * The whole setup with nothing to type: a space of its own on the shared hub (owner secret and channel
-     * credential kept encrypted here), then [setUp]. A failure leaves a "try again" button.
-     */
-    override fun start() {
-        mutable.update { it.copy(starting = true, startFailed = false, error = null) }
-        viewModelScope.launch {
-            try {
-                val r = HubApi.register(defaultUrl, phoneName, hubTransport)
-                sessions.saveDevice(r.hubUrl, r.deviceId to r.deviceSecret)
-                open(Access(r.hubUrl, r.owner), tries = 4)
-                mutable.update { it.copy(starting = false) }
-                setUp()
-            } catch (e: Exception) {
-                mutable.update { it.copy(starting = false, startFailed = true) }
-            }
+        sessions.load()?.let { (url, token) ->
+            api = newApi(url, token)
+            mutable.update { it.copy(hubUrl = url, connected = true) }
+            refresh()
         }
     }
 
-    /** Someone with their own hub (Cloudflare) or an access to paste. */
-    override fun useOwnHub() = mutable.update { it.copy(manualLogin = true) }
-
-    /** Links every app of this phone that offers the bridge (Stone) and keeps its full package; a shared hub gets a code. */
-    private suspend fun setUp() {
-        val s = mutable.value
-        for (app in providerApps()) runCatching { providers.link(app.packageName, s.hub?.environment ?: ENV_ACTIVE, s.settings.mode.name.lowercase()) }
-        mutable.update { it.copy(packages = providers.packages(), providerApps = providerApps()) }
-        afterPackages()
-        if (mutable.value.hub?.shared == true) runCatching { mutable.update { it.copy(connect = requireApi().connectCode()) } }
-    }
-
-    /** A new sign-in code (the old one stops working). */
-    override fun newConnectCode() = run { mutable.update { it.copy(connect = requireApi().connectCode()) }; null }
-
     /** One paste (address + token, or only the token); checked against the hub before it is saved. */
-    fun connect(pasted: String) = run { open(AccessParser.parse(pasted, defaultUrl)); null }
-
-    /** Checks [access] against the hub and only then saves it. */
-    private suspend fun open(access: Access, tries: Int = 1) = newApi(access.url, access.token).let { candidate ->
-        val hub = stateWithRetry(candidate, tries)
-        api = candidate; sessions.save(candidate.base, access.token)
-        mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = hub) }
-    }
-
-    /** No hub_ token? With the Cloudflare token (used once, never kept) the app deploys or updates the hub and logs in. */
-    override fun createAccess(cfToken: String) = run { open(cloudflare.createAccess(cfToken), tries = 8); UiText.Res(R.string.cf_owner_done) }
-    override fun updateHub(cfToken: String) = run { UiText.Res(R.string.cf_updated, listOf(cloudflare.updateHub(cfToken).removePrefix("https://"))) }
-    override fun rotateOwner(cfToken: String) = run { open(cloudflare.rotateOwner(cfToken), tries = 8); UiText.Res(R.string.cf_owner_done) }
-
-    override fun refresh() = run {
-        reload()
-        // The sign-in code lasts 10 minutes: a fresh one whenever the screen is refreshed after that.
-        val code = mutable.value.connect
-        if (mutable.value.hub?.shared == true && (code == null || code.second <= System.currentTimeMillis()))
-            mutable.update { it.copy(connect = requireApi().connectCode()) }
+    fun connect(pasted: String) = run {
+        val access = AccessParser.parse(pasted, defaultUrl)
+        val candidate = newApi(access.url, access.token)
+        candidate.state().also {
+            api = candidate
+            sessions.save(candidate.base, access.token)
+            mutable.update { s -> s.copy(hubUrl = candidate.base, connected = true, hub = it) }
+        }
         null
     }
 
+    override fun refresh() = run { mutable.update { s -> s.copy(hub = requireApi().state()) }; null }
+
     override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) = run {
-        val created = requireApi().createAgent(name, apps, readOnly, days); mutable.update { it.copy(created = created, hub = requireApi().state()) }; null
+        val created = requireApi().createAgent(name, apps, readOnly, days)
+        mutable.update { it.copy(created = created, hub = requireApi().state()) }
+        null
     }
 
-    override fun setPaused(id: String, paused: Boolean) = run { requireApi().setPaused(id, paused); reload(); UiText.Res(if (paused) R.string.note_paused else R.string.note_resumed) }
-    override fun revoke(id: String) = run { requireApi().revoke(id); reload(); UiText.Res(R.string.note_revoked) }
-
-    /** Connect, pause or disconnect the MCP environment (the hub enforces it); connecting registers the phone's apps again. */
-    override fun setEnvironment(target: String) = run {
-        requireApi().setEnvironment(target); providers.pushState(target, mutable.value.settings.mode.name.lowercase())
-        if (target == ENV_ACTIVE) afterPackages()
-        reload()
-        UiText.Res(when (target) { ENV_PAUSED -> R.string.env_note_paused; ENV_DISCONNECTED -> R.string.env_note_disconnected; else -> R.string.env_note_active })
+    override fun setPaused(id: String, paused: Boolean) = run {
+        requireApi().setPaused(id, paused); reload(); if (paused) "Enlace pausado." else "Enlace reanudado."
     }
+    override fun revoke(id: String) = run { requireApi().revoke(id); reload(); "Enlace revocado: deja de funcionar ya." }
+    override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); note }
+    override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); "Stone desvinculado." }
 
-    /** Read-only: the apps on this phone that work with the hub, and what the hub says about each. */
-    override fun scan() = run { mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }; null }
-
-    override fun testBridge(packageName: String) = providers(packageName) { providers.test(it) }
-    override fun linkProvider(packageName: String) = providers(packageName) { providers.link(it, mutable.value.hub?.environment ?: ENV_ACTIVE, mutable.value.settings.mode.name.lowercase()) }
-    override fun offerPackage(packageName: String, agent: String, label: String, acts: List<String>, days: Int) = providers(packageName) { providers.offer(it, agent, label, acts, days) }
-    override fun revokePackage(packageName: String, id: String) = providers(packageName) { providers.revoke(it, id) }
-    override fun refreshPackages(packageName: String) = providers(packageName) { providers.refresh(it) }
-    private fun providers(name: String, block: suspend (String) -> UiText?) = run { block(name).also { mutable.update { s -> s.copy(packages = providers.packages()) }; afterPackages() } }
-
-    /** Another phone joins this hub with a code from the owner's phone. */
-    fun join(url: String, code: String, name: String) = run { val hub = phones.join(url, code, name); mutable.update { it.copy(satellite = true, hubUrl = hub, providerApps = providerApps()) }; UiText.Res(R.string.phone_joined) }
-    override fun leaveHub() { phones.leave(); mutable.update { it.copy(satellite = false) } }
-    override fun createPairing() = run { mutable.update { it.copy(pairing = requireApi().createPairing()) }; null }
-    override fun revokeDevice(id: String) = run { requireApi().deleteDevice(id); reload(); UiText.Res(R.string.phone_revoked) }
-    private fun providerApps() = runCatching { localApps.installed().filter { it.bridge && it.sameDeveloper } }.getOrDefault(emptyList())
-
-    override fun updateSettings(change: (AppSettings) -> AppSettings) {
-        val next = change(mutable.value.settings)
-        val modeChanged = next.mode != mutable.value.settings.mode
-        settingsStore.save(next); mutable.update { it.copy(settings = next) }; if (modeChanged) sendMode()
+    /** Read-only: lists compatible apps on this phone and asks the hub for each one's status. */
+    override fun scan() = run {
+        val remote = requireApi().scan()
+        mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), remote)) }
+        null
     }
-
-    /** Tells the linked apps (Stone) the chosen mode, at start and on every change, over the local bridge. */
-    private fun sendMode() = mutable.value.let { s -> viewModelScope.launch(Dispatchers.IO) {
-        providers.pushState(s.hub?.environment ?: ENV_ACTIVE, s.settings.mode.name.lowercase()) } }
 
     override fun dismissCreated() = mutable.update { it.copy(created = null) }
     override fun dismissMessage() = mutable.update { it.copy(error = null, notice = null) }
 
     override fun logout() {
         sessions.clear(); api = null
-        mutable.update { UiState(hubUrl = it.hubUrl, settings = it.settings) }
+        mutable.update { UiState(hubUrl = it.hubUrl) }
     }
 
     private suspend fun reload() = mutable.update { it.copy(hub = requireApi().state()) }
-    private fun requireApi() = api ?: throw HubException("UNAUTHORIZED", "")
+    private fun requireApi() = api ?: throw HubException("UNAUTHORIZED", "Conéctate de nuevo.")
 
     /** Runs [block] with a loading flag; its text (if any) becomes a notice, a failure becomes an error. */
-    private fun run(block: suspend () -> UiText?) {
+    private fun run(block: suspend () -> String?) {
         mutable.update { it.copy(loading = true, error = null, notice = null) }
         viewModelScope.launch {
             try {
@@ -168,9 +104,9 @@ class HubViewModel(
             } catch (e: HubException) {
                 // A token the hub no longer accepts means the session is over.
                 if (e.code == "UNAUTHORIZED" && mutable.value.connected) logout()
-                mutable.update { it.copy(loading = false, error = e.toUiText()) }
+                mutable.update { it.copy(loading = false, error = e.message) }
             } catch (e: Exception) {
-                mutable.update { it.copy(loading = false, error = UiText.Res(R.string.err_unexpected)) }
+                mutable.update { it.copy(loading = false, error = "El hub respondió algo inesperado.") }
             }
         }
     }

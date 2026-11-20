@@ -55,7 +55,7 @@ private val DURATIONS = listOf(7 to R.string.days_7, 30 to R.string.days_30, 90 
 }
 
 /** The new link, shown once. Copying marks it as sensitive (hidden from the clipboard preview). */
-@Composable fun CreatedDialog(created: CreatedAgent, dismiss: () -> Unit, showToken: Boolean = true) {
+@Composable fun CreatedDialog(created: CreatedAgent, dismiss: () -> Unit) {
     val context = LocalContext.current
     var copied by remember { mutableStateOf(false) }
     AlertDialog(onDismissRequest = {}, title = { Text(stringResource(R.string.created_title, created.agent.name)) },
@@ -64,7 +64,7 @@ private val DURATIONS = listOf(7 to R.string.days_7, 30 to R.string.days_30, 90 
             Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = HubColors.Background, shape = MaterialTheme.shapes.medium) {
                 Text(created.url, Modifier.padding(10.dp), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
             }
-            if (showToken) TextButton({ copySecret(context, "Gateway Hub", created.token); copied = true }) {
+            TextButton({ copySecret(context, "Gateway Hub", created.token); copied = true }) {
                 Text(stringResource(R.string.copy_token), fontSize = 13.sp)
             }
             if (copied) Text(stringResource(R.string.copied), color = HubColors.Good, fontSize = 13.sp)

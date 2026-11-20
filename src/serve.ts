@@ -4,18 +4,12 @@ import type { HubAdminStore, HubContext, HubEnv, HubStoreApi } from "./modules/t
 import { type Limiter, givenToken, sameSecret } from "./auth.ts";
 import { type Principal, principalFor } from "./agents.ts";
 import { handleRpc } from "./mcp.ts";
-import { type Router, createRouter } from "./router.ts";
-import { modules as builtIn } from "./modules/index.ts";
-import type { HubModule } from "./modules/types.ts";
+import { createRouter } from "./router.ts";
+import { modules } from "./modules/index.ts";
 import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
-import type { Channel } from "./channel/core.ts";
-import { deviceFor } from "./channel/devices.ts";
-import { redeemPairing } from "./channel/pairing.ts";
-import { SPACE_KEY, isSpaceOwner } from "./spaces.ts";
-import { channelModules } from "./channel/dynamic.ts";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.0.2";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",
@@ -26,12 +20,7 @@ export const CORS = {
   "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, Mcp-Session-Id, Mcp-Protocol-Version, X-Api-Key",
   "Access-Control-Expose-Headers": "Mcp-Session-Id",
 };
-const routers = new WeakMap<HubModule[], Router>();
-function routerFor(list: HubModule[]): Router {
-  let router = routers.get(list);
-  if (!router) { router = createRouter(list); routers.set(list, router); }
-  return router;
-}
+const router = createRouter(modules);
 
 export function json(status: number, body: unknown, extra: Record<string, string> = {}): Response {
   return new Response(body === null ? null : JSON.stringify(body),
@@ -41,28 +30,14 @@ const rpcError = (status: number, message: string, extra: Record<string, string>
   json(status, { jsonrpc: "2.0", id: null, error: { code: -32001, message } }, extra);
 
 export interface Limits { requests: Limiter; failures: Limiter }
-export type ServeStore = HubStoreApi & HubAdminStore & Limits & {
-  channel?: Channel;
-  /** Accepts the phone's WebSocket (the Durable Object); tests leave it out. */
-  acceptChannel?(device: string): Response;
-  dropChannel?(device: string): void;
-};
+export type ServeStore = HubStoreApi & HubAdminStore & Limits;
 
 function rejected(store: ServeStore, caller: string, missing: boolean) {
   store.failures.hit(caller);
   console.warn(JSON.stringify({ event: "auth_rejected", caller, missing })); // never the token itself
 }
 
-export interface ServeOptions {
-  /** A person's space in the shared hub (u_<space>): its owner is its own secret, not HUB_TOKEN. */
-  tenant?: boolean;
-  /** A one-use code for the public link's sign-in page (the directory object makes it). */
-  connectCode?(): Promise<{ code: string; expiresAt: number }>;
-}
-
-/** [modules] is the hub's app list; tests pass their own. */
-export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch,
-  modules: HubModule[] = builtIn, opts: ServeOptions = {}): Promise<Response> {
+export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch): Promise<Response> {
   const url = new URL(request.url);
   const caller = request.headers.get("CF-Connecting-IP") || "local";
   if (store.requests.hit(caller)) {
@@ -70,50 +45,23 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
     return rpcError(429, "Gateway Hub: too many requests. Wait a minute.", { "Retry-After": "60" });
   }
   const owner = env.HUB_TOKEN;
-  const space = opts.tenant ? await store.getConfig(SPACE_KEY) : null;
-  // A space that was never set up answers nothing (its secrets cannot exist).
-  if (opts.tenant && !space) { rejected(store, caller, false); return rpcError(401, "Gateway Hub: unknown link.") }
-  if (!opts.tenant && !owner) return rpcError(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
-  const isOwner = async (token: string) => opts.tenant ? isSpaceOwner(store, token) : !!owner && sameSecret(token, owner);
+  if (!owner) return rpcError(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
   if (store.failures.blocked(caller)) return rpcError(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
-  const ctx: HubContext = { store, env, channel: store.channel, fetch: (input, init) => fetcher(input, init) };
-
-  if (url.pathname === "/pair") {
-    // Another phone joins with a one-use code from the owner's Gateway (no owner token on that phone).
-    if (request.method !== "POST") return rpcError(405, "Gateway Hub: POST the pairing code.", { Allow: "POST" });
-    let body: Record<string, unknown> = {};
-    try { body = await request.json() as Record<string, unknown>; } catch { /* empty */ }
-    const made = await redeemPairing(store, String(body.code ?? ""), String(body.name ?? ""));
-    if (!made) { rejected(store, caller, !body.code); return rpcError(401, "Gateway Hub: wrong or expired pairing code."); }
-    return json(200, made);
-  }
-
-  if (url.pathname === "/channel") {
-    // A phone's Gateway Hub app opens its channel with its own device credential (never the owner token).
-    const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
-    const device = bearer ? await deviceFor(store, bearer) : null;
-    if (!device) { rejected(store, caller, !bearer); return rpcError(401, "Gateway Hub: unknown device."); }
-    if (request.headers.get("Upgrade") !== "websocket" || !store.acceptChannel) return rpcError(426, "Gateway Hub: WebSocket required.");
-    return store.acceptChannel(device.id);
-  }
+  const ctx: HubContext = { store, env, fetch: (input, init) => fetcher(input, init) };
 
   if (url.pathname === "/mcp") {
     if (request.method === "DELETE") return json(200, null);
     if (request.method !== "POST") return rpcError(405, "Gateway Hub: send MCP requests with POST.", { Allow: "POST, DELETE" });
     const token = givenToken(request, url);
-    const principal: Principal | null = token ? await principalFor(token, isOwner, store) : null;
+    const principal: Principal | null = token ? await principalFor(token, owner, store) : null;
     if (!principal) {
       rejected(store, caller, !token);
-      // The public link signs in with OAuth: this header tells the AI app where (see oauth/).
-      return rpcError(401, "Gateway Hub: missing, wrong, paused or expired link.",
-        { "WWW-Authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource"` });
+      return rpcError(401, "Gateway Hub: missing, wrong, paused or expired link.", { "WWW-Authenticate": "Bearer" });
     }
     const body = await request.text();
     if (body.length > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
-    ctx.agent = principal.id;
-    const dynamic = ctx.channel ? await channelModules(ctx, modules) : [];
-    const reply = await handleRpc(body, dynamic.length ? createRouter([...modules, ...dynamic]) : routerFor(modules), ctx, VERSION,
+    const reply = await handleRpc(body, router, ctx, VERSION,
       { principal, record: (tool, ok, ms) => store.metricsRecord(principal.id, tool, ok, ms) });
     const session = body.includes('"initialize"') ? { "Mcp-Session-Id": crypto.randomUUID() } : {};
     return reply === null ? json(202, null, session) : json(200, reply, session);
@@ -122,7 +70,7 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   if (url.pathname === "/admin" || url.pathname === "/setup") {
     return handleAdmin(request, url, { store, ctx, modules, security: SECURITY, async isOwner(token) {
       // Only the owner token opens the panel: agent links never do.
-      if (token && await isOwner(token)) return true;
+      if (token && await sameSecret(token, owner)) return true;
       rejected(store, caller, !token);
       return false;
     } });
@@ -130,14 +78,12 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   if (url.pathname.startsWith("/api/admin/")) {
     // The owner token only in the Authorization header here: an API URL never carries a secret.
     const bearer = /^bearer\s+(.+)$/i.exec(request.headers.get("authorization") ?? "")?.[1]?.trim() ?? "";
-    if (!bearer || !await isOwner(bearer)) {
+    if (!bearer || !await sameSecret(bearer, owner)) {
       rejected(store, caller, !bearer);
       return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
         { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } });
     }
-    const all = ctx.channel ? [...modules, ...await channelModules(ctx, modules)] : modules;
-    return handleAdminApi(request, url, { store, ctx, modules: all, security: SECURITY, version: VERSION, dropDevice: store.dropChannel?.bind(store),
-      shared: !!space, connectCode: opts.connectCode });
+    return handleAdminApi(request, url, { store, ctx, modules, security: SECURITY, version: VERSION });
   }
   return rpcError(404, "Gateway Hub: unknown path. Use POST /mcp, or open /admin.");
 }

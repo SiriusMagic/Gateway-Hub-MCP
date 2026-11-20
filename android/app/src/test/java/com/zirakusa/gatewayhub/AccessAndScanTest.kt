@@ -44,10 +44,10 @@ class AccessAndScanTest {
         val stone = LocalApp("com.zirakusa.stone.kotlin.preview", "Stone", "1.7.12", "music_", true)
         val stranger = LocalApp("com.example.other", "Other", "1", "other_", false)
         val rows = ScanMerge.merge(listOf(stone, stranger), remote)
-        assertEquals(3, rows.size)
+        assertEquals(4, rows.size)
         assertEquals(stone, rows.first { it.prefix == "music_" }.local)
         assertTrue(rows.first { it.prefix == "music_" }.remote!!.linked)
-        assertNull(rows.first { it.prefix == "weather_" }.local)
+        assertNull(rows.first { it.prefix == "notes_" }.local)
         assertNull(rows.first { it.local == stranger }.remote) // installed, not in the hub yet
     }
 }

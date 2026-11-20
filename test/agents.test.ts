@@ -14,7 +14,7 @@ const names = (r: any) => r.body.result.tools.map((t: any) => t.name);
 
 test("only the owner opens the panel; agent links never do", async () => {
   const h = hub();
-  const agent = await createAgent(h, { name: "Claude", apps: ["demo_"] });
+  const agent = await createAgent(h, { name: "Claude", apps: ["calc_", "notes_"] });
   assert.equal((await h.admin({ token: agent, action: "login" })).status, 401);
   assert.equal((await h.admin({ token: TOKEN, action: "login" })).status, 200);
   assert.equal([...h.store.agents.values()][0].tokenHash.length, 64);              // only the hash is stored
@@ -23,28 +23,27 @@ test("only the owner opens the panel; agent links never do", async () => {
 
 test("an agent sees and calls only its apps", async () => {
   const h = hub();
-  const agent = await createAgent(h, { name: "Stone only", apps: "music_" });
+  const agent = await createAgent(h, { name: "Calc only", apps: "calc_" });
   const listed = names(await h.rpc("tools/list", {}, agent));
-  assert.ok(listed.length > 0 && listed.every((n: string) => n.startsWith("music_")));
-  const denied = await h.rpc("tools/call", { name: "demo_save", arguments: { key: "x", value: "y" } }, agent);
+  assert.ok(listed.length > 0 && listed.every((n: string) => n.startsWith("calc_")));
+  const denied = await h.rpc("tools/call", { name: "notes_create", arguments: { title: "x" } }, agent);
   assert.equal(denied.body.result.structuredContent.error.code, "FORBIDDEN");
-  assert.equal(await h.store.getConfig("demo.x"), null);
+  assert.equal(h.store.notes.size, 0);
 });
 
 test("read-only links list and run only tools that read", async () => {
   const h = hub();
-  await h.rpc("tools/call", { name: "demo_save", arguments: { key: "k", value: "hola" } });   // owner
-  const agent = await createAgent(h, { name: "Lector", apps: ["demo_"], readonly: "1" });
+  const agent = await createAgent(h, { name: "Lector", apps: ["notes_", "calc_"], readonly: "1" });
   const listed = names(await h.rpc("tools/list", {}, agent));
-  assert.ok(listed.includes("demo_get") && !listed.includes("demo_save") && !listed.includes("demo_delete"));
-  const denied = await h.rpc("tools/call", { name: "demo_save", arguments: { key: "k", value: "x" } }, agent);
+  assert.ok(listed.includes("notes_list") && !listed.includes("notes_create") && !listed.includes("notes_delete"));
+  const denied = await h.rpc("tools/call", { name: "notes_create", arguments: { title: "x" } }, agent);
   assert.equal(denied.body.result.structuredContent.error.code, "FORBIDDEN");
-  assert.equal((await h.rpc("tools/call", { name: "demo_get", arguments: { key: "k" } }, agent)).body.result.structuredContent.value, "hola");
+  assert.equal((await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "1+1" } }, agent)).body.result.structuredContent.result, 2);
 });
 
 test("pause, expiry and revoke stop a link at once", async () => {
   const h = hub();
-  const agent = await createAgent(h, { name: "Temp", apps: "demo_" });
+  const agent = await createAgent(h, { name: "Temp", apps: "calc_" });
   const id = [...h.store.agents.keys()][0];
   assert.equal((await h.rpc("ping", {}, agent)).status, 200);
   await h.admin({ token: TOKEN, action: "agent_pause", id });
@@ -66,15 +65,15 @@ test("the panel refuses agents without apps and unknown apps", async () => {
 
 test("metrics count every call per agent, app and tool", async () => {
   const h = hub(new MemoryStore());
-  const agent = await createAgent(h, { name: "Medido", apps: ["demo_", "music_"] });
-  await h.rpc("tools/call", { name: "demo_save", arguments: { key: "a", value: "1" } }, agent);
-  await h.rpc("tools/call", { name: "demo_get", arguments: { key: "missing" } }, agent);
-  await h.rpc("tools/call", { name: "music_status", arguments: {} });                     // owner
+  const agent = await createAgent(h, { name: "Medido", apps: ["calc_", "notes_"] });
+  await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "2*3" } }, agent);
+  await h.rpc("tools/call", { name: "calc_evaluate", arguments: { expression: "2*" } }, agent);
+  await h.rpc("tools/call", { name: "notes_list", arguments: {} });                       // owner
   const week = await h.store.metricsSummary(0);
   assert.equal(week.calls, 3); assert.equal(week.errors, 1);
-  assert.deepEqual(week.byApp.map((a) => a.name).sort(), ["demo_", "music_"]);
+  assert.deepEqual(week.byApp.map((a) => a.name).sort(), ["calc_", "notes_"]);
   const page = await h.admin({ token: TOKEN, action: "login" });
-  assert.match(page.html, /Medido/); assert.match(page.html, /demo_save/);
+  assert.match(page.html, /Medido/); assert.match(page.html, /calc_evaluate/);
 });
 
 test("the panel accepts the combined access and explains Stone links", async () => {

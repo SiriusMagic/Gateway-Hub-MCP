@@ -1,10 +1,9 @@
 // What the owner can do, shared by the HTML panel (actions.ts) and the JSON API (api.ts) used by
 // the Android app. Validation lives here, once.
 import { type Agent, type HubAdminStore, type HubContext, type HubModule, type HubStoreApi, ToolError } from "../modules/types.ts";
-import { MAX_AGENTS, agentStatus, newId, newSecret, sha256Hex } from "../agents.ts";
-import { environmentState, setEnvironmentState } from "../environment.ts";
-import { listDevices } from "../channel/devices.ts";
-import { providers } from "../channel/registry.ts";
+import { MAX_AGENTS, agentStatus, newAgentToken, newId, sha256Hex } from "../agents.ts";
+import { parseStoneLink, stoneRpc } from "../modules/music/stone.ts";
+import { savedLink } from "../modules/music/index.ts";
 
 export type AdminStore = HubStoreApi & HubAdminStore;
 export const DAY = 86_400_000;
@@ -18,9 +17,7 @@ export async function overview(store: AdminStore, ctx: HubContext, modules: HubM
   return {
     version,
     modules: modules.map((m) => ({ prefix: m.prefix, title: m.title, summary: m.summary, androidPackage: m.androidPackage ?? null })),
-    stoneLinked: !!(await providers(store))["music_"],
-    environment: await environmentState(store),
-    devices: await devicesView(store, ctx),
+    stoneLinked: !!await savedLink(ctx),
     agents: (await store.agentsList()).map(publicAgent),
     metrics: { day: await store.metricsSummary(now - DAY), week: await store.metricsSummary(now - 7 * DAY) },
   };
@@ -39,6 +36,22 @@ export async function scan(ctx: HubContext, modules: HubModule[]) {
   return { scannedAt: Date.now(), apps: results };
 }
 
+/** Saves Stone's link after checking it; a token Stone rejects is never saved. Returns a note for the owner. */
+export async function linkStone(store: AdminStore, ctx: HubContext, raw: string): Promise<string> {
+  const link = parseStoneLink(raw, ctx.env.STONE_RELAY_HOST);
+  let note = "Stone vinculado y en línea.";
+  try { await stoneRpc(ctx, link, "tools/list", {}, 8_000); } catch (error) {
+    if ((error as ToolError).code === "STONE_TOKEN") throw error;
+    note = "Stone vinculado. Ahora no responde: abre Stone con el Modo MCP activado.";
+  }
+  await store.setConfig("music.link", JSON.stringify(link)); await store.setConfig("music.tools", null);
+  return note;
+}
+
+export async function unlinkStone(store: AdminStore) {
+  await store.setConfig("music.link", null); await store.setConfig("music.tools", null);
+}
+
 export interface NewAgent { name: string; apps: string[]; readOnly: boolean; days: number }
 
 /** Creates an agent; its secret link is returned once and only its SHA-256 is stored. */
@@ -50,7 +63,7 @@ export async function createAgent(store: AdminStore, modules: HubModule[], origi
   const apps = [...new Set((Array.isArray(input.apps) ? input.apps : []).map(String))].filter((p) => known.has(p));
   if (!apps.length) throw new ToolError("INVALID_ARGUMENT", "Elige al menos una app.");
   const days = Math.min(365, Math.max(0, Math.floor(Number(input.days) || 0)));
-  const secret = newSecret("gw", await store.getConfig("space.id")), now = Date.now();
+  const secret = newAgentToken(), now = Date.now();
   const agent: Agent = { id: newId(), name, tokenHash: await sha256Hex(secret), modules: apps.length === known.size ? ["*"] : apps,
     readOnly: input.readOnly === true, paused: false, expiresAt: days ? now + days * DAY : 0, created: now, lastUsed: 0 };
   await store.agentsCreate(agent);
@@ -61,23 +74,4 @@ export async function setPaused(store: AdminStore, id: string, paused: boolean):
   if (!(await store.agentsList()).some((a) => a.id === id)) return false;
   await store.agentsSet(id, { paused });
   return true;
-}
-
-const ENVIRONMENT_NOTES = {
-  active: "Entorno MCP conectado: las apps vuelven a ejecutar herramientas.",
-  paused: "Entorno MCP en pausa: se conservan enlaces y ajustes, pero no se ejecuta nada.",
-  disconnected: "Entorno MCP desconectado: Stone se desvinculó y no se ejecuta nada.",
-};
-
-/** Connect, pause or disconnect the whole MCP environment. Returns the new state and a note. */
-export async function changeEnvironment(store: AdminStore, raw: string) {
-  const state = await setEnvironmentState(store, raw);
-  return { state, message: ENVIRONMENT_NOTES[state] };
-}
-
-/** Phones allowed on the channel (never their credential hash), whether they are connected and what they serve. */
-export async function devicesView(store: AdminStore, ctx: HubContext) {
-  const served = Object.values(await providers(store));
-  return (await listDevices(store)).map((d) => ({ id: d.id, name: d.name, created: d.created, online: ctx.channel?.online(d.id) ?? false,
-    providers: served.filter((p) => p.device === d.id).map((p) => ({ prefix: p.prefix, app: p.app, title: p.title, packages: p.packages.length })) }));
 }

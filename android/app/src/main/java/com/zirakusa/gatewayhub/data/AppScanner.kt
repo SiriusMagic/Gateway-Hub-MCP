@@ -5,9 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 
 /** An app on this phone that declares support for the Gateway Hub (only what it declares; nothing is started). */
-data class LocalApp(val packageName: String, val label: String, val version: String, val prefix: String?, val sameDeveloper: Boolean,
-    /** It offers the local MCP bridge (a service with [LocalBridge.ACTION]). */
-    val bridge: Boolean = false)
+data class LocalApp(val packageName: String, val label: String, val version: String, val prefix: String?, val sameDeveloper: Boolean)
 
 /** What the hub says about one app (from /api/admin/scan). */
 data class RemoteStatus(val prefix: String, val title: String, val androidPackage: String?, val remote: Boolean,
@@ -31,9 +29,8 @@ class PackageScanner(private val context: Context) : LocalAppSource {
             val pkg = info.packageName
             val prefix = info.metaData?.getString(META_PREFIX)?.takeIf { p -> Regex("^[a-z][a-z0-9]{0,15}_$").matches(p) }
             val version = runCatching { pm.getPackageInfo(pkg, 0).versionName }.getOrNull().orEmpty()
-            val bridge = pm.queryIntentServices(Intent(LocalBridge.ACTION).setPackage(pkg), 0).isNotEmpty()
             LocalApp(pkg, info.applicationInfo.loadLabel(pm).toString().take(60), version, prefix,
-                pm.checkSignatures(context.packageName, pkg) == PackageManager.SIGNATURE_MATCH, bridge)
+                pm.checkSignatures(context.packageName, pkg) == PackageManager.SIGNATURE_MATCH)
         }
     }
 

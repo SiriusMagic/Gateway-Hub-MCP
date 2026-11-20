@@ -3,7 +3,6 @@ package com.zirakusa.gatewayhub
 import android.os.Looper
 import com.zirakusa.gatewayhub.data.HubApi
 import com.zirakusa.gatewayhub.ui.HubViewModel
-import com.zirakusa.gatewayhub.ui.UiText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -30,7 +29,7 @@ class HubViewModelTest {
         vm.connect("https://hub.example#hub_wrongwrongwrongwrongwrong"); vm.settle()
         assertFalse(vm.state.value.connected)
         assertNull(sessions.saved)
-        assertEquals(UiText.Res(R.string.err_unauthorized), vm.state.value.error)
+        assertEquals("Token del propietario incorrecto.", vm.state.value.error)
     }
 
     @Test fun theRightTokenIsSavedAndTheHubLoaded() {
@@ -58,7 +57,7 @@ class HubViewModelTest {
             "paused":false,"status":"active","expiresAt":0,"created":1,"lastUsed":0},"url":"https://hub.example/mcp?token=gw_once","token":"gw_once"}"""
             else 200 to STATE_JSON }
         val vm = vm(MemorySessions("https://hub.example" to "owner"), transport); vm.settle()
-        vm.createAgent("X", listOf("music_"), false, 7); vm.settle()
+        vm.createAgent("X", listOf("calc_"), false, 7); vm.settle()
         assertNotNull(vm.state.value.created)
         vm.dismissCreated()
         assertNull(vm.state.value.created)
@@ -69,51 +68,7 @@ class HubViewModelTest {
         val transport = FakeTransport()
         val vm = vm(MemorySessions(), transport)
         vm.connect("https://stone-relay.example.workers.dev/d/3e6076f88b2ae131ea6e/mcp?token=stn_abcdefghijklmnopqrstuv"); vm.settle()
-        assertEquals(UiText.Res(R.string.err_stone_link), vm.state.value.error)
-        assertTrue(transport.sent.isEmpty())
-    }
-
-    /** The shared hub answers: a new space, its state, and sign-in codes. */
-    private fun sharedHub(transport: FakeTransport = FakeTransport()) = transport.apply { reply = { r -> when {
-        r.url.endsWith("/register") -> 200 to """{"hub":"https://hub.example","owner":"hub_s0123456789abcdef_OWNERownerOWNERowner12",
-            "device":{"id":"0a0b0c0d0e0f","name":"Pixel","created":1},"secret":"dev_s0123456789abcdef_DEVICEdeviceDEVICE"}"""
-        r.url.endsWith("/connect-code") -> 200 to """{"code":"12345678","expiresAt":${System.currentTimeMillis() + 600_000}}"""
-        else -> 200 to STATE_JSON.replace("\"environment\":\"active\"", "\"environment\":\"active\",\"shared\":true,\"publicUrl\":\"https://hub.example/mcp\"")
-    } } }
-
-    private fun HubViewModel.settleStart() {
-        repeat(300) { shadowOf(Looper.getMainLooper()).idle(); val s = state.value
-            if (!s.starting && !s.loading && (s.connect != null || s.startFailed)) return; Thread.sleep(10) }
-    }
-
-    @Test fun theFirstLaunchJoinsTheSharedHubWithNothingToType() {
-        val sessions = MemorySessions(); val transport = sharedHub()
-        val vm = HubViewModel(sessions, "https://hub.example", newApi = { url, token -> HubApi(url, token, transport) },
-            hubTransport = transport, autoStart = true, phoneName = "Pixel")
-        vm.settleStart()
-        val s = vm.state.value
-        assertTrue(s.connected); assertTrue(s.hub!!.shared); assertEquals("https://hub.example/mcp", s.hub!!.publicUrl)
-        assertEquals("12345678", s.connect!!.first)
-        assertEquals("https://hub.example" to "hub_s0123456789abcdef_OWNERownerOWNERowner12", sessions.saved)
-        assertEquals("0a0b0c0d0e0f" to "dev_s0123456789abcdef_DEVICEdeviceDEVICE", sessions.device("https://hub.example"))
-        assertTrue(transport.sent.first().body!!.contains("Pixel"))
-        // The owner secret travels only in the header, never in a URL.
-        assertTrue(transport.sent.none { it.url.contains("hub_s") })
-    }
-
-    @Test fun noInternetOnTheFirstLaunchOffersToTryAgain() {
-        val transport = FakeTransport { throw java.io.IOException("offline") }
-        val vm = HubViewModel(MemorySessions(), "https://hub.example", newApi = { url, token -> HubApi(url, token, transport) },
-            hubTransport = transport, autoStart = true)
-        vm.settleStart()
-        assertTrue(vm.state.value.startFailed); assertFalse(vm.state.value.connected)
-        sharedHub(transport); vm.start(); vm.settleStart()
-        assertTrue(vm.state.value.connected)
-    }
-
-    @Test fun withoutAutoStartNothingIsSent() {
-        val transport = FakeTransport()
-        HubViewModel(MemorySessions(), "https://hub.example", hubTransport = transport).let { shadowOf(Looper.getMainLooper()).idle() }
+        assertTrue(vm.state.value.error!!.contains("Stone"))
         assertTrue(transport.sent.isEmpty())
     }
 }

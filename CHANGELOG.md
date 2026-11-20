@@ -1,3 +1,12 @@
+# Hub 0.0.2 restaurado · Gateway 0.0.10
+
+- **Vuelve el hub de antes:** el hub solo reenvía. Cada llamada de `music_` va a Stone por el relay `stone-relay`, con
+  el token `stn_` de Stone, y **todo el control vuelve a estar en Stone** (interruptor, tokens y confirmaciones).
+- Para vincular: en Stone › Ajustes › Modo MCP, toca **Copiar** y pega el enlace en la pestaña Apps del hub.
+- Se quitan el hub compartido, el código de 8 cifras, el canal de teléfonos, los paquetes firmados y el puente local.
+- La app Gateway 0.0.10 es la 0.0.2 con número nuevo, para que se instale encima de la 0.0.9. Necesita Stone 1.7.21.
+- Para publicarlo: `npx wrangler deploy` (mismo Worker `stone-hub`; se vuelve a usar `STONE_RELAY_HOST`).
+
 # Hub 0.1.0 · Gateway 0.0.9 (hub compartido)
 
 - **Un hub para todos, cada uno en su espacio.** Gateway se une solo al abrirse: sin Cloudflare, sin tokens, sin

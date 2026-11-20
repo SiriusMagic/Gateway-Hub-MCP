@@ -22,9 +22,8 @@ class LiveHubTest {
         val api = HubApi(url, token)
         assertTrue(api.state().version.isNotBlank())
         // The scan only reads: every app answers with its state, nothing is turned on.
-        assertTrue(api.scan().any { it.prefix == "music_" })
-        assertTrue(api.state().environment.isNotBlank())
-        val created = api.createAgent("Prueba app Android", listOf("music_"), readOnly = true, days = 1)
+        assertTrue(api.scan().any { it.prefix == "calc_" && it.online })
+        val created = api.createAgent("Prueba app Android", listOf("calc_"), readOnly = true, days = 1)
         try {
             assertTrue(created.url.startsWith("https://") && created.token.startsWith("gw_"))
             api.setPaused(created.agent.id, true)

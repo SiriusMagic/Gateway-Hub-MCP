@@ -10,8 +10,8 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "0.0.9"
+        versionCode = 10
+        versionName = "0.0.10"
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
     }
@@ -49,8 +49,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
-    // WebSocket of the phone's channel with the hub (same version as Stone).
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.18")

@@ -6,36 +6,18 @@ conectarlas una por una. Cada herramienta lleva el prefijo de su app, y el enrut
 
 | Prefijo | App | Qué hace |
 |---|---|---|
-| `music_` | [Stone](https://github.com/SiriusMagic/Stone) (en el teléfono) | Todas las herramientas de Stone, por el canal de Gateway en el teléfono |
-
-Calculadora, Notas y Utilidades se quitaron en la 0.0.3: el hub queda solo para apps reales. Para añadir
-otra, ver [`MODULES.md`](MODULES.md).
-
-## Hub compartido (0.1.0): copiar, pegar y escribir un código
-
-El mismo Worker sirve a **muchas personas**, cada una en su propio espacio (un Durable Object `u_<espacio>`):
-
-1. Instala **Gateway Hub** (y Stone). Al abrirlo se une solo al hub: sin Cloudflare, sin tokens ni registro.
-   Stone se vincula solo.
-2. Copia el enlace público **`https://<hub>/mcp`** (el mismo para todos) y pégalo en Claude o ChatGPT como conector
-   personalizado.
-3. Cuando la IA lo pida, escribe el **código de 8 cifras** que muestra Gateway (sirve una vez y cambia cada 10 minutos).
-
-Cada secreto nombra su espacio (`gw_s<espacio>_…`), así que el Worker manda cada llamada **solo** al teléfono de su
-dueño: nunca a todos. El inicio de sesión es OAuth 2.1 con PKCE y registro dinámico de clientes (`src/oauth/`).
-Quien tenga su propio hub (Cloudflare) lo sigue usando con «Tengo mi propio hub»; ese hub de un solo dueño
-(`HUB_TOKEN`) funciona igual que antes.
-
-**Entorno MCP** (app o `/admin`): *Conectar*, *Pausar* (conserva enlaces y ajustes, pero no ejecuta nada) o
-*Desconectar* (además olvida las apps registradas). Lo aplica el propio hub: con el entorno en pausa o desconectado,
-toda llamada responde `PAUSED` o `DISCONNECTED`.
+| `music_` | [Stone](https://github.com/SiriusMagic/Stone) (en el teléfono) | Todas las herramientas de Stone, a través de su relay |
+| `notes_` | Notas | Crear, buscar, leer, editar y borrar |
+| `calc_` | Calculadora | Expresiones y porcentajes, sin ejecutar código |
+| `utils_` | Utilidades | Hora en cualquier zona horaria y números al azar |
 
 ```text
 Claude / ChatGPT ──https──▶ Gateway Hub (Cloudflare Worker, TypeScript)
    (un enlace por agente)     │ enlace del agente → apps permitidas · lectura/escritura · caducidad
                               │ 120/min · 1 MiB · validación de argumentos · métricas
                               ▼
-                          router.ts ── prefijo ──▶ music_ ──wss /channel──▶ Gateway (teléfono) ──IPC──▶ Stone
+                          router.ts ── prefijo ──▶ notes_ · calc_ · utils_   (dentro del hub)
+                              └── music_ ──https──▶ relay de Stone ──wss──▶ Stone (teléfono)
 ```
 
 ## Quién hace qué
@@ -52,8 +34,8 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.9**, la app nativa del propietario:
-agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.9.apk`. Próximas fases: [`ROADMAP.md`](ROADMAP.md). Usa la API JSON
+[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.10**, la app nativa del propietario:
+agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.10.apk`. Usa la API JSON
 `/api/admin/*`, que solo acepta el token del propietario en la cabecera y no responde a navegadores
 (sin CORS).
 
@@ -61,7 +43,7 @@ agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `an
 
 1. Abre **`https://<hub>/admin`** (o la app) y pega tu **acceso**: `https://<hub>#hub_…`, o solo el token del
    propietario. Los tokens de Stone (`stn_…`) y de agente (`gw_…`) no sirven para entrar.
-2. **Vincula Stone:** en Stone › Ajustes › Modo API › Gateway Hub, toca **Vincular**. Eso copia un
+2. **Vincula Stone:** en Stone › Ajustes › Modo MCP, toca **Copiar**. Eso copia un
    enlace solo para el hub. Pégalo en *Apps*.
 3. **Crea un enlace por IA:** pon un nombre, elige las apps, si es solo lectura y cuántos días
    dura. El panel muestra el enlace **una sola vez**: pégalo en Claude o ChatGPT como conector
@@ -82,17 +64,17 @@ agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `an
   cuerpo de 1 MiB como máximo; lotes de 20.
 - **Datos:** argumentos validados en el servidor con el esquema de cada herramienta, SQL siempre
   parametrizado, HTML siempre escapado y sin cookies (sin riesgo de CSRF).
-- **Red:** el hub no hace `fetch` a ninguna web: las apps llegan solo por el canal `/channel` de cada teléfono,
-  autenticado con su credencial de dispositivo.
+- **Red:** el módulo de música solo acepta enlaces del relay configurado (`STONE_RELAY_HOST`), así que
+  el hub no puede usarse para llamar a otras webs. El token de Stone viaja en la cabecera.
 - **Aislamiento:** un módulo que falla no tumba a los demás.
-- **Sin dependencias en ejecución:** MCP y validación están escritos a mano; `wrangler`
+- **Sin dependencias en ejecución:** MCP, validación y calculadora están escritos a mano; `wrangler`
   solo sirve para publicar.
 
 ## Desarrollo
 
 ```sh
 npm ci
-npm test                 # 41 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
+npm test                 # 27 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
 npm run dev              # http://127.0.0.1:8790 (secretos locales en .dev.vars, ignorado por Git)
 npx wrangler secret put HUB_TOKEN
 npx wrangler deploy

@@ -21,7 +21,7 @@ import com.zirakusa.gatewayhub.data.ScannedApp
 
 /** Finds compatible apps and their state without turning anything on (the hub only sends tools/list). */
 @OptIn(ExperimentalLayoutApi::class)
-@Composable fun ScannerList(apps: List<ScannedApp>?, busy: Boolean, scan: () -> Unit, providers: ProvidersUi = ProvidersUi()) {
+@Composable fun ScannerList(apps: List<ScannedApp>?, busy: Boolean, scan: () -> Unit) {
     HubCard {
         Text(stringResource(R.string.scanner_title), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         Text(stringResource(R.string.scanner_hint), Modifier.padding(top = 4.dp), color = HubColors.Muted, fontSize = 13.sp)
@@ -29,12 +29,12 @@ import com.zirakusa.gatewayhub.data.ScannedApp
             Icon(Icons.Default.Radar, null, Modifier.size(18.dp)); Text(stringResource(R.string.scanner_run), Modifier.padding(start = 6.dp))
         }
     }
-    apps?.forEach { ScannedCard(it, busy, providers) }
+    apps?.forEach { ScannedCard(it) }
     if (apps?.isEmpty() == true) Text(stringResource(R.string.scanner_none), Modifier.padding(16.dp), color = HubColors.Muted)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
-@Composable private fun ScannedCard(app: ScannedApp, busy: Boolean, providers: ProvidersUi) {
+@Composable private fun ScannedCard(app: ScannedApp) {
     val context = LocalContext.current
     val local = app.local; val remote = app.remote
     HubCard {
@@ -64,7 +64,5 @@ import com.zirakusa.gatewayhub.data.ScannedApp
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: ActivityNotFoundException) {}
             }) { Text(stringResource(R.string.scan_open)) }
         }
-        // Provider apps (local MCP bridge): link, execution packages and a test (only when the app offers the bridge).
-        if (local != null && local.bridge && local.sameDeveloper && providers.actions != null) ProviderButtons(local, busy, providers)
     }
 }
