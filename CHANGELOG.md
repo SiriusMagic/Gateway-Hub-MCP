@@ -1,3 +1,13 @@
+# Hub y Gateway 0.0.13: «Vincular con token», Escáner primero y Filem (files_)
+
+- La app abre en **Escáner**, que ahora es la primera pestaña. Se quita la pestaña **Apps**.
+- Arriba del Escáner, **Vincular con token**: pega el enlace que copia cualquier app (Modo MCP › token tipo Hub ›
+  Copiar). El token ya dice de qué app es (stn_ Stone, lum_ Luma, cal_ Calculadora, fil_ Filem) y el aviso es simple:
+  «Stone: token vinculado».
+- Hub: **Filem** es `files_` (app remota con Modo MCP, como Luma y la Calculadora). Hay que publicar el hub
+  (`npx wrangler deploy`) para que exista.
+- Notas aún no se puede vincular: el hub todavía tiene su propio `notes_`.
+
 # Hub: la Calculadora del teléfono es calc_
 
 - `calc_` ahora es tu app **Calculadora** (Modo MCP, por el relay), como Luma es `gallery_`. Se quita la calculadora

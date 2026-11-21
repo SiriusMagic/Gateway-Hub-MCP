@@ -17,12 +17,12 @@ import com.zirakusa.gatewayhub.R
 
 /** Everything the owner does once connected; [vm] actions are passed down as callbacks. */
 enum class HubTab(val label: Int, val icon: ImageVector) {
-    AGENTS(R.string.tab_agents, Icons.Default.Key), SCANNER(R.string.tab_scanner, Icons.Default.Radar),
-    APPS(R.string.tab_apps, Icons.Default.Apps), METRICS(R.string.tab_metrics, Icons.Default.Insights)
+    SCANNER(R.string.tab_scanner, Icons.Default.Radar), AGENTS(R.string.tab_agents, Icons.Default.Key),
+    METRICS(R.string.tab_metrics, Icons.Default.Insights)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable fun HomeScreen(state: UiState, vm: HubActions, initialTab: HubTab = HubTab.AGENTS) {
+@Composable fun HomeScreen(state: UiState, vm: HubActions, initialTab: HubTab = HubTab.SCANNER) {
     var tab by remember { mutableStateOf(initialTab) }
     var creating by remember { mutableStateOf(false) }
     var leaving by remember { mutableStateOf(false) }
@@ -55,8 +55,10 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
             if (hub == null) { if (!state.loading) Text(state.error ?: "", Modifier.padding(16.dp), color = HubColors.Bad); return@Column }
             when (tab) {
                 HubTab.AGENTS -> AgentsList(hub.agents, hub.modules, vm::setPaused, vm::revoke)
-                HubTab.SCANNER -> ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink)
-                HubTab.APPS -> AppsList(hub, state.loading, vm::linkStone, vm::unlinkStone)
+                HubTab.SCANNER -> {
+                    TokenCard(state.loading, vm::linkToken)
+                    ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink)
+                }
                 HubTab.METRICS -> MetricsList(hub)
             }
             Text(stringResource(R.string.hub_version, hub.version), Modifier.padding(vertical = 16.dp), color = HubColors.Muted, fontSize = 12.sp)
@@ -77,6 +79,6 @@ interface HubActions {
     fun refresh(); fun logout(); fun dismissMessage(); fun dismissCreated()
     fun setPaused(id: String, paused: Boolean); fun revoke(id: String)
     fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int)
-    fun linkStone(link: String); fun unlinkStone()
+    fun linkToken(link: String)
     fun scan(); fun autoLink(packageName: String); fun setAutoSync(on: Boolean)
 }

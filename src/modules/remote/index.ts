@@ -88,4 +88,7 @@ export const galleryModule = remoteModule(LUMA);
 export const CALCULADORA: RemoteApp = { prefix: "calc_", title: "Calculadora", label: "Calculadora", androidPackage: "com.zirakusa.calculadora",
   summary: "The user's calculator on the phone: exact arithmetic and scientific expressions, history, currency and unit conversion." };
 export const calculatorAppModule = remoteModule(CALCULADORA);
-export const REMOTE_APPS = [LUMA, CALCULADORA];
+export const FILEM: RemoteApp = { prefix: "files_", title: "Archivos (Filem)", label: "Filem", androidPackage: "com.zirakusa.filem",
+  summary: "Filem on the phone: list, search and read the user's files and folders; with write access also create folders, rename, copy, move and send to its trash." };
+export const filesAppModule = remoteModule(FILEM);
+export const REMOTE_APPS = [LUMA, CALCULADORA, FILEM];

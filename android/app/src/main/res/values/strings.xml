@@ -7,7 +7,6 @@
     <string name="login_token_hint">Se guarda cifrado en este teléfono (Android Keystore) y solo viaja por HTTPS.</string>
     <string name="login_connect">Conectar</string>
     <string name="tab_agents">Agentes</string>
-    <string name="tab_apps">Apps</string>
     <string name="tab_scanner">Escáner</string>
     <string name="scanner_title">Escáner de apps compatibles</string>
     <string name="scanner_hint">Busca en este teléfono las apps que funcionan con el hub y pregunta al hub su estado. Solo lee: no activa ni cambia nada.</string>
@@ -66,14 +65,9 @@
     <string name="copied">Copiado</string>
     <string name="done">Listo</string>
     <string name="app_ready">Lista</string>
-    <string name="app_linked">Vinculado</string>
     <string name="app_unlinked">Sin vincular</string>
-    <string name="stone_title">Vincular Stone</string>
-    <string name="stone_hint">En Stone › Ajustes › Modo MCP: activa «Redireccionar a Hub» (se vincula solo al escanear y el hub administra todo), o crea un token tipo Hub, toca Copiar y pégalo aquí (Stone pone los permisos).</string>
-    <string name="stone_link">Enlace de Stone</string>
     <string name="paste">Pegar</string>
     <string name="link">Vincular</string>
-    <string name="unlink">Desvincular Stone</string>
     <string name="metrics_day">Últimas 24 h</string>
     <string name="metrics_week">Últimos 7 días</string>
     <string name="metrics_calls">llamadas</string>
@@ -86,4 +80,10 @@
     <string name="metrics_revoked">(revocado)</string>
     <string name="metrics_row">Llamadas: %1$d · Errores: %2$d · %3$d ms</string>
     <string name="hub_version">Hub %1$s</string>
+    <string name="token_title">Vincular con token</string>
+    <string name="token_hint">En la app (Stone, Luma, Calculadora, Filem…) › Modo MCP: crea un token tipo Hub, toca Copiar y pégalo aquí. El token ya dice de qué app es.</string>
+    <string name="token_field">Enlace o token de la app</string>
+    <string name="token_detected">%1$s · token reconocido</string>
+    <string name="token_unknown">No reconozco ese token: copia el enlace desde la app (Modo MCP › Copiar).</string>
+    <string name="token_not_supported">%1$s todavía no se puede vincular al hub.</string>
 </resources>

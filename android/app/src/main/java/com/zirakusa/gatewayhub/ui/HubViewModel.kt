@@ -8,6 +8,7 @@ import com.zirakusa.gatewayhub.data.LocalApp
 import com.zirakusa.gatewayhub.data.RemoteStatus
 import com.zirakusa.gatewayhub.data.CreatedAgent
 import com.zirakusa.gatewayhub.data.LinkAnswer
+import com.zirakusa.gatewayhub.data.TokenApps
 import com.zirakusa.gatewayhub.data.LocalAppSource
 import com.zirakusa.gatewayhub.data.ScanMerge
 import com.zirakusa.gatewayhub.data.ScannedApp
@@ -81,8 +82,13 @@ class HubViewModel(
         requireApi().setPaused(id, paused); reload(); if (paused) "Enlace pausado." else "Enlace reanudado."
     }
     override fun revoke(id: String) = run { requireApi().revoke(id); reload(); "Enlace revocado: deja de funcionar ya." }
-    override fun linkStone(link: String) = run { val note = requireApi().linkStone(link); reload(); note }
-    override fun unlinkStone() = run { requireApi().unlinkStone(); reload(); "Stone desvinculado." }
+    /** «Vincular con token»: the token says which app it is; the answer is one simple line («Stone: token vinculado»). */
+    override fun linkToken(link: String) = run {
+        val app = TokenApps.identify(link) ?: throw HubException("UNKNOWN_TOKEN", "No reconozco ese token.")
+        if (!app.supported) throw HubException("NOT_SUPPORTED", "${app.name} todavía no se puede vincular al hub.")
+        if (app.prefix == "music_") requireApi().linkStone(link) else requireApi().linkApp(app.prefix, link)
+        reload(); "${app.name}: token vinculado"
+    }
 
     /**
      * Lists compatible apps and asks the hub for their state (read-only). With [UiState.autoSync], an app

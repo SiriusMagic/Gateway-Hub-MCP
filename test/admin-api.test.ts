@@ -23,7 +23,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
   const { body } = await h.api("GET", "/state");
   assert.equal(body.version, "0.0.2");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
-  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "calc_", "notes_", "utils_"]);
+  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "calc_", "files_", "notes_", "utils_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
   assert.equal(body.agents[0].tokenHash, undefined);
@@ -132,4 +132,21 @@ test("the Calculadora app is calc_: its own tool names, its token, read through 
   await h.rpc("tools/call", { name: "calc_player_state", arguments: {} });
   assert.equal(calc.calls.at(-1)!.body.params.name, "player_state");
   assert.equal(calc.calls.at(-1)!.auth, "Bearer cal_" + "y".repeat(43));
+});
+
+test("the Filem app is files_: not linked → coded error, bad link refused, then its own tools with its token", async () => {
+  const { fakeStone, MemoryStore, RELAY } = await import("./helpers.ts");
+  const filem = fakeStone({ token: { name: "Hub", kind: "hub", usage: "Archivos", mode: "read" } });
+  const h = hub(new MemoryStore(), filem.fetcher);
+  const unlinked = await h.rpc("tools/call", { name: "files_player_state", arguments: {} });
+  assert.equal(unlinked.body.result.structuredContent.error.code, "NOT_LINKED");
+  assert.equal((await h.api("POST", "/apps/files_", { link: "https://evil.example/d/x/mcp" })).body.error.code, "INVALID_LINK");
+  const link = `https://${RELAY}/d/abcdefabcdefabcdefabcdef/mcp?token=fil_` + "z".repeat(43);
+  assert.match((await h.api("POST", "/apps/files_", { link })).body.message, /Filem vinculad/);
+  assert.ok((await h.rpc("tools/list")).body.result.tools.some((t: any) => t.name === "files_status"));
+  await h.rpc("tools/call", { name: "files_player_state", arguments: {} });
+  assert.equal(filem.calls.at(-1)!.body.params.name, "player_state");
+  assert.equal(filem.calls.at(-1)!.auth, "Bearer fil_" + "z".repeat(43));
+  const missing = await h.rpc("tools/call", { name: "files_nada", arguments: {} });
+  assert.equal(missing.body.result.structuredContent.error.code, "UNKNOWN_TOOL");
 });

@@ -10,8 +10,8 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 12
-        versionName = "0.0.12"
+        versionCode = 13
+        versionName = "0.0.13"
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
     }

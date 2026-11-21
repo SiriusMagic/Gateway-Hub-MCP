@@ -27,7 +27,6 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     suspend fun setPaused(id: String, paused: Boolean) { call("POST", "/agents/$id/${if (paused) "pause" else "resume"}", JSONObject()) }
     suspend fun revoke(id: String) { call("DELETE", "/agents/$id") }
     suspend fun linkStone(link: String): String = JSONObject(call("POST", "/stone", JSONObject().put("link", link.trim()))).getString("message")
-    suspend fun unlinkStone() { call("DELETE", "/stone") }
     /** Other apps with Modo MCP (Luma: gallery_). */
     suspend fun linkApp(prefix: String, link: String): String =
         JSONObject(call("POST", "/apps/$prefix", JSONObject().put("link", link.trim()))).getString("message")

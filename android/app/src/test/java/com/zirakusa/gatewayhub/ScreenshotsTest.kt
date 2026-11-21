@@ -27,7 +27,7 @@ class ScreenshotsTest {
         override fun refresh() {}; override fun logout() {}; override fun dismissMessage() {}; override fun dismissCreated() {}
         override fun setPaused(id: String, paused: Boolean) {}; override fun revoke(id: String) {}
         override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) {}
-        override fun linkStone(link: String) {}; override fun unlinkStone() {}; override fun scan() {}
+        override fun linkToken(link: String) {}; override fun scan() {}
         override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}
     }
 
@@ -42,7 +42,6 @@ class ScreenshotsTest {
         listOf(LocalApp("com.zirakusa.stone.kotlin.preview", "Stone Kotlin · Prueba", "1.7.13", "music_", true, "com.zirakusa.stone.kotlin.preview.hublink"),
             LocalApp("com.example.lookalike", "Stone Pro", "9.9", "music_", false)),
         HubJson.scan(SCAN_JSON))), NoActions, HubTab.SCANNER) }
-    @Test fun apps() = shot("apps") { HomeScreen(connected, NoActions, HubTab.APPS) }
     @Test fun metrics() = shot("metrics") { HomeScreen(connected, NoActions, HubTab.METRICS) }
     @Test fun createdLink() = shot("created") {
         HomeScreen(connected.copy(created = CreatedAgent(hub.agents[0], "https://stone-hub.example.workers.dev/mcp?token=gw_EXAMPLEexampleEXAMPLE", "gw_EXAMPLE")), NoActions)

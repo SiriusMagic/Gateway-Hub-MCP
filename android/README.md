@@ -1,4 +1,4 @@
-# Gateway Hub para Android (0.0.2)
+# Gateway Hub para Android
 
 App nativa (Kotlin, Jetpack Compose) del **propietario** del Gateway Hub. Hace lo mismo que el panel
 web `/admin`, pero en el teléfono:
@@ -7,14 +7,14 @@ web `/admin`, pero en el teléfono:
   vez, y pausar, reanudar o revocar.
 - **Acceso en un solo pegado:** `https://<hub>#hub_…` o solo el token. Si pegas algo de Stone o de un
   agente, la app explica qué es.
-- **Escáner:** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
+- **Vincular con token:** pega el enlace que copia la app (Modo MCP › token tipo Hub › Copiar). El token ya dice
+  de qué app es (Stone, Luma, Calculadora, Filem) y responde «Stone: token vinculado».
+- **Escáner (primera pestaña):** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
   muestra su estado en el hub (sin vincular, apagada, en línea). Solo lee, no activa nada.
-- **Apps:** ver el estado de cada app y vincular o desvincular Stone (pegando el enlace de Stone ›
-  Modo MCP › Copiar).
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.12.apk`](GatewayHub-0.0.12.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.13.apk`](GatewayHub-0.0.13.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 
