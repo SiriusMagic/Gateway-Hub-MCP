@@ -56,7 +56,8 @@ agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `an
 
 - **Transporte:** solo HTTPS (una petición por HTTP se rechaza, no se redirige). Cabeceras HSTS,
   nosniff, no-store, DENY y CSP sin scripts en `/admin`.
-- **Token del propietario:** secreto de Cloudflare (`wrangler secret put HUB_TOKEN`). Solo él abre
+- **Token del propietario:** secreto de Cloudflare (`wrangler secret put HUB_TOKEN`), de 32 caracteres aleatorios o
+  más: con uno débil el hub no abre. Solo él abre
   el panel; los enlaces de agente nunca lo abren.
 - **Enlaces de agente:** `gw_` + 256 bits aleatorios. Se muestran una vez y solo se guarda su
   SHA-256.
@@ -76,9 +77,9 @@ agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `an
 
 ```sh
 npm ci
-npm test                 # 27 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
+npm test                 # 30 pruebas en Node (enrutador, módulos, agentes, métricas, panel)
 npm run dev              # http://127.0.0.1:8790 (secretos locales en .dev.vars, ignorado por Git)
-npx wrangler secret put HUB_TOKEN
+openssl rand -base64 32 | npx wrangler secret put HUB_TOKEN   # 32+ caracteres aleatorios
 npx wrangler deploy
 ```
 

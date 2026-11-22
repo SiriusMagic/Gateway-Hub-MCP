@@ -7,7 +7,7 @@ gateway-hub-mcp/
 │   ├── store.ts            # Durable Object: SQLite (notas, config, agentes, métricas) + límites
 │   ├── serve.ts            # Límites, tamaño, quién llama → /mcp o /admin
 │   ├── agents.ts           # Propietario y agentes: tokens, apps permitidas, solo lectura
-│   ├── auth.ts             # Comparación en tiempo constante, lectura del token, limitador
+│   ├── auth.ts             # Comparación en tiempo constante, lectura del token, limitador, token fuerte
 │   ├── mcp.ts              # MCP / JSON-RPC 2.0: filtra herramientas por agente y registra métricas
 │   ├── router.ts           # Discriminador: prefijo → módulo; aísla fallos de cada módulo
 │   ├── validate.ts         # Validación de argumentos con el esquema de la herramienta

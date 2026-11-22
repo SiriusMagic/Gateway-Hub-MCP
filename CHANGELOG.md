@@ -1,3 +1,12 @@
+# Hub 0.0.3: token del propietario fuerte
+
+- El hub **no abre** (ni `/mcp` ni `/admin`) mientras `HUB_TOKEN` sea débil: menos de 32 caracteres, pocos caracteres
+  distintos o una secuencia («abcdef…», «0123…»). Responde 503 con cómo crear uno fuerte y registra el motivo, nunca el
+  token. El token del propietario es el único secreto que elige una persona, y abre el hub y todos los teléfonos que el
+  hub alcanza.
+- Crear uno fuerte: `openssl rand -base64 32 | npx wrangler secret put HUB_TOKEN`.
+- 30 pruebas.
+
 # Hub y Gateway 0.0.13: «Vincular con token», Escáner primero y Filem (files_)
 
 - La app abre en **Escáner**, que ahora es la primera pestaña. Se quita la pestaña **Apps**.

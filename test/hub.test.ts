@@ -92,3 +92,22 @@ test("admin panel escapes what it shows", async () => {
   const page = await h.admin({ token: TOKEN, action: "agent_create", name: "<script>alert(1)</script>", apps: "utils_", days: "1" });
   assert.doesNotMatch(page.html, /<script>alert/);
 });
+
+test("a weak owner token closes the hub until it is replaced", async () => {
+  const { weakOwnerToken } = await import("../src/auth.ts");
+  assert.equal(weakOwnerToken("short-token-123"), "SHORT");
+  assert.equal(weakOwnerToken("aaaaaaaaaabbbbbbbbbbccccccccccdddd"), "LOW_VARIETY");
+  assert.equal(weakOwnerToken("abcdefghijklmnopqrstuvwxyz0123456789"), "SEQUENCE");
+  assert.equal(weakOwnerToken("q7Vx2pL9mZ4rT8wK1nB6cY3hD5sF0gJe+/Qa"), null);
+  assert.equal(weakOwnerToken(TOKEN), null);
+  const { serve } = await import("../src/serve.ts");
+  const h = hub();
+  const weak = await serve(new Request("https://hub.example/mcp", { method: "POST", headers: { authorization: "Bearer password123" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping" }) }), { HUB_TOKEN: "password123", STONE_RELAY_HOST: RELAY }, h.store);
+  assert.equal(weak.status, 503);
+  const text = await weak.text();
+  assert.match(text, /too weak \(SHORT\)/);
+  assert.doesNotMatch(text, /password123/);
+  const admin = await serve(new Request("https://hub.example/admin"), { HUB_TOKEN: "password123", STONE_RELAY_HOST: RELAY }, h.store);
+  assert.equal(admin.status, 503);
+});

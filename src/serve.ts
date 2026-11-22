@@ -1,7 +1,7 @@
 // Every request to the hub, after the Worker checked HTTPS: limits, size, who is calling, then
 // /mcp (AI clients) or /admin (owner).
 import type { HubAdminStore, HubContext, HubEnv, HubStoreApi } from "./modules/types.ts";
-import { type Limiter, givenToken, sameSecret } from "./auth.ts";
+import { weakOwnerToken, type Limiter, givenToken, sameSecret } from "./auth.ts";
 import { type Principal, principalFor } from "./agents.ts";
 import { handleRpc } from "./mcp.ts";
 import { createRouter } from "./router.ts";
@@ -9,7 +9,7 @@ import { modules } from "./modules/index.ts";
 import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
 
-export const VERSION = "0.0.2";
+export const VERSION = "0.0.3";
 const MAX_BODY = 1 << 20;
 export const SECURITY = {
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains", "X-Content-Type-Options": "nosniff",
@@ -46,6 +46,13 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   }
   const owner = env.HUB_TOKEN;
   if (!owner) return rpcError(503, "Gateway Hub has no owner token yet (npx wrangler secret put HUB_TOKEN).");
+  // A guessable owner token would open the hub and every phone it reaches: refuse to serve until it is replaced.
+  const weak = weakOwnerToken(owner);
+  if (weak) {
+    console.warn(JSON.stringify({ event: "weak_owner_token", reason: weak })); // never the token itself
+    return rpcError(503, `Gateway Hub: the owner token is too weak (${weak}). Make a strong one: ` +
+      "openssl rand -base64 32 | npx wrangler secret put HUB_TOKEN");
+  }
   if (store.failures.blocked(caller)) return rpcError(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
   const ctx: HubContext = { store, env, fetch: (input, init) => fetcher(input, init) };

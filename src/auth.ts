@@ -12,6 +12,21 @@ export async function sameSecret(given: string, expected: string): Promise<boole
   return diff === 0;
 }
 
+/**
+ * Why the owner token is too weak to guard the hub (and, through it, every phone the hub reaches), or null when it is
+ * strong. The owner token is the one secret a person chooses, so it must not be guessable: at least 32 characters,
+ * enough different characters, and not a run like "abcdef…" or "0123…". Generate one with `openssl rand -base64 32`.
+ */
+export function weakOwnerToken(token: string): "SHORT" | "LOW_VARIETY" | "SEQUENCE" | null {
+  if (token.length < MIN_OWNER_TOKEN) return "SHORT";
+  if (new Set(token).size < 12) return "LOW_VARIETY";
+  let steps = 0;
+  for (let i = 1; i < token.length; i++) if (Math.abs(token.charCodeAt(i) - token.charCodeAt(i - 1)) <= 1) steps++;
+  if (steps / (token.length - 1) > 0.6) return "SEQUENCE";
+  return null;
+}
+export const MIN_OWNER_TOKEN = 32;
+
 /** Bearer header, X-Api-Key, or ?token= for apps that only accept a link (ChatGPT). */
 export function givenToken(request: Request, url: URL): string | null {
   const auth = request.headers.get("authorization") ?? "";

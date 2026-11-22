@@ -2,7 +2,7 @@ import type { Agent, CallStat, HubAdminStore, HubStoreApi, MetricsSummary, Note 
 import { Limiter } from "../src/auth.ts";
 import { serve } from "../src/serve.ts";
 
-export const TOKEN = "hub_test_token_0123456789abcdefghijklmnop";
+export const TOKEN = "hub_test_Q7vX2pL9mZ4rT8wK1nB6cY3hD5sF0gJe";
 export const RELAY = "stone-relay.example.workers.dev";
 export const STONE_LINK = `https://${RELAY}/d/abcdefghijkl12/mcp?token=stn_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345`;
 
