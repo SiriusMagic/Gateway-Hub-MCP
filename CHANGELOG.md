@@ -11,7 +11,7 @@
   falló), los nodos más usados brillan más, y arriba dice cuántas órdenes se entendieron y se hicieron y cuánto tardan.
 - Usa las órdenes estándar de Android (las mismas de cualquier asistente) y las de la familia (`FAMILIA.md` §10, permiso
   de firma `com.zirakusa.family.permission.ACT`). Se puede elegir como asistente del teléfono (botón de encendido).
-- Nunca elige entre dos contactos al azar: si «Ana» puede ser varias personas y ninguna coincide, pregunta.
+- Nunca elige entre dos contactos al azar: si «Ana» puede ser varias personas y ninguna coincide, dice que no la encontró.
 - 29 pruebas en la app.
 
 # Hub 0.0.3: token del propietario fuerte
