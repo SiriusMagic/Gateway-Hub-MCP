@@ -26,7 +26,7 @@ gateway-hub-mcp/
 │       ├── data/           # HubApi (HTTPS), modelos, SessionStore cifrado con el Keystore
 │       ├── ui/             # HubViewModel (único dueño del estado) y pantallas
 │       └── assistant/      # Asistente: Words y Parser (español → orden, puros), Catalog (apps de la familia),
-│                           # Brain (decide y actúa por Hands), Graph (nodos y camino), AndroidHands (intents),
+│                           # Brain (decide y actúa por Hands), Graph (árbol entrada → app → acción), BrainPage (mapa en Ajustes), AndroidHands (intents),
 │                           # Vosk/VoskEars (voz sin internet, modelo en assets/model-es), Listening (palabra
 │                           # «Oye Lucía», EnergyGate, vocabulario), WakeService (escucha en primer plano),
 │                           # Lucia* (asistente predeterminado: gesto de esquina y botón), Voice (TTS), BrainCanvas,

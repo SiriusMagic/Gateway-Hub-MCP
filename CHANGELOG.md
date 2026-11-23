@@ -1,3 +1,15 @@
+# Gateway Hub (app Android) 0.0.18: mapa de Lucía en Ajustes y más formas de controlar la música
+
+- El **mapa de Lucía** (el cerebro completo) pasa a **Ajustes de Lucía › Mapa de Lucía**. La pantalla de hablar queda
+  limpia: conversación, caja de texto y micrófono.
+- El mapa es ahora un **árbol**: Voz/Texto → app → lo que hace esa app. Cada acción cuelga de su app (Notas → Conteo,
+  Stone → Música, Reloj → Alarma…); lo que Lucía responde sola (Mi día, Hora, Fecha, Volumen) cuelga de «Lucía». Están
+  todas las apps de la familia.
+- **Hecho / Falló** ya no son nodos unidos al camino: es una marca arriba (● Hecho en verde, ● Falló en rojo), y la
+  última rama se pinta del mismo color.
+- Música: «pon pausa», «pon pausa a la música», «pausa la canción», «quita / apaga la música», «reinicia la música»,
+  «repite la canción», «vuelve a empezar», «otra canción», «cambia la canción», «quita la pausa», «dale play».
+
 # Gateway Hub (app Android) 0.0.17: órdenes con volumen
 
 - Una orden puede llevar el **volumen**: «pon música al 30 por ciento», «reproduce música de Bad Bunny al 40 %», «pon mis
