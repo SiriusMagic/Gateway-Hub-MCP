@@ -11,6 +11,9 @@
     <!-- «Pon una alarma a las 7» with Android's standard order (Reloj or the phone's clock). -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <!-- The family's «Hoy» summaries (weather, agenda…), only from apps signed with the same key. -->
+    <!-- Declared here too (FAMILIA.md §7), so it is granted whichever family app is installed first. -->
+    <permission android:name="com.zirakusa.family.permission.SUMMARY" android:protectionLevel="signature"
+        android:label="@string/summary_permission" />
     <uses-permission android:name="com.zirakusa.family.permission.SUMMARY" />
     <!-- The family's own orders (FAMILIA.md §10), only between apps signed with the same key. -->
     <permission android:name="com.zirakusa.family.permission.ACT" android:protectionLevel="signature"
