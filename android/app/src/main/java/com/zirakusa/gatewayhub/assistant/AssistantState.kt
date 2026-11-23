@@ -13,6 +13,14 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var partial by mutableStateOf("")
     var level by mutableFloatStateOf(0f)
     var voiceAnswers by mutableStateOf(true)
+    /** Lucía's settings page and what the phone allows (the activity keeps these up to date). */
+    var settingsOpen by mutableStateOf(false)
+    var wake by mutableStateOf(false)
+    var name by mutableStateOf(WakeName.LUCIA)
+    var onlyCharging by mutableStateOf(false)
+    var isDefault by mutableStateOf(false)
+    var canAppear by mutableStateOf(false)
+    var modelReady by mutableStateOf(false)
     /** Each new order restarts the light running through the graph. */
     var pulse by mutableStateOf(0); private set
     val last get() = turns.lastOrNull()

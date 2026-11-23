@@ -6,4 +6,7 @@
     <issue id="OldTargetApi" severity="ignore" />
     <issue id="NewerVersionAvailable" severity="ignore" />
     <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <!-- Lucía's offline speech recognition (Vosk) ships only for phones' ARM processors, to keep the APK
+         smaller; ChromeOS on x86 is not a target of the family. -->
+    <issue id="ChromeOsAbiSupport" severity="ignore" />
 </lint>

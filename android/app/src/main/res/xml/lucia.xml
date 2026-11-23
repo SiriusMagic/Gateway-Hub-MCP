@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lucía as the phone's assistant: her session opens her screen; her recognizer is Vosk, on the phone. -->
+<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:sessionService="com.zirakusa.gatewayhub.assistant.LuciaSessionService"
+    android:recognitionService="com.zirakusa.gatewayhub.assistant.LuciaRecognition"
+    android:supportsAssist="true"
+    android:supportsLaunchVoiceAssistFromKeyguard="false"
+    android:supportsLocalInteraction="false" />

@@ -46,7 +46,7 @@ object Parser {
 
         // Music: recommendations first, then «reproduce música (de X)», «pon a X».
         if (has(t, "recomendaciones", "recomendado", "recomendada", "recomiendame", "mix del dia", "mezcla del dia", "descubrimiento")) return Command(Action.PLAY_RECOMMENDED)
-        Regex("^(reproduce|reproducir|pon|ponme|toca|escuchar|quiero escuchar|play)( algo de| un poco de)?( la)? (musica|canciones|una cancion|algo)( de (.+))?$").find(t)?.let { m ->
+        Regex("^(reproduce|reproducir|pon|ponme|toca|escuchar|quiero escuchar|play)( algo de| un poco de)?( la)? (musica|canciones|una cancion|algo)(?:( de)? (.+))?$").find(t)?.let { m ->
             return Command(Action.PLAY_MUSIC, m.groupValues[6].takeIf { it.isNotBlank() }?.let { mapOf("query" to it) } ?: emptyMap())
         }
         Regex("^(reproduce|pon|ponme|toca) (.+)$").find(t)?.let { m ->
@@ -56,8 +56,8 @@ object Parser {
         // Questions the assistant answers itself, with the family's summaries.
         if (has(t, "que hora es", "hora es", "dime la hora")) return Command(Action.TIME)
         if (has(t, "que dia es", "que fecha es", "dia es hoy", "fecha de hoy")) return Command(Action.DATE)
-        if (has(t, "clima", "tiempo hace", "que tiempo", "va a llover", "llovera", "temperatura", "hace frio", "hace calor")) return Command(Action.WEATHER)
-        if (has(t, "que tengo", "mi agenda", "mis eventos", "tengo hoy", "eventos de hoy", "citas")) return Command(Action.AGENDA)
+        if (t == "tiempo" || has(t, "clima", "tiempo hace", "que tiempo", "va a llover", "va llover", "llovera", "temperatura", "hace frio", "hace calor")) return Command(Action.WEATHER)
+        if (has(t, "que tengo", "tengo hoy", "mi agenda", "mis eventos", "tengo hoy", "eventos de hoy", "citas")) return Command(Action.AGENDA)
         if (has(t, "buenos dias", "buenas tardes", "buenas noches", "resumen", "que hay hoy", "mi dia", "como va mi dia")) return Command(Action.TODAY)
 
         // Opening things.

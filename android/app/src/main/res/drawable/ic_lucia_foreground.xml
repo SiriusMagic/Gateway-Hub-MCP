@@ -1,0 +1,7 @@
+<!-- Lucía: a gold microphone among a few glowing nodes, on the hub's night colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#55E8B931" android:strokeWidth="1.5" android:pathData="M34,40L54,54M74,38L54,54M32,66L54,54M76,68L54,54" />
+    <path android:fillColor="#E8B931" android:pathData="M34,40m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0M74,38m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0M32,66m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0M76,68m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#E8B931" android:pathData="M54,60a6,6 0,0 0,6 -6V42a6,6 0,0 0,-12 0v12a6,6 0,0 0,6 6zM64,54a10,10 0,0 1,-20 0h-3a13,13 0,0 0,11.5 12.9V72h3v-5.1A13,13 0,0 0,67 54z" />
+</vector>

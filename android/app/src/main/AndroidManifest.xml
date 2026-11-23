@@ -7,6 +7,13 @@
     <uses-permission android:name="com.zirakusa.gatewayhub.permission.LINK" />
     <!-- Asistente: the microphone only while the user holds a conversation; contacts only for «llama a Ana». -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- «Oye Lucía»: listening for the name while the user turned it on, with a fixed notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- So Lucía can open herself when she hears her name and isn't the phone's assistant (the user allows it). -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <!-- «Pon una alarma a las 7» with Android's standard order (Reloj or the phone's clock). -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
@@ -61,8 +68,8 @@
             </intent-filter>
         </activity>
         <!-- Asistente: its own icon, and the phone's assist gesture when chosen as the assistant. -->
-        <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/assistant"
-            android:icon="@mipmap/ic_launcher" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
+        <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/lucia"
+            android:icon="@mipmap/ic_lucia" android:roundIcon="@mipmap/ic_lucia" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
             android:taskAffinity="com.zirakusa.gatewayhub.assistant">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -74,5 +81,21 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <!-- «Oye Lucía»: listens for the name (microphone) while the user keeps it on. -->
+        <service android:name=".assistant.WakeService" android:exported="false" android:foregroundServiceType="microphone" />
+        <!-- Lucía as the phone's assistant: Android's gestures (bottom corner, power button) open her. -->
+        <service android:name=".assistant.LuciaService" android:exported="true" android:label="@string/lucia"
+            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <meta-data android:name="android.voice_interaction" android:resource="@xml/lucia" />
+            <intent-filter><action android:name="android.service.voice.VoiceInteractionService" /></intent-filter>
+        </service>
+        <service android:name=".assistant.LuciaSessionService" android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION" />
+        <!-- Speech to text for other apps too, but only for apps that may use the microphone themselves. -->
+        <service android:name=".assistant.LuciaRecognition" android:exported="true" android:label="@string/lucia"
+            android:permission="android.permission.RECORD_AUDIO">
+            <intent-filter><action android:name="android.speech.RecognitionService" /></intent-filter>
+            <meta-data android:name="android.speech" android:resource="@xml/lucia_recognition" />
+        </service>
     </application>
 </manifest>

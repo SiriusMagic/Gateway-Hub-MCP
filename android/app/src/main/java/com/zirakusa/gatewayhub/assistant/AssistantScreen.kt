@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -47,22 +48,30 @@ import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.ui.HubColors
 
 /** What the screen asks of the phone. */
-class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, val makeDefault: () -> Unit = {})
+class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, val makeDefault: () -> Unit = {},
+    val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
+    val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {})
 
 /** «Asistente»: the brain lighting up on top, the conversation, and a box to write or the microphone to speak. */
-@Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions()) =
+@Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions()) {
+    if (state.settingsOpen) return LuciaSettings(state, actions)
+    Talking(state, actions)
+}
+
+@Composable private fun Talking(state: AssistantState, actions: AssistantActions) =
     Column(Modifier.fillMaxSize().background(HubColors.Background).statusBarsPadding().navigationBarsPadding().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.assistant), color = HubColors.Text, fontSize = 24.sp)
+                Text(state.name.shown, color = HubColors.Text, fontSize = 24.sp)
                 val h = state.health
                 Text(if (h.total == 0) stringResource(R.string.assistant_hint) else pluralStringResource(R.plurals.assistant_health, h.total, h.total, h.understood, h.done, h.averageMs),
                     color = HubColors.Muted, fontSize = 12.sp)
             }
-            IconButton({ state.voiceAnswers = !state.voiceAnswers }) {
+            IconButton({ actions.setVoice(!state.voiceAnswers) }) {
                 Icon(if (state.voiceAnswers) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                     stringResource(if (state.voiceAnswers) R.string.voice_on else R.string.voice_off), tint = HubColors.Muted)
             }
+            IconButton({ state.settingsOpen = true }) { Icon(Icons.Default.Settings, stringResource(R.string.lucia_settings), tint = HubColors.Muted) }
         }
         BrainCanvas(state, Modifier.fillMaxWidth().height(300.dp))
         val list = rememberLazyListState()

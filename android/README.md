@@ -11,13 +11,15 @@ web `/admin`, pero en el teléfono:
   de qué app es (Stone, Luma, Calculadora, Filem) y responde «Stone: token vinculado».
 - **Escáner (primera pestaña):** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
   muestra su estado en el hub (sin vincular, apagada, en línea). Solo lee, no activa nada.
-- **Asistente (icono propio):** voz o texto en español, entendido en el teléfono, para abrir apps de la familia,
+- **Lucía (asistente, icono propio):** voz o texto en español, entendido en el teléfono, para abrir apps de la familia,
   reproducir música y recomendaciones en Stone, alarmas y temporizadores, llamar y escribir (con confirmación), clima,
   agenda y «buenos días». Muestra su «cerebro» en nodos que se encienden con cada orden. Ver `assistant/`.
+  La voz se reconoce **sin internet** con Vosk (`vosk-model-small-es-0.42`, licencia Apache 2.0, dentro del APK). Se
+  abre con «Oye Lucía» (opcional), con el gesto de la esquina o el botón de encendido si es el asistente del teléfono.
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.14.apk`](GatewayHub-0.0.14.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.15.apk`](GatewayHub-0.0.15.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 

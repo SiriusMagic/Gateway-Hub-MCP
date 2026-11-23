@@ -27,7 +27,9 @@ gateway-hub-mcp/
 │       ├── ui/             # HubViewModel (único dueño del estado) y pantallas
 │       └── assistant/      # Asistente: Words y Parser (español → orden, puros), Catalog (apps de la familia),
 │                           # Brain (decide y actúa por Hands), Graph (nodos y camino), AndroidHands (intents),
-│                           # Ears (voz en el teléfono), Voice (TTS), BrainCanvas y AssistantScreen
+│                           # Vosk/VoskEars (voz sin internet, modelo en assets/model-es), Listening (palabra
+│                           # «Oye Lucía», EnergyGate, vocabulario), WakeService (escucha en primer plano),
+│                           # Lucia* (asistente predeterminado: gesto de esquina y botón), Voice (TTS), BrainCanvas
 ├── MODULES.md              # Cómo crear un módulo
 └── .github/workflows/      # CI: npm ci, pruebas y npm audit
 ```

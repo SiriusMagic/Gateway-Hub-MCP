@@ -87,7 +87,6 @@
     <string name="token_unknown">No reconozco ese token: copia el enlace desde la app (Modo MCP › Copiar).</string>
     <string name="token_not_supported">%1$s todavía no se puede vincular al hub.</string>
     <string name="act_permission">Órdenes entre apps de la familia</string>
-    <string name="assistant">Asistente</string>
     <string name="assistant_hint">Habla o escribe. Todo se entiende en el teléfono.</string>
     <string name="assistant_write">Escribe una orden…</string>
     <string name="assistant_try">Prueba con:</string>
@@ -97,8 +96,6 @@
     <string name="stop_listening">Dejar de escuchar</string>
     <string name="voice_on">Responder en voz alta</string>
     <string name="voice_off">Responder solo por escrito</string>
-    <string name="no_recognizer">Este teléfono no tiene reconocimiento de voz. Instala o activa «Reconocimiento de voz» de Android.</string>
-    <string name="listen_failed">No se pudo escuchar (error %1$d)</string>
     <string name="ex_music">Reproduce música</string>
     <string name="ex_recommended">Pon mis recomendaciones del día</string>
     <string name="ex_alarm">Pon una alarma a las 7 y media</string>
@@ -149,4 +146,34 @@
     <plurals name="minutes"><item quantity="one">%1$d minuto</item><item quantity="many">%1$d minutos</item><item quantity="other">%1$d minutos</item></plurals>
     <plurals name="hours"><item quantity="one">%1$d hora</item><item quantity="many">%1$d horas</item><item quantity="other">%1$d horas</item></plurals>
     <string name="summary_permission">Resumen de las apps de la familia</string>
+    <string name="lucia">Lucía</string>
+    <string name="lucia_open">Abrir Lucía</string>
+    <string name="lucia_open_offline">Abrir Lucía (funciona sin conectar el hub)</string>
+    <string name="lucia_settings">Ajustes de Lucía</string>
+    <string name="back">Atrás</string>
+    <string name="wake_title">Escuchar «Oye %1$s»</string>
+    <string name="wake_hint">Dices «Oye» u «Hola» y su nombre, y se abre lista para escucharte. Todo en el teléfono; en silencio casi no gasta.</string>
+    <string name="wake_name">Nombre</string>
+    <string name="only_charging">Solo mientras carga</string>
+    <string name="only_charging_hint">Con batería no escucha su nombre (el botón y los gestos siguen).</string>
+    <string name="default_title">Asistente del teléfono</string>
+    <string name="default_hint">Elígela en «Asistente digital» para abrirla deslizando desde una esquina inferior o con el botón de encendido, y para que se abra sola al oír su nombre.</string>
+    <string name="default_yes">Es el asistente del teléfono: deslizar desde una esquina inferior la abre.</string>
+    <string name="default_go">Elegir asistente</string>
+    <string name="appear_title">Aparecer encima</string>
+    <string name="appear_hint">Si no es el asistente del teléfono, necesita este permiso para abrirse al oír su nombre. Sin él, te avisa con una notificación.</string>
+    <string name="appear_yes">Puede abrirse sola al oír su nombre.</string>
+    <string name="appear_go">Permitir</string>
+    <string name="voice_title">Reconocimiento de voz</string>
+    <string name="voice_ready">Listo, en el teléfono y sin internet (Vosk, español).</string>
+    <string name="voice_loading">Preparando el reconocimiento de voz…</string>
+    <string name="no_model">No se pudo preparar el reconocimiento de voz. Vuelve a abrir Lucía.</string>
+    <string name="no_mic">El micrófono está ocupado por otra app.</string>
+    <string name="wake_needs_mic">Para escuchar su nombre, Lucía necesita el micrófono.</string>
+    <string name="wake_channel">Lucía escuchando su nombre</string>
+    <string name="wake_call_channel">Lucía te escuchó</string>
+    <string name="wake_listening">Escuchando «Oye %1$s»</string>
+    <string name="wake_listening_text">Toca para abrirla. Se apaga en sus ajustes.</string>
+    <string name="wake_heard">Te escuché</string>
+    <string name="wake_tap">Toca para hablar con Lucía</string>
 </resources>

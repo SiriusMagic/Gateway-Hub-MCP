@@ -44,6 +44,7 @@ import com.zirakusa.gatewayhub.R
             if (state.loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
             else Text(stringResource(R.string.login_connect), fontWeight = FontWeight.Bold)
         }
+        TextButton({ openLucia(context) }, Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(stringResource(R.string.lucia_open_offline), color = HubColors.Gold) }
         Text(stringResource(R.string.login_token_hint), Modifier.fillMaxWidth().padding(top = 16.dp), color = HubColors.Muted, fontSize = 12.sp)
     }
     }

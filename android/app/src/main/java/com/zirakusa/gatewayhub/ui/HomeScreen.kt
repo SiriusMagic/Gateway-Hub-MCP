@@ -37,6 +37,8 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
                 Text(state.hubUrl.removePrefix("https://"), color = HubColors.Muted, fontSize = 12.sp, maxLines = 1)
             } },
             actions = {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                IconButton({ openLucia(context) }) { Icon(Icons.Default.Mic, stringResource(R.string.lucia_open), tint = HubColors.Gold) }
                 IconButton(vm::refresh, enabled = !state.loading) { Icon(Icons.Default.Refresh, stringResource(R.string.refresh)) }
                 IconButton({ leaving = true }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.logout)) }
             },
@@ -82,3 +84,7 @@ interface HubActions {
     fun linkToken(link: String)
     fun scan(); fun autoLink(packageName: String); fun setAutoSync(on: Boolean)
 }
+
+/** Lucía works without the hub: she lives in this app, with her own icon too. */
+fun openLucia(context: android.content.Context) =
+    context.startActivity(android.content.Intent(context, com.zirakusa.gatewayhub.assistant.AssistantActivity::class.java))

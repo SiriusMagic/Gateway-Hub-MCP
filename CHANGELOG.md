@@ -1,3 +1,19 @@
+# Gateway Hub (app Android) 0.0.15: Lucía, voz sin internet y «Oye Lucía»
+
+- El asistente se llama **Lucía** y tiene su icono en el cajón de apps; también se abre con el micrófono de la pantalla
+  principal del hub y desde la pantalla de inicio de sesión (funciona sin conectar el hub).
+- **Voz sin internet y sin Google**: reconocimiento en el teléfono con Vosk (modelo pequeño en español, Apache 2.0) en
+  lugar del de Android, que en muchos teléfonos (Tecno, Infinix) no existe o necesita Google. Primero prueba con las
+  palabras que conoce (órdenes, apps y nombres de tus contactos) y, si no, con texto libre.
+- **«Oye Lucía»** (o «Hola Lucía»; también Luna, Nova o Kira): opcional, en ajustes. Escucha con una notificación fija,
+  solo se despierta con la frase entera y gasta poco (solo analiza cuando hay sonido). Opción «solo cargando».
+  Tras reiniciar el teléfono hay que abrir Lucía una vez (Android no deja encender el micrófono al arrancar).
+- **Asistente del teléfono**: si eliges Lucía como asistente digital, se abre con el **gesto de la esquina inferior** o
+  manteniendo el **botón de encendido**, como el de Google. Ajustes trae el botón para elegirla.
+- «Mostrar sobre otras apps» (opcional) para que «Oye Lucía» abra la pantalla aunque estés en otra app.
+- Entiende más formas: «tiempo», «va a llover», «pon algo de…», «qué tengo hoy».
+- El APK pesa unos 60 MB porque lleva el modelo de voz. 33 pruebas en la app.
+
 # Gateway Hub (app Android) 0.0.14: Asistente
 
 - **Asistente** con su propio icono dentro de la app del hub: hablas o escribes y abre apps y hace cosas en la familia,
