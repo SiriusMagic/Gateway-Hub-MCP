@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -52,9 +51,10 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
     val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
     val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {})
 
-/** «Asistente»: the brain lighting up on top, the conversation, and a box to write or the microphone to speak. */
+/** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {
     if (state.tally != null) return CountScreen(state, counting)
+    if (state.brainOpen) return BrainPage(state)
     if (state.settingsOpen) return LuciaSettings(state, actions)
     Talking(state, actions)
 }
@@ -74,7 +74,6 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             }
             IconButton({ state.settingsOpen = true }) { Icon(Icons.Default.Settings, stringResource(R.string.lucia_settings), tint = HubColors.Muted) }
         }
-        BrainCanvas(state, Modifier.fillMaxWidth().height(300.dp))
         val list = rememberLazyListState()
         LaunchedEffect(state.turns.size) { if (state.turns.isNotEmpty()) list.animateScrollToItem(state.turns.lastIndex) }
         LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

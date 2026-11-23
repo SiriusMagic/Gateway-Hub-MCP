@@ -6,7 +6,8 @@ enum class Action {
 }
 
 /** Media buttons, for any player. */
-enum class MediaKey { PAUSE, RESUME, NEXT, PREVIOUS }
+/** [RESTART]: the song again from the start. */
+enum class MediaKey { PAUSE, RESUME, NEXT, PREVIOUS, RESTART }
 
 /** One understood order: the action and its pieces («hour», «minute», «seconds», «who», «text», «query», «app», «key», «title», «volume» 0–100 or «volume_step» up/down, said with any order). */
 data class Command(val action: Action, val slots: Map<String, String> = emptyMap()) {

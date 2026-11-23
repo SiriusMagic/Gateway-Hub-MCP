@@ -23,11 +23,15 @@ object Parser {
 
     private fun one(t: String): Command {
         // Media buttons: short orders, for whatever is playing.
+        // «pon pausa a la música», «reinicia la canción», «quita la música», «otra canción»: what is said, with or without
+        // «la música / la canción / el tema / esto» after it.
+        val what = "(?: (?:a |en )?(?:la |el |esta |este )?(?:musica|cancion|tema|reproduccion|audio|esto|eso))?"
         when {
-            Regex("^(pausa|pausar|pausa la musica|para la musica|deten la musica|detente|stop|silencio)$").matches(t) -> return media(MediaKey.PAUSE)
-            Regex("^(siguiente|siguiente cancion|la siguiente|salta(la)?|pasa la cancion)$").matches(t) -> return media(MediaKey.NEXT)
-            Regex("^(anterior|cancion anterior|la anterior|vuelve atras)$").matches(t) -> return media(MediaKey.PREVIOUS)
-            Regex("^(continua|sigue|reanuda|reanudar|play|(?:continua|sigue|reanuda|reanudar|vuelve a poner) la musica)$").matches(t) -> return media(MediaKey.RESUME)
+            Regex("^(?:pausa|pausar|pausala|pon(?:le)? pausa|ponle pausa|haz pausa|para|parala|pararla|deten|detenla|detener|detente|stop|silencio|quita|quitala|apaga|apagala|calla|callate)$what$").matches(t) -> return media(MediaKey.PAUSE)
+            Regex("^(?:reinicia|reiniciala|reiniciar|repite|repitela|vuelve a empezar|empieza de nuevo|desde el principio|otra vez|de nuevo|pon de nuevo|vuelve a poner desde el principio)$what(?: desde el principio| de nuevo| otra vez)?$").matches(t) -> return media(MediaKey.RESTART)
+            Regex("^(?:siguiente|la siguiente|el siguiente|salta|saltala|pasa|pasala|cambia|cambiala|otra|otro|adelanta)(?: (?:a la |al |la |el |de )?(?:siguiente )?(?:cancion|tema|musica))?(?: siguiente)?$").matches(t) -> return media(MediaKey.NEXT)
+            Regex("^(?:anterior|la anterior|el anterior|cancion anterior|tema anterior|vuelve atras|regresa|atras|pon la anterior)$").matches(t) -> return media(MediaKey.PREVIOUS)
+            Regex("^(?:continua|continuar|sigue|seguir|reanuda|reanudar|play|dale play|quita (?:la )?pausa|vuelve a poner|despausa|resume)$what$").matches(t) -> return media(MediaKey.RESUME)
         }
 
         // Timer before alarm: «pon un temporizador de 10 minutos», «avísame en 5 minutos».

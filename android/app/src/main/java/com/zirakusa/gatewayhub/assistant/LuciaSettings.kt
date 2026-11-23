@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -34,7 +35,7 @@ import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.ui.HubColors
 
 /**
- * Lucía's settings: «Oye Lucía» (and which name), only while charging, being the phone's assistant (corner swipe and
+ * Lucía's settings: her map (the brain), «Oye Lucía» (and which name), only while charging, being the phone's assistant (corner swipe and
  * power button) and appearing on top (so she can open by voice when she isn't the assistant).
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -44,6 +45,15 @@ import com.zirakusa.gatewayhub.ui.HubColors
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton({ state.settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back), tint = HubColors.Text) }
             Text(stringResource(R.string.lucia_settings), color = HubColors.Text, fontSize = 22.sp)
+        }
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(HubColors.Card).clickable { state.brainOpen = true }.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.brain_title), color = HubColors.Text, fontSize = 17.sp)
+                Text(stringResource(R.string.brain_hint), color = HubColors.Muted, fontSize = 14.sp)
+            }
+            ResultMark(state.last)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = HubColors.Muted)
         }
         Card {
             Line(stringResource(R.string.wake_title, state.name.shown), stringResource(R.string.wake_hint), state.wake, actions.setWake)

@@ -43,6 +43,13 @@ class AssistantScreenshotsTest {
         compose.waitForIdle()
         compose.onNodeWithText("Alarma a las 7:30.").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-turns.png")
+        // The whole brain lives in her settings: Voz → Notas → Conteo, with «Hecho» marked apart.
+        state.send("vamos a contar", byVoice = true); state.endTally()
+        state.settingsOpen = true
+        compose.onNodeWithText("Mapa de Lucía").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Hecho").assertExists()
+        compose.onRoot().captureRoboImage("build/screenshots/assistant-map.png")
     }
 
     /** «Vamos a contar» turns the screen into the count; − and + fix a line; the total is big enough to read from afar. */

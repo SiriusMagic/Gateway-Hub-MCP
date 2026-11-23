@@ -43,7 +43,7 @@ class VolumeTest {
         val turn = Brain(hands).handle("pon música al 30 por ciento", byVoice = true)
         assertEquals(listOf("volume 30", "music *"), hands.done)             // volume before the music starts
         assertEquals(30, turn.reply.volume); assertEquals(Say.PLAYING, turn.reply.say)
-        assertEquals(listOf(Graph.VOICE, "do:PLAY_MUSIC", "do:VOLUME", "app:stone", Graph.OK), turn.path)
+        assertEquals(listOf(Graph.VOICE, "app:stone", "do:PLAY_MUSIC", "do:VOLUME"), turn.path)
         val up = Brain(hands).handle("sube el volumen")
         assertEquals(Say.VOLUME_SET, up.reply.say); assertEquals(listOf("45"), up.reply.args)
         assertEquals(Say.VOLUME_SET, Brain(hands).handle("volumen al 0").reply.say)

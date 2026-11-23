@@ -18,7 +18,7 @@ object Talk {
             Say.PLAYING_QUERY -> res.getString(R.string.say_playing_query, a[0])
             Say.RECOMMENDED -> res.getString(R.string.say_recommended)
             Say.MEDIA_DONE -> res.getString(when (MediaKey.valueOf(a[0])) { MediaKey.PAUSE -> R.string.say_paused; MediaKey.RESUME -> R.string.say_resumed
-                MediaKey.NEXT -> R.string.say_next; MediaKey.PREVIOUS -> R.string.say_previous })
+                MediaKey.NEXT -> R.string.say_next; MediaKey.PREVIOUS -> R.string.say_previous; MediaKey.RESTART -> R.string.say_restart })
             Say.ALARM_SET -> res.getString(R.string.say_alarm, "%d:%02d".format(a[0].toInt(), a[1].toInt()))
             Say.TIMER_SET -> res.getString(R.string.say_timer, duration(a[0].toInt(), res))
             Say.CALLING -> res.getString(R.string.say_calling, a[0])

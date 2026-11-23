@@ -15,6 +15,8 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var voiceAnswers by mutableStateOf(true)
     /** Lucía's settings page and what the phone allows (the activity keeps these up to date). */
     var settingsOpen by mutableStateOf(false)
+    /** «Mapa de Lucía», opened from her settings. */
+    var brainOpen by mutableStateOf(false)
     var wake by mutableStateOf(false)
     var name by mutableStateOf(WakeName.LUCIA)
     var onlyCharging by mutableStateOf(false)

@@ -56,7 +56,9 @@ class AndroidHands(context: Context) : Hands {
 
     override fun media(key: MediaKey): Boolean {
         val code = when (key) { MediaKey.PAUSE -> KeyEvent.KEYCODE_MEDIA_PAUSE; MediaKey.RESUME -> KeyEvent.KEYCODE_MEDIA_PLAY
-            MediaKey.NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT; MediaKey.PREVIOUS -> KeyEvent.KEYCODE_MEDIA_PREVIOUS }
+            MediaKey.NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT; MediaKey.PREVIOUS -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
+            // Players go back to the start of the song on «previous» once a few seconds have played.
+            MediaKey.RESTART -> KeyEvent.KEYCODE_MEDIA_PREVIOUS }
         val audio = app.getSystemService(AudioManager::class.java) ?: return false
         audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code)); audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
         return true

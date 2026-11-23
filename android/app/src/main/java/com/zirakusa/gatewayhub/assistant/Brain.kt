@@ -45,9 +45,8 @@ data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: 
 
 /** One exchange: what was heard, how it was understood, the app that did it, the answer, if it worked and how long it took. */
 data class Turn(val heard: String, val byVoice: Boolean, val command: Command, val app: FamilyApp?, val reply: Reply, val ok: Boolean, val millis: Long) {
-    /** The lit path of the graph: input → action → app → result. */
-    val path get() = listOfNotNull(if (byVoice) Graph.VOICE else Graph.TEXT, Graph.action(command.action).takeIf { command.action != Action.UNKNOWN },
-        Graph.action(Action.VOLUME).takeIf { reply.volume != null && command.action != Action.VOLUME }, app?.let { Graph.app(it) }, if (ok) Graph.OK else Graph.FAIL)
+    /** The lit path of the graph: input → app → action. Whether it worked ([ok]) is marked apart, not as a node. */
+    val path get() = Graph.path(byVoice, command, app, reply.volume != null)
 }
 
 /** Understands and acts. Pure apart from its [Hands]. */

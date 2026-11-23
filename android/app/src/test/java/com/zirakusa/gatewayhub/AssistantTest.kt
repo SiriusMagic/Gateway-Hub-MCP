@@ -5,6 +5,7 @@ import com.zirakusa.gatewayhub.assistant.AssistantState
 import com.zirakusa.gatewayhub.assistant.Brain
 import com.zirakusa.gatewayhub.assistant.Catalog
 import com.zirakusa.gatewayhub.assistant.FamilyApp
+import com.zirakusa.gatewayhub.assistant.Edge
 import com.zirakusa.gatewayhub.assistant.Graph
 import com.zirakusa.gatewayhub.assistant.Hands
 import com.zirakusa.gatewayhub.assistant.MediaKey
@@ -71,6 +72,12 @@ class AssistantTest {
         assertEquals(Action.PLAY_MUSIC, p("Reproduce música").action); assertNull(p("reproduce música")["query"])
         assertEquals("bad bunny", p("pon música de Bad Bunny")["query"]); assertEquals("soda stereo", p("Pon Soda Stereo")["query"])
         assertEquals(Action.PLAY_RECOMMENDED, p("Pon mis recomendaciones del día").action); assertEquals(Action.PLAY_RECOMMENDED, p("ponme el mix del día").action)
+        listOf("pon pausa", "pon pausa a la música", "ponle pausa", "pausa la canción", "para la música", "detén la canción", "quita la música", "apaga la música")
+            .forEach { assertEquals(it, "PAUSE", p(it)["key"]) }
+        listOf("reinicia la música", "reinicia la canción", "repite la canción", "vuelve a empezar", "otra vez", "desde el principio")
+            .forEach { assertEquals(it, "RESTART", p(it)["key"]) }
+        listOf("otra canción", "cambia la canción", "pasa la canción", "siguiente tema").forEach { assertEquals(it, "NEXT", p(it)["key"]) }
+        listOf("quita la pausa", "dale play", "vuelve a poner la música").forEach { assertEquals(it, "RESUME", p(it)["key"]) }
         assertEquals("PAUSE", p("pausa")["key"]); assertEquals("NEXT", p("Siguiente canción")["key"]); assertEquals("RESUME", p("continúa")["key"])
         p("Pon una alarma a las siete y media").let { assertEquals(Action.ALARM, it.action); assertEquals(7, it.int("hour")); assertEquals(30, it.int("minute")) }
         p("despiértame a las 6 de la mañana").let { assertEquals(6, it.int("hour")); assertEquals(0, it.int("minute")) }
@@ -121,15 +128,20 @@ class AssistantTest {
     @Test fun theGraphLightsThePath() {
         val brain = Brain(FakeHands())
         val turn = brain.handle("reproduce música", byVoice = true)
-        assertEquals(listOf(Graph.VOICE, "do:PLAY_MUSIC", "app:stone", Graph.OK), turn.path)
-        assertEquals(listOf(Graph.TEXT, Graph.FAIL), brain.handle("cuéntame un chiste").path)
+        // A tree: input → app → what the app does. Done or failed is a mark, not a node.
+        assertEquals(listOf(Graph.VOICE, "app:stone", "do:PLAY_MUSIC"), turn.path); assertTrue(turn.ok)
+        assertEquals(listOf(Graph.TEXT), brain.handle("cuéntame un chiste").path)
+        assertEquals(listOf(Graph.TEXT, "app:notas", "do:COUNT"), brain.handle("vamos a contar").path)       // Conteo hangs from Notas
+        assertEquals(listOf(Graph.TEXT, Graph.LUCIA, "do:TIME"), brain.handle("qué hora es").path)
+        assertEquals(listOf(Graph.TEXT, "app:luma"), brain.handle("abre la galería").path)
+        assertTrue(Graph.edges().contains(Edge("app:notas", "do:COUNT")))
+        assertFalse(Graph.edges().any { it.from == Graph.VOICE && it.to.startsWith("do:") })  // inputs only reach apps
         val nodes = Graph.nodes { it.name }
         val ids = nodes.map { it.id }.toSet()
         assertTrue(Graph.edges().all { it.from in ids && it.to in ids })                         // every edge joins two drawn nodes
         assertTrue(turn.path.all { it in ids })
-        for (a in Action.entries.filter { it != Action.UNKNOWN && it != Action.OPEN }) {          // each action reaches its app or a result
-            assertTrue(a.name, Graph.edges().any { it.from == Graph.action(a) })
-        }
+        for (a in Graph.actions) assertEquals(a.name, 1, Graph.edges().count { it.to == Graph.action(a) })   // each action has one parent
+        Catalog.apps.forEach { assertTrue(it.id, Graph.app(it) in ids) }                       // every app of the family is drawn
         assertTrue(nodes.all { it.x in 0f..1f && it.y in 0f..1f })
         val state = AssistantState(brain)
         listOf("reproduce música", "pausa", "abre notas", "nada de nada").forEach { state.send(it, byVoice = false) }
