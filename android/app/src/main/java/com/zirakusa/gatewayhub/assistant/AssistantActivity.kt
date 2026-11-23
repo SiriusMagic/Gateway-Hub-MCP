@@ -38,6 +38,7 @@ class AssistantActivity : ComponentActivity() {
     private var resumeCount = false
     private val mic = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (it) { if (state.tally != null) countOn(greet = true) else listen() } }
     private val contacts = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) state.last?.let { state.send(it.heard, it.byVoice) } }
+    private val phone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private val forWake = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
         if (r[Manifest.permission.RECORD_AUDIO] == true) setWake(true) else Toast.makeText(this, R.string.wake_needs_mic, Toast.LENGTH_LONG).show()
     }
@@ -162,7 +163,11 @@ class AssistantActivity : ComponentActivity() {
         try { startActivity(Intent.createChooser(send, getString(R.string.count_share))) } catch (_: ActivityNotFoundException) { }
     }
 
-    private fun afterTurn() { if (state.last?.reply?.say == Say.NEED_CONTACTS) contacts.launch(Manifest.permission.READ_CONTACTS) }
+    private fun afterTurn() = when (state.last?.reply?.say) {
+        Say.NEED_CONTACTS -> contacts.launch(Manifest.permission.READ_CONTACTS)
+        Say.NEED_PHONE -> phone.launch(Manifest.permission.ANSWER_PHONE_CALLS)
+        else -> Unit
+    }
 
     private fun failed(error: Int) {
         state.listening = false

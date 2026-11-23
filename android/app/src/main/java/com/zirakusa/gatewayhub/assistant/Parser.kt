@@ -34,6 +34,23 @@ object Parser {
             Regex("^(?:continua|continuar|sigue|seguir|reanuda|reanudar|play|dale play|quita (?:la )?pausa|vuelve a poner|despausa|resume)$what$").matches(t) -> return media(MediaKey.RESUME)
         }
 
+        // The call ringing now: «contesta», «atiende la llamada», «cuelga», «rechaza la llamada». The user's own voice only;
+        // remote AIs never get this (it is not an MCP tool).
+        val call = "(?: (?:la |esta |el )?(?:llamada|telefono|celular))?"
+        if (Regex("^(?:contesta|contestar|contestale|atiende|atender|responde|responder|acepta|aceptar|coge|toma)$call$").matches(t)) return Command(Action.ANSWER)
+        if (Regex("^(?:cuelga|colgar|cuelgale|rechaza|rechazar|rechazala|corta|cortar|termina|terminar|no contestes)$call$").matches(t)) return Command(Action.HANG_UP)
+
+        // A quick note in Notas: «anota que mañana compro pan», «crea una nota comprar leche», «apunta llamar a Ana».
+        Regex("^(?:anota|apunta|toma nota|guarda una nota|crea una nota|nueva nota|haz una nota|escribe una nota|recuerda)(?: (?:de )?que| de)? (.+)$").find(t)?.let { m ->
+            return Command(Action.NOTE, mapOf("text" to m.groupValues[1].trim()))
+        }
+
+        // The torch: «enciende la linterna», «apaga la linterna», «prende la luz».
+        if (has(t, "linterna", "flash", "luz")) {
+            if (Regex("^(?:enciende|encender|prende|prender|activa|activar|pon|abre)").containsMatchIn(t)) return Command(Action.TORCH, mapOf("on" to "1"))
+            if (Regex("^(?:apaga|apagar|desactiva|desactivar|quita|cierra)").containsMatchIn(t)) return Command(Action.TORCH, mapOf("on" to "0"))
+        }
+
         // Timer before alarm: «pon un temporizador de 10 minutos», «avísame en 5 minutos».
         if (has(t, "temporizador", "cuenta regresiva") || Regex("^(avisame|recuerdame|despiertame) en ").containsMatchIn(t)) {
             Words.duration(t)?.let { return Command(Action.TIMER, mapOf("seconds" to "$it")) }

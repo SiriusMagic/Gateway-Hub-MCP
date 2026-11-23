@@ -27,17 +27,24 @@ interface Hands {
     fun summary(app: FamilyApp): Summary?
     /** Leaves a new note in Notas (a finished count); its id, or null when Notas is missing or too old. */
     fun saveNote(title: String, body: String, folder: String): Long?
+    /** Answers or ends the call ringing now; throws [NoPhone] without the permission. False: no call. */
+    fun answerCall(): Boolean
+    fun endCall(): Boolean
+    /** The phone's torch. */
+    fun torch(on: Boolean): Boolean
     /** The phone's media volume, 0–100. */
     fun volume(): Int
     fun setVolume(percent: Int): Boolean
     fun now(): LocalDateTime = LocalDateTime.now()
     class NoContacts : Exception()
+    class NoPhone : Exception()
 }
 
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
-    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET
+    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
+    ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF
 }
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
@@ -69,7 +76,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
@@ -94,6 +101,16 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             Action.COUNT -> Reply(Say.COUNTING, listOfNotNull(c["title"])) to true
             Action.VOLUME -> change(c)?.let { v -> if (hands.setVolume(v)) Reply(Say.VOLUME_SET, listOf("$v")) to true else null }
                 ?: (Reply(Say.FAILED, listOf("Volumen")) to false)
+            // Android's own call handling: works whatever the phone app is.
+            Action.ANSWER, Action.HANG_UP -> try {
+                val ok = if (c.action == Action.ANSWER) hands.answerCall() else hands.endCall()
+                (if (ok) Reply(if (c.action == Action.ANSWER) Say.ANSWERED else Say.HUNG_UP) else Reply(Say.NO_CALL)) to ok
+            } catch (_: Hands.NoPhone) { Reply(Say.NEED_PHONE) to false }
+            Action.NOTE -> c["text"].orEmpty().let { text ->
+                val title = text.replaceFirstChar { it.uppercase() }.take(60)
+                if (hands.saveNote(title, text, "Lucía") != null) Reply(Say.NOTED, listOf(text)) to true else Reply(Say.FAILED, listOf(app!!.name)) to false
+            }
+            Action.TORCH -> (c["on"] == "1").let { on -> done(hands.torch(on), Reply(if (on) Say.TORCH_ON else Say.TORCH_OFF)) }
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
             Action.UNKNOWN -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false

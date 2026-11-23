@@ -1,3 +1,12 @@
+# Gateway Hub (app Android) 0.0.19: Lucía contesta llamadas, notas rápidas y linterna
+
+- **Llamadas**: «Oye Lucía, contesta», «atiende la llamada», «cuelga», «rechaza la llamada». La primera vez pide el
+  permiso de llamadas. Solo con tu voz: ninguna IA conectada por MCP puede hacerlo.
+- **Nota rápida**: «anota que mañana compro pan», «apunta llamar a Ana», «crea una nota comprar leche» → nota nueva en
+  Notas (carpeta Lucía).
+- **Linterna**: «enciende la linterna», «apaga la linterna», «prende la luz».
+- En el mapa: Teléfono → Contestar · Colgar, Notas → Conteo · Nota rápida, Lucía → Linterna.
+
 # Gateway Hub (app Android) 0.0.18: mapa de Lucía en Ajustes y más formas de controlar la música
 
 - El **mapa de Lucía** (el cerebro completo) pasa a **Ajustes de Lucía › Mapa de Lucía**. La pantalla de hablar queda

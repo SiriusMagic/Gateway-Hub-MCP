@@ -27,6 +27,10 @@ class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toSet(),
     val done = mutableListOf<String>()
     override fun installed(app: FamilyApp) = app.id in installed
     override fun open(app: FamilyApp) = done.add("open ${app.id}")
+    var phoneAllowed = true; var ringing = true
+    override fun torch(on: Boolean) = done.add("torch $on")
+    override fun answerCall(): Boolean { if (!phoneAllowed) throw Hands.NoPhone(); done.add("answer"); return ringing }
+    override fun endCall(): Boolean { if (!phoneAllowed) throw Hands.NoPhone(); done.add("hang up"); return ringing }
     override fun playMusic(query: String?) = done.add("music ${query ?: "*"}")
     override fun playRecommended() = done.add("recommended")
     override fun media(key: MediaKey) = done.add("media $key")
@@ -123,6 +127,27 @@ class AssistantTest {
         val missing = brain.handle("reproduce música")
         assertEquals(Say.NOT_INSTALLED, missing.reply.say); assertFalse(missing.ok)
         assertEquals(Say.NOT_UNDERSTOOD, brain.handle("cuéntame un chiste").reply.say)
+    }
+
+    @Test fun answersAndEndsCallsByVoice() {
+        listOf("contesta", "contesta la llamada", "atiende", "responde la llamada", "acepta la llamada").forEach { assertEquals(it, Action.ANSWER, p(it).action) }
+        listOf("cuelga", "rechaza la llamada", "corta la llamada", "termina la llamada", "no contestes").forEach { assertEquals(it, Action.HANG_UP, p(it).action) }
+        val hands = FakeHands(); val brain = Brain(hands)
+        assertEquals(Say.ANSWERED, brain.handle("contesta").reply.say)
+        assertEquals(listOf(Graph.TEXT, "app:telefono", "do:ANSWER"), brain.handle("contesta").path)
+        hands.ringing = false; assertEquals(Say.NO_CALL, brain.handle("cuelga").reply.say)
+        hands.phoneAllowed = false; val t = brain.handle("cuelga"); assertEquals(Say.NEED_PHONE, t.reply.say); assertFalse(t.ok)
+        hands.installed = emptySet(); hands.phoneAllowed = true; hands.ringing = true
+        assertEquals(Say.ANSWERED, brain.handle("contesta").reply.say)                             // any phone app: Android answers
+    }
+
+    @Test fun notesAndTorch() {
+        assertEquals("mañana compro pan", p("Anota que mañana compro pan")["text"]); assertEquals(Action.NOTE, p("crea una nota comprar leche").action)
+        assertEquals("1", p("enciende la linterna")["on"]); assertEquals("0", p("apaga la linterna")["on"]); assertEquals(Action.TORCH, p("prende la luz").action)
+        val hands = FakeHands(); val brain = Brain(hands)
+        val note = brain.handle("apunta llamar a Ana")
+        assertEquals(Say.NOTED, note.reply.say); assertEquals(listOf(Graph.TEXT, "app:notas", "do:NOTE"), note.path)
+        assertEquals(Say.TORCH_ON, brain.handle("enciende la linterna").reply.say); assertTrue("torch true" in hands.done)
     }
 
     @Test fun theGraphLightsThePath() {

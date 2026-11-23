@@ -102,6 +102,31 @@ class AndroidHands(context: Context) : Hands {
             .getOrNull()?.takeIf { it > 0 }
     }
 
+    private fun phoneAllowed() = ContextCompat.checkSelfPermission(app, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED
+    private val telecom get() = app.getSystemService(android.telecom.TelecomManager::class.java)
+
+    @Suppress("DEPRECATION") // the way for an assistant (not the phone app) to answer; still supported
+    override fun answerCall(): Boolean {
+        if (!phoneAllowed()) throw Hands.NoPhone()
+        val t = telecom ?: return false
+        // Nothing happens when no call is ringing (knowing it would need another permission).
+        return try { t.acceptRingingCall(); true } catch (_: SecurityException) { throw Hands.NoPhone() }
+    }
+
+    @Suppress("DEPRECATION")
+    override fun endCall(): Boolean {
+        if (!phoneAllowed()) throw Hands.NoPhone()
+        val t = telecom ?: return false
+        return try { if (android.os.Build.VERSION.SDK_INT >= 28) t.endCall() else false } catch (_: SecurityException) { throw Hands.NoPhone() }
+    }
+
+    /** The torch of the back camera; no permission needed. */
+    override fun torch(on: Boolean): Boolean = runCatching {
+        val cam = app.getSystemService(android.hardware.camera2.CameraManager::class.java) ?: return false
+        val id = cam.cameraIdList.firstOrNull { cam.getCameraCharacteristics(it).get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true } ?: return false
+        cam.setTorchMode(id, on); true
+    }.getOrDefault(false)
+
     private val audio get() = app.getSystemService(AudioManager::class.java)
     override fun volume(): Int = audio?.let { a -> 100 * a.getStreamVolume(AudioManager.STREAM_MUSIC) / maxOf(1, a.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) } ?: 0
     /** The media volume, shown on screen like the phone's buttons do; false when the phone doesn't allow it (Do not disturb). */
