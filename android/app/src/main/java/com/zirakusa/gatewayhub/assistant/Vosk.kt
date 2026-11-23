@@ -116,3 +116,63 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
 
     companion object { const val NO_MODEL = 1001; const val NO_MIC = 1002 }
 }
+
+/**
+ * Listens without stopping while a count is open (the screen stays on, nothing runs once it closes). Each phrase is
+ * given to [heard] when the speaker pauses. [muted] while Lucía speaks, so her own voice is not counted. Gives up after
+ * 10 minutes with nothing said ([ended]).
+ */
+class CountEars(private val context: Context, private val grammar: () -> String, private val heard: (String) -> Unit,
+    private val partial: (String) -> Unit, private val level: (Float) -> Unit, private val failed: (Int) -> Unit, private val ended: () -> Unit) {
+    private val running = AtomicBoolean(false)
+    @Volatile var muted = false
+    @Volatile private var newWords = false
+
+    val active get() = running.get()
+
+    /** The list grew: listen for its words from the next phrase on. */
+    fun refresh() { newWords = true }
+
+    fun start() {
+        if (!running.compareAndSet(false, true)) return
+        Vosk.model(context) { model ->
+            if (model == null) { running.set(false); return@model failed(VoskEars.NO_MODEL) }
+            Thread({ listen(model) }, "lucia-count").start()
+        }
+    }
+
+    private fun listen(model: Model) {
+        val mic = Vosk.microphone() ?: run { running.set(false); return failed(VoskEars.NO_MIC) }
+        val limited = Recognizer(model, Vosk.RATE.toFloat(), grammar())
+        val free = Recognizer(model, Vosk.RATE.toFloat())
+        val buffer = ShortArray(Vosk.RATE / 10)
+        val freeSaid = StringBuilder()
+        var lastSpeech = System.currentTimeMillis()
+        var timedOut = false
+        try {
+            mic.startRecording()
+            while (running.get()) {
+                val n = mic.read(buffer, 0, buffer.size)
+                if (n <= 0) continue
+                if (muted) { level(0f); continue }
+                level((EnergyGate().rms(buffer, n) / 3000).toFloat().coerceIn(0f, 1f))
+                if (free.acceptWaveForm(buffer, n)) freeSaid.append(' ').append(Vosk.text(free.result))
+                if (limited.acceptWaveForm(buffer, n)) {
+                    val a = Vosk.text(limited.result)
+                    val b = (freeSaid.toString() + " " + Vosk.text(free.finalResult)).trim()
+                    freeSaid.setLength(0)
+                    val said = TallyWords.pick(a, b)
+                    partial("")
+                    if (said.isNotBlank()) { lastSpeech = System.currentTimeMillis(); heard(said) }
+                    if (newWords) { newWords = false; limited.setGrammar(grammar()) }
+                } else Vosk.text(limited.partialResult, "partial").takeIf { it.isNotBlank() }?.let { lastSpeech = System.currentTimeMillis(); partial(it) }
+                if (System.currentTimeMillis() - lastSpeech > 10 * 60_000) { timedOut = true; break }
+            }
+        } finally {
+            runCatching { mic.stop() }; mic.release(); limited.close(); free.close(); running.set(false); level(0f)
+        }
+        if (timedOut) ended()
+    }
+
+    fun stop() { running.set(false) }
+}

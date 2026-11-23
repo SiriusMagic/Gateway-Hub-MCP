@@ -16,10 +16,11 @@ web `/admin`, pero en el teléfono:
   agenda y «buenos días». Muestra su «cerebro» en nodos que se encienden con cada orden. Ver `assistant/`.
   La voz se reconoce **sin internet** con Vosk (`vosk-model-small-es-0.42`, licencia Apache 2.0, dentro del APK). Se
   abre con «Oye Lucía» (opcional), con el gesto de la esquina o el botón de encendido si es el asistente del teléfono.
+  **Modo conteo** («vamos a contar»): cuenta lo que dices en voz alta y lo guarda como tabla en Notas (carpeta Conteos).
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.15.apk`](GatewayHub-0.0.15.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.16.apk`](GatewayHub-0.0.16.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 

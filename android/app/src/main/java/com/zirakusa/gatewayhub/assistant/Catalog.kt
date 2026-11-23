@@ -37,6 +37,7 @@ object Catalog {
         Action.PHOTO -> byId("camara")
         Action.SCAN -> byId("qr")
         Action.SPEED -> byId("redes")
+        Action.COUNT -> byId("notas")
         else -> null
     }
 

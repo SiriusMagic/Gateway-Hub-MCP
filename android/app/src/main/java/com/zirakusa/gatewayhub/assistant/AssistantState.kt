@@ -21,6 +21,13 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var isDefault by mutableStateOf(false)
     var canAppear by mutableStateOf(false)
     var modelReady by mutableStateOf(false)
+    /** The count open on screen (null: talking), its lines, what was just heard, and the note it was saved as. */
+    var tally by mutableStateOf<Tally?>(null); private set
+    var tallyLines by mutableStateOf(emptyList<Tallied>()); private set
+    var tallyHeard by mutableStateOf("")
+    var tallyListening by mutableStateOf(false)
+    var tallySavedId by mutableStateOf<Long?>(null)
+    var tallyFailed by mutableStateOf(false)
     /** Each new order restarts the light running through the graph. */
     var pulse by mutableStateOf(0); private set
     val last get() = turns.lastOrNull()
@@ -33,7 +40,26 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         turns = (turns + turn).takeLast(MAX)
         pulse++
         if (byVoice && voiceAnswers) speak(turn.reply)
+        if (turn.command.action == Action.COUNT) startTally(turn.command["title"].orEmpty())
+        onTurn(turn)
     }
+
+    /** The activity follows each order (a count opens its screen). */
+    var onTurn: (Turn) -> Unit = {}
+
+    fun startTally(title: String) { tally = Tally(title); tallyLines = emptyList(); tallyHeard = ""; tallySavedId = null; tallyFailed = false }
+    fun endTally() { tally = null; tallyLines = emptyList(); tallyListening = false; tallyHeard = "" }
+
+    /** A phrase heard while counting; [Tally.Outcome] tells the screen how to answer (beep, read, save). */
+    fun hearTally(text: String): Tally.Outcome? {
+        val t = tally ?: return null
+        val o = t.hear(text)
+        if (o.kind != Tally.Kind.NOTHING) tallyHeard = text
+        tallyLines = t.lines
+        return o
+    }
+
+    fun bumpTally(key: String, delta: Int) { tally?.let { it.bump(key, delta); tallyLines = it.lines } }
 
     fun sendTyped() { send(typed, byVoice = false); typed = "" }
     fun heard(text: String, final: Boolean) { partial = text; if (final) { listening = false; partial = ""; send(text, byVoice = true) } }

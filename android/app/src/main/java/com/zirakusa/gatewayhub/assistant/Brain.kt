@@ -25,6 +25,8 @@ interface Hands {
     /** Null: not found; throws [NoContacts] without the permission. */
     fun person(name: String): Person?
     fun summary(app: FamilyApp): Summary?
+    /** Leaves a new note in Notas (a finished count); its id, or null when Notas is missing or too old. */
+    fun saveNote(title: String, body: String, folder: String): Long?
     fun now(): LocalDateTime = LocalDateTime.now()
     class NoContacts : Exception()
 }
@@ -32,7 +34,7 @@ interface Hands {
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
-    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED
+    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING
 }
 
 data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList())
@@ -56,7 +58,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
@@ -77,6 +79,8 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
                 val lines = parts.flatMap { s -> s.lines.take(2) }
                 if (lines.isEmpty()) Reply(Say.NOTHING_TODAY, listOf("")) to true else Reply(Say.SUMMARY, listOf(""), lines) to true
             }
+            // The screen turns into the count; Notas only matters when it is saved.
+            Action.COUNT -> Reply(Say.COUNTING, listOfNotNull(c["title"])) to true
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
             Action.UNKNOWN -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false

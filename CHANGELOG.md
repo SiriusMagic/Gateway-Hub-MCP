@@ -1,3 +1,18 @@
+# Gateway Hub (app Android) 0.0.16: modo conteo de Lucía
+
+- **Modo conteo**: di «vamos a contar», «a contar» o «nuevo conteo casa Pérez». Lucía escucha sin parar (pantalla
+  encendida) y cuenta lo que vas diciendo: «tomacorriente», «tomacorriente», «interruptor simple»… Un pitido confirma
+  cada conteo.
+- Entiende cantidades («cinco focos», «dos interruptores y un tomacorriente»), «otro» / «tres más» (lo último contado),
+  palabras repetidas sin pausa («toma corriente toma corriente» = 2), singular y plural juntos, y correcciones: «quita
+  uno», «quita dos focos», «borra el último» / «me equivoqué». «¿Cuántos van?» o «cuántos focos» lo dice en voz alta (sin
+  contarse a sí misma). Cada línea tiene botones − y +.
+- «Termina» o «Guardar en Notas» crea una nota nueva en Notas (carpeta **Conteos**) con la tabla y el total; «Abrir en
+  Notas» la muestra. Si Notas no está o es anterior a 0.6.0, se puede compartir. «Cancela» solo pausa; descartar pregunta.
+- Vocabulario de electricidad incluido (tomacorriente, interruptores, foco, luminaria, breaker, cajetín…); lo nuevo que
+  digas se añade a la lista y se aprende para las siguientes veces.
+- 42 pruebas en la app.
+
 # Gateway Hub (app Android) 0.0.15: Lucía, voz sin internet y «Oye Lucía»
 
 - El asistente se llama **Lucía** y tiene su icono en el cajón de apps; también se abre con el micrófono de la pantalla

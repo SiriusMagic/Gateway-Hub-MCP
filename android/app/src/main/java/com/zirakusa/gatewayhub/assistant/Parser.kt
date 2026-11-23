@@ -25,6 +25,12 @@ object Parser {
             if (has(t, "temporizador")) return Command(Action.OPEN, mapOf("app" to "reloj"))
         }
 
+        // Counting aloud: «a contar», «vamos a contar», «nuevo conteo casa Pérez», «modo conteo».
+        Regex("^(?:a contar|contar|vamos a contar|empieza a contar|empezar a contar|quiero contar|ayudame a contar|modo conteo|modo contar|(?:nuevo |inicia (?:un )?|empieza (?:un )?|haz (?:un )?|un )?conteo)(?: (?:de la|en la|del|de|para|en) (.+)| (.+))?$").find(t)?.let { m ->
+            val title = m.groupValues[1].ifEmpty { m.groupValues[2] }.trim()
+            return Command(Action.COUNT, if (title.isEmpty()) emptyMap() else mapOf("title" to title))
+        }
+
         // Alarm: «pon una alarma a las 7», «despiértame a las 6 y media», «alarma para mañana a las 5».
         if (has(t, "alarma", "despiertame", "levantame", "despertador")) {
             val at = t.substringAfter(" a las ", "").ifEmpty { t.substringAfter(" a la ", "") }.ifEmpty { t.substringAfter(" para las ", "") }

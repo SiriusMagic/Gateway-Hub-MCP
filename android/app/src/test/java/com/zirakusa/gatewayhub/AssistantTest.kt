@@ -43,6 +43,9 @@ class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toSet(),
         else -> null
     }
     override fun now(): LocalDateTime = LocalDateTime.of(2026, 11, 21, 9, 5)
+    val notes = mutableListOf<Triple<String, String, String>>()
+    override fun saveNote(title: String, body: String, folder: String): Long? =
+        if ("notas" in installed) { notes += Triple(title, body, folder); notes.size.toLong() } else null
 }
 
 /** The assistant: Spanish words, times and durations, every phrase it knows, the brain with fake hands, and the graph. */

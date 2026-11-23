@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Bundle
 import android.provider.AlarmClock
 import android.provider.ContactsContract
 import android.provider.MediaStore
@@ -89,6 +90,21 @@ class AndroidHands(context: Context) : Hands {
             val b = this.app.contentResolver.call("content://$p.summary".toUri(), "summary", null, null) ?: return null
             Summary(b.getString("title").orEmpty(), b.getStringArrayList("lines").orEmpty(), b.getString("empty").orEmpty())
         }.getOrNull()
+    }
+
+    /** Notas' inbox: only adds a note, and only for apps signed by the same developer (the ACT permission). */
+    override fun saveNote(title: String, body: String, folder: String): Long? {
+        val p = pkg(Catalog.byId("notas")) ?: return null
+        val extras = Bundle().apply { putString("title", title); putString("body", body); putString("folder", folder) }
+        return runCatching { app.contentResolver.call("content://$p.inbox".toUri(), "add_note", null, extras)?.getLong("id") }
+            .getOrNull()?.takeIf { it > 0 }
+    }
+
+    /** Opens a note in Notas (after a count was saved there). */
+    fun openNote(id: Long): Boolean {
+        val p = pkg(Catalog.byId("notas")) ?: return false
+        val i = (pm.getLaunchIntentForPackage(p) ?: return false).putExtra("note_id", id).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        return try { app.startActivity(i); true } catch (_: ActivityNotFoundException) { false }
     }
 
     companion object { const val PLAY_RECOMMENDED = "com.zirakusa.family.action.PLAY_RECOMMENDED" }

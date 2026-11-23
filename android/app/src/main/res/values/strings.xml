@@ -103,6 +103,7 @@
     <string name="ex_weather">¿Qué tiempo hace?</string>
     <string name="ex_call">Llama a Ana</string>
     <string name="ex_open">Abre la cámara</string>
+    <string name="ex_count">Vamos a contar</string>
     <string name="say_opening">Abriendo %1$s.</string>
     <string name="say_not_installed">%1$s no está instalada.</string>
     <string name="say_playing">Reproduciendo tu música en aleatorio.</string>
@@ -141,6 +142,35 @@
     <string name="do_speed">Velocidad</string>
     <string name="do_open">Abrir app</string>
     <string name="do_unknown">Sin entender</string>
+    <string name="do_count">Conteo</string>
+    <string name="say_counting">Te escucho: di lo que cuentas.</string>
+    <string name="count_title">Conteo</string>
+    <string name="count_note_title">Conteo %1$s</string>
+    <string name="count_note_title_named">Conteo: %1$s</string>
+    <string name="count_folder">Conteos</string>
+    <string name="count_thing">Punto</string>
+    <string name="count_amount">Cantidad</string>
+    <string name="count_total">Total</string>
+    <string name="count_empty">Di lo que vas contando: «tomacorriente», «interruptor simple», «cinco focos».</string>
+    <string name="count_help">«otro» · «quita uno» · «borra el último» · «cuántos van» · «termina»</string>
+    <string name="count_listening">Escuchando</string>
+    <string name="count_paused">En pausa: toca el micrófono para seguir</string>
+    <string name="count_resume">Seguir contando</string>
+    <string name="count_pause">Pausar</string>
+    <string name="count_save">Guardar en Notas</string>
+    <string name="count_discard">Descartar</string>
+    <string name="count_discard_sure">¿Descartar este conteo?</string>
+    <string name="count_more">Sumar uno a %1$s</string>
+    <string name="count_less">Quitar uno a %1$s</string>
+    <string name="count_saved">Guardado en Notas.</string>
+    <string name="count_open_note">Abrir en Notas</string>
+    <string name="count_new">Nuevo conteo</string>
+    <string name="count_close">Cerrar</string>
+    <string name="count_share">Compartir</string>
+    <string name="count_no_notas">No pude guardar en Notas (instala o actualiza Notas). Puedes compartir el conteo.</string>
+    <string name="count_not_found">Eso no está en la lista.</string>
+    <string name="count_nothing">Aún no hay nada contado.</string>
+    <string name="count_line">%1$s: %2$d</string>
     <plurals name="assistant_health"><item quantity="one">%1$d orden · %2$d entendida · %3$d hecha · %4$d ms</item><item quantity="many">%1$d órdenes · %2$d entendidas · %3$d hechas · %4$d ms</item><item quantity="other">%1$d órdenes · %2$d entendidas · %3$d hechas · %4$d ms</item></plurals>
     <plurals name="seconds"><item quantity="one">%1$d segundo</item><item quantity="many">%1$d segundos</item><item quantity="other">%1$d segundos</item></plurals>
     <plurals name="minutes"><item quantity="one">%1$d minuto</item><item quantity="many">%1$d minutos</item><item quantity="other">%1$d minutos</item></plurals>
@@ -176,4 +206,12 @@
     <string name="wake_listening_text">Toca para abrirla. Se apaga en sus ajustes.</string>
     <string name="wake_heard">Te escuché</string>
     <string name="wake_tap">Toca para hablar con Lucía</string>
+    <plurals name="count_total_said">
+        <item quantity="one">%d en total.</item>
+        <item quantity="other">%d en total.</item>
+    </plurals>
+    <plurals name="count_saved_said">
+        <item quantity="one">Guardado en Notas: %d en total.</item>
+        <item quantity="other">Guardado en Notas: %d en total.</item>
+    </plurals>
 </resources>

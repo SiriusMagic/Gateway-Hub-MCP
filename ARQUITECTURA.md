@@ -29,7 +29,8 @@ gateway-hub-mcp/
 │                           # Brain (decide y actúa por Hands), Graph (nodos y camino), AndroidHands (intents),
 │                           # Vosk/VoskEars (voz sin internet, modelo en assets/model-es), Listening (palabra
 │                           # «Oye Lucía», EnergyGate, vocabulario), WakeService (escucha en primer plano),
-│                           # Lucia* (asistente predeterminado: gesto de esquina y botón), Voice (TTS), BrainCanvas
+│                           # Lucia* (asistente predeterminado: gesto de esquina y botón), Voice (TTS), BrainCanvas,
+│                           # Tally (modo conteo, reglas puras), CountEars (escucha continua) y Counting (pantalla)
 ├── MODULES.md              # Cómo crear un módulo
 └── .github/workflows/      # CI: npm ci, pruebas y npm audit
 ```

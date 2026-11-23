@@ -1,6 +1,7 @@
 package com.zirakusa.gatewayhub
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -42,5 +43,21 @@ class AssistantScreenshotsTest {
         compose.waitForIdle()
         compose.onNodeWithText("Alarma a las 7:30.").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-turns.png")
+    }
+
+    /** «Vamos a contar» turns the screen into the count; − and + fix a line; the total is big enough to read from afar. */
+    @Test fun counting() {
+        val state = AssistantState(Brain(FakeHands()))
+        compose.setContent { HubTheme { AssistantScreen(state) } }
+        compose.onNodeWithText("Vamos a contar").performClick()
+        compose.onNodeWithText("Guardar en Notas").assertExists()
+        listOf("toma corriente toma corriente toma corriente", "tomacorriente", "interruptor simple", "cinco focos", "interruptor de tres vías")
+            .forEach { state.hearTally(it) }
+        state.tallyListening = true
+        compose.waitForIdle()
+        compose.onNodeWithText("11").assertExists()
+        compose.onNodeWithContentDescription("Quitar uno a Foco").performClick()
+        compose.onNodeWithText("10").assertExists()
+        compose.onRoot().captureRoboImage("build/screenshots/assistant-count.png")
     }
 }
