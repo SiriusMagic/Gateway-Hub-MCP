@@ -86,4 +86,66 @@
     <string name="token_detected">%1$s · token reconocido</string>
     <string name="token_unknown">No reconozco ese token: copia el enlace desde la app (Modo MCP › Copiar).</string>
     <string name="token_not_supported">%1$s todavía no se puede vincular al hub.</string>
+    <string name="act_permission">Órdenes entre apps de la familia</string>
+    <string name="assistant">Asistente</string>
+    <string name="assistant_hint">Habla o escribe. Todo se entiende en el teléfono.</string>
+    <string name="assistant_write">Escribe una orden…</string>
+    <string name="assistant_try">Prueba con:</string>
+    <string name="assistant_default">Abrirlo con el botón de encendido</string>
+    <string name="send">Enviar</string>
+    <string name="speak">Hablar</string>
+    <string name="stop_listening">Dejar de escuchar</string>
+    <string name="voice_on">Responder en voz alta</string>
+    <string name="voice_off">Responder solo por escrito</string>
+    <string name="no_recognizer">Este teléfono no tiene reconocimiento de voz. Instala o activa «Reconocimiento de voz» de Android.</string>
+    <string name="listen_failed">No se pudo escuchar (error %1$d)</string>
+    <string name="ex_music">Reproduce música</string>
+    <string name="ex_recommended">Pon mis recomendaciones del día</string>
+    <string name="ex_alarm">Pon una alarma a las 7 y media</string>
+    <string name="ex_timer">Temporizador de 10 minutos</string>
+    <string name="ex_weather">¿Qué tiempo hace?</string>
+    <string name="ex_call">Llama a Ana</string>
+    <string name="ex_open">Abre la cámara</string>
+    <string name="say_opening">Abriendo %1$s.</string>
+    <string name="say_not_installed">%1$s no está instalada.</string>
+    <string name="say_playing">Reproduciendo tu música en aleatorio.</string>
+    <string name="say_playing_query">Buscando «%1$s» en Stone.</string>
+    <string name="say_recommended">Tus recomendaciones del día en Stone.</string>
+    <string name="say_paused">En pausa.</string>
+    <string name="say_resumed">Seguimos.</string>
+    <string name="say_next">Siguiente canción.</string>
+    <string name="say_previous">Canción anterior.</string>
+    <string name="say_alarm">Alarma a las %1$s.</string>
+    <string name="say_timer">Temporizador de %1$s.</string>
+    <string name="say_calling">Listo para llamar a %1$s: toca Llamar.</string>
+    <string name="say_messaging">Mensaje para %1$s: revísalo y toca Enviar.</string>
+    <string name="say_no_contact">No encontré a «%1$s» en tus contactos.</string>
+    <string name="say_need_contacts">Para llamar por nombre, permite los contactos.</string>
+    <string name="say_time">Son las %1$s.</string>
+    <string name="say_date">Hoy es %1$s.</string>
+    <string name="say_nothing_today">No hay nada para hoy.</string>
+    <string name="say_not_understood">No entendí. Prueba con «reproduce música» o «pon una alarma a las 7».</string>
+    <string name="say_unknown_app">No conozco la app «%1$s».</string>
+    <string name="say_failed">%1$s no pudo hacerlo.</string>
+    <string name="do_music">Música</string>
+    <string name="do_recommended">Recomendado</string>
+    <string name="do_media">Controles</string>
+    <string name="do_alarm">Alarma</string>
+    <string name="do_timer">Temporizador</string>
+    <string name="do_call">Llamar</string>
+    <string name="do_message">Mensaje</string>
+    <string name="do_weather">Clima</string>
+    <string name="do_agenda">Agenda</string>
+    <string name="do_today">Mi día</string>
+    <string name="do_time">Hora</string>
+    <string name="do_date">Fecha</string>
+    <string name="do_photo">Foto</string>
+    <string name="do_scan">Escanear</string>
+    <string name="do_speed">Velocidad</string>
+    <string name="do_open">Abrir app</string>
+    <string name="do_unknown">Sin entender</string>
+    <plurals name="assistant_health"><item quantity="one">%1$d orden · %2$d entendida · %3$d hecha · %4$d ms</item><item quantity="many">%1$d órdenes · %2$d entendidas · %3$d hechas · %4$d ms</item><item quantity="other">%1$d órdenes · %2$d entendidas · %3$d hechas · %4$d ms</item></plurals>
+    <plurals name="seconds"><item quantity="one">%1$d segundo</item><item quantity="many">%1$d segundos</item><item quantity="other">%1$d segundos</item></plurals>
+    <plurals name="minutes"><item quantity="one">%1$d minuto</item><item quantity="many">%1$d minutos</item><item quantity="other">%1$d minutos</item></plurals>
+    <plurals name="hours"><item quantity="one">%1$d hora</item><item quantity="many">%1$d horas</item><item quantity="other">%1$d horas</item></plurals>
 </resources>

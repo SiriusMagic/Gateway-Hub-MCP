@@ -24,7 +24,10 @@ gateway-hub-mcp/
 ├── android/                # App Android del propietario (Kotlin + Compose) → android/README.md
 │   └── app/src/main/java/com/zirakusa/gatewayhub/
 │       ├── data/           # HubApi (HTTPS), modelos, SessionStore cifrado con el Keystore
-│       └── ui/             # HubViewModel (único dueño del estado) y pantallas
+│       ├── ui/             # HubViewModel (único dueño del estado) y pantallas
+│       └── assistant/      # Asistente: Words y Parser (español → orden, puros), Catalog (apps de la familia),
+│                           # Brain (decide y actúa por Hands), Graph (nodos y camino), AndroidHands (intents),
+│                           # Ears (voz en el teléfono), Voice (TTS), BrainCanvas y AssistantScreen
 ├── MODULES.md              # Cómo crear un módulo
 └── .github/workflows/      # CI: npm ci, pruebas y npm audit
 ```

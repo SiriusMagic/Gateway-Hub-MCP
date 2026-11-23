@@ -1,3 +1,19 @@
+# Sin publicar (app Android): Asistente
+
+- **Asistente** con su propio icono dentro de la app del hub: hablas o escribes y abre apps y hace cosas en la familia,
+  **todo en el teléfono** (reconocimiento de voz de Android en el dispositivo, reglas en español, sin IA en la nube y sin
+  escuchar en segundo plano). Responde en voz alta (se puede silenciar).
+- Entiende: reproducir música (aleatoria o «de X») y **recomendaciones del día** (Stone), pausa / siguiente / anterior /
+  sigue, **alarmas** («a las 7 y media», «6 de la tarde»), **temporizadores** («media hora»), **llamar** y **mandar
+  mensajes** (por nombre o número; solo abre la pantalla, tú confirmas), el **clima**, tu **agenda**, «buenos días»
+  (resumen del día), la hora, la fecha, foto, QR, prueba de velocidad y abrir cualquier app de la familia por su nombre.
+- **El cerebro en nodos**: entrada → acción → app → resultado; cada orden enciende su camino (verde si se hizo, rojo si
+  falló), los nodos más usados brillan más, y arriba dice cuántas órdenes se entendieron y se hicieron y cuánto tardan.
+- Usa las órdenes estándar de Android (las mismas de cualquier asistente) y las de la familia (`FAMILIA.md` §10, permiso
+  de firma `com.zirakusa.family.permission.ACT`). Se puede elegir como asistente del teléfono (botón de encendido).
+- Nunca elige entre dos contactos al azar: si «Ana» puede ser varias personas y ninguna coincide, pregunta.
+- 29 pruebas en la app.
+
 # Hub 0.0.3: token del propietario fuerte
 
 - El hub **no abre** (ni `/mcp` ni `/admin`) mientras `HUB_TOKEN` sea débil: menos de 32 caracteres, pocos caracteres

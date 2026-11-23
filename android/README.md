@@ -11,6 +11,9 @@ web `/admin`, pero en el teléfono:
   de qué app es (Stone, Luma, Calculadora, Filem) y responde «Stone: token vinculado».
 - **Escáner (primera pestaña):** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
   muestra su estado en el hub (sin vincular, apagada, en línea). Solo lee, no activa nada.
+- **Asistente (icono propio):** voz o texto en español, entendido en el teléfono, para abrir apps de la familia,
+  reproducir música y recomendaciones en Stone, alarmas y temporizadores, llamar y escribir (con confirmación), clima,
+  agenda y «buenos días». Muestra su «cerebro» en nodos que se encienden con cada orden. Ver `assistant/`.
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
