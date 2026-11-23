@@ -112,7 +112,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
 /** Before the first order: a few things to try (tap one to send it). */
 @Composable private fun Examples(state: AssistantState, makeDefault: () -> Unit) = Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
     Text(stringResource(R.string.assistant_try), color = HubColors.Muted, fontSize = 13.sp)
-    listOf(R.string.ex_music, R.string.ex_recommended, R.string.ex_alarm, R.string.ex_timer, R.string.ex_weather, R.string.ex_count, R.string.ex_call, R.string.ex_open).forEach { id ->
+    listOf(R.string.ex_music, R.string.ex_volume, R.string.ex_recommended, R.string.ex_alarm, R.string.ex_timer, R.string.ex_weather, R.string.ex_count, R.string.ex_call, R.string.ex_open).forEach { id ->
         val phrase = stringResource(id)
         Text(phrase, Modifier.clip(CircleShape).background(HubColors.Card).clickable { state.send(phrase, byVoice = false) }.padding(horizontal = 14.dp, vertical = 8.dp),
             color = HubColors.Text, fontSize = 14.sp)

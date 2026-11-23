@@ -27,6 +27,9 @@ interface Hands {
     fun summary(app: FamilyApp): Summary?
     /** Leaves a new note in Notas (a finished count); its id, or null when Notas is missing or too old. */
     fun saveNote(title: String, body: String, folder: String): Long?
+    /** The phone's media volume, 0–100. */
+    fun volume(): Int
+    fun setVolume(percent: Int): Boolean
     fun now(): LocalDateTime = LocalDateTime.now()
     class NoContacts : Exception()
 }
@@ -34,15 +37,17 @@ interface Hands {
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
-    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING
+    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET
 }
 
-data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList())
+/** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
+data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList(), val volume: Int? = null)
 
 /** One exchange: what was heard, how it was understood, the app that did it, the answer, if it worked and how long it took. */
 data class Turn(val heard: String, val byVoice: Boolean, val command: Command, val app: FamilyApp?, val reply: Reply, val ok: Boolean, val millis: Long) {
     /** The lit path of the graph: input → action → app → result. */
-    val path get() = listOfNotNull(if (byVoice) Graph.VOICE else Graph.TEXT, Graph.action(command.action).takeIf { command.action != Action.UNKNOWN }, app?.let { Graph.app(it) }, if (ok) Graph.OK else Graph.FAIL)
+    val path get() = listOfNotNull(if (byVoice) Graph.VOICE else Graph.TEXT, Graph.action(command.action).takeIf { command.action != Action.UNKNOWN },
+        Graph.action(Action.VOLUME).takeIf { reply.volume != null && command.action != Action.VOLUME }, app?.let { Graph.app(it) }, if (ok) Graph.OK else Graph.FAIL)
 }
 
 /** Understands and acts. Pure apart from its [Hands]. */
@@ -51,8 +56,15 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         val start = clock()
         val c = Parser.parse(heard)
         val app = when (c.action) { Action.OPEN -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
+        // The volume first, so music never starts too loud; then the order.
+        val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null
         val (reply, ok) = act(c, app)
-        return Turn(heard, byVoice, c, app, reply, ok, clock() - start)
+        return Turn(heard, byVoice, c, app, if (volume != null) reply.copy(volume = volume) else reply, ok, clock() - start)
+    }
+
+    private fun change(c: Command): Int? {
+        val v = c["volume"]?.toIntOrNull()?.let { Volume.Change.To(it) } ?: c["volume_step"]?.let { Volume.Change.Step(it == "up") } ?: return null
+        return Volume.apply(v, hands.volume())
     }
 
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
@@ -81,6 +93,8 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             }
             // The screen turns into the count; Notas only matters when it is saved.
             Action.COUNT -> Reply(Say.COUNTING, listOfNotNull(c["title"])) to true
+            Action.VOLUME -> change(c)?.let { v -> if (hands.setVolume(v)) Reply(Say.VOLUME_SET, listOf("$v")) to true else null }
+                ?: (Reply(Say.FAILED, listOf("Volumen")) to false)
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
             Action.UNKNOWN -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false

@@ -7,16 +7,27 @@ package com.zirakusa.gatewayhub.assistant
 object Parser {
     private fun has(t: String, vararg words: String) = words.any { Regex("(^| )$it( |$)").containsMatchIn(t) }
 
+    /**
+     * An order and what comes with it: «pon música al 30 por ciento» is music plus a volume. The volume is taken out first
+     * ([Volume]); what is left is the order. Only the volume alone is the VOLUME action.
+     */
     fun parse(raw: String): Command {
         val t = Words.normalize(raw)
         if (t.isEmpty()) return Command(Action.UNKNOWN)
+        val (volume, rest) = Volume.take(t)
+        if (volume == null) return one(t)
+        val slot = when (volume) { is Volume.Change.To -> "volume" to "${volume.percent}"; is Volume.Change.Step -> "volume_step" to if (volume.up) "up" else "down" }
+        val c = if (rest.isEmpty()) Command(Action.UNKNOWN) else one(rest)
+        return if (c.action == Action.UNKNOWN || c.action == Action.VOLUME) Command(Action.VOLUME, mapOf(slot)) else c.copy(slots = c.slots + slot)
+    }
 
+    private fun one(t: String): Command {
         // Media buttons: short orders, for whatever is playing.
         when {
             Regex("^(pausa|pausar|pausa la musica|para la musica|deten la musica|detente|stop|silencio)$").matches(t) -> return media(MediaKey.PAUSE)
             Regex("^(siguiente|siguiente cancion|la siguiente|salta(la)?|pasa la cancion)$").matches(t) -> return media(MediaKey.NEXT)
             Regex("^(anterior|cancion anterior|la anterior|vuelve atras)$").matches(t) -> return media(MediaKey.PREVIOUS)
-            Regex("^(continua|sigue|reanuda|reanudar|play|continua la musica)$").matches(t) -> return media(MediaKey.RESUME)
+            Regex("^(continua|sigue|reanuda|reanudar|play|(?:continua|sigue|reanuda|reanudar|vuelve a poner) la musica)$").matches(t) -> return media(MediaKey.RESUME)
         }
 
         // Timer before alarm: «pon un temporizador de 10 minutos», «avísame en 5 minutos».

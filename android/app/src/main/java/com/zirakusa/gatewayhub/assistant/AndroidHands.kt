@@ -100,6 +100,16 @@ class AndroidHands(context: Context) : Hands {
             .getOrNull()?.takeIf { it > 0 }
     }
 
+    private val audio get() = app.getSystemService(AudioManager::class.java)
+    override fun volume(): Int = audio?.let { a -> 100 * a.getStreamVolume(AudioManager.STREAM_MUSIC) / maxOf(1, a.getStreamMaxVolume(AudioManager.STREAM_MUSIC)) } ?: 0
+    /** The media volume, shown on screen like the phone's buttons do; false when the phone doesn't allow it (Do not disturb). */
+    override fun setVolume(percent: Int): Boolean = runCatching {
+        val a = audio ?: return false
+        val max = a.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        a.setStreamVolume(AudioManager.STREAM_MUSIC, Math.round(max * percent.coerceIn(0, 100) / 100f), AudioManager.FLAG_SHOW_UI)
+        true
+    }.getOrDefault(false)
+
     /** Opens a note in Notas (after a count was saved there). */
     fun openNote(id: Long): Boolean {
         val p = pkg(Catalog.byId("notas")) ?: return false

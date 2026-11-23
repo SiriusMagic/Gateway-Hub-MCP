@@ -33,8 +33,9 @@ object Talk {
             Say.UNKNOWN_APP -> res.getString(R.string.say_unknown_app, a[0])
             Say.FAILED -> res.getString(R.string.say_failed, a[0])
             Say.COUNTING -> res.getString(R.string.say_counting)
+            Say.VOLUME_SET -> res.getString(R.string.say_volume, a[0].toInt())
         }
-        return (listOf(head) + r.lines).filter { it.isNotBlank() }.joinToString("\n")
+        return (listOf(head) + r.lines + listOfNotNull(r.volume?.let { res.getString(R.string.say_volume, it) })).filter { it.isNotBlank() }.joinToString("\n")
     }
 
     private fun duration(s: Int, res: Resources) = when {
@@ -49,6 +50,6 @@ object Talk {
         Action.ALARM -> R.string.do_alarm; Action.TIMER -> R.string.do_timer; Action.CALL -> R.string.do_call; Action.MESSAGE -> R.string.do_message
         Action.WEATHER -> R.string.do_weather; Action.AGENDA -> R.string.do_agenda; Action.TODAY -> R.string.do_today; Action.TIME -> R.string.do_time
         Action.DATE -> R.string.do_date; Action.PHOTO -> R.string.do_photo; Action.SCAN -> R.string.do_scan; Action.SPEED -> R.string.do_speed
-        Action.COUNT -> R.string.do_count; Action.OPEN -> R.string.do_open; Action.UNKNOWN -> R.string.do_unknown
+        Action.COUNT -> R.string.do_count; Action.VOLUME -> R.string.do_volume; Action.OPEN -> R.string.do_open; Action.UNKNOWN -> R.string.do_unknown
     })
 }

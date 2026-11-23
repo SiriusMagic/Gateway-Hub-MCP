@@ -143,6 +143,9 @@
     <string name="do_open">Abrir app</string>
     <string name="do_unknown">Sin entender</string>
     <string name="do_count">Conteo</string>
+    <string name="do_volume">Volumen</string>
+    <string name="say_volume">Volumen al %1$d %%.</string>
+    <string name="ex_volume">Pon música al 30 por ciento</string>
     <string name="say_counting">Te escucho: di lo que cuentas.</string>
     <string name="count_title">Conteo</string>
     <string name="count_note_title">Conteo %1$s</string>

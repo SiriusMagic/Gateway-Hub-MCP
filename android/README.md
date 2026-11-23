@@ -20,7 +20,7 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.16.apk`](GatewayHub-0.0.16.apk) (`com.zirakusa.gatewayhub`).
+APK listo para instalar: [`GatewayHub-0.0.17.apk`](GatewayHub-0.0.17.apk) (`com.zirakusa.gatewayhub`).
 
 ## Seguridad
 

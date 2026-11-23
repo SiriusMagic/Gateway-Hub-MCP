@@ -69,7 +69,8 @@ object Vocabulary {
         fotos imágenes luma stone video videos reloj cronómetro calendario calculadora contactos teléfono llamadas mensajes redes
         wifi brújula nivel inicio música cero uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince
         dieciséis diecisiete dieciocho diecinueve veinte veinticinco treinta cuarenta cincuenta sesenta noventa por favor oye hola
-        contar conteo modo vamos nuevo empieza quiero ayúdame casa
+        contar conteo modo vamos nuevo empieza quiero ayúdame casa volumen por ciento porciento sube súbele baja bájale subir bajar
+        máximo mínimo mitad tope todo alto bajo fuerte suave más menos con hasta aumenta disminuye poco cambia
     """.trim().split(Regex("\\s+")).toSet()
 
     /** The grammar (JSON list): the base words, the app names and the people's names (each word of them). */

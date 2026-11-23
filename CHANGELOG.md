@@ -1,3 +1,12 @@
+# Gateway Hub (app Android) 0.0.17: órdenes con volumen
+
+- Una orden puede llevar el **volumen**: «pon música al 30 por ciento», «reproduce música de Bad Bunny al 40 %», «pon mis
+  recomendaciones a todo volumen», «sigue la música con el volumen a la mitad». Lucía pone el volumen **antes** de que
+  empiece a sonar, y en el cerebro se encienden los dos nodos (Música → Volumen → Stone).
+- Solo el volumen: «volumen al 30», «volumen al máximo», «sube el volumen», «bájale un poco», «más bajo» (de 15 en 15).
+- «Sigue la música» y «reanuda la música» ahora continúan la reproducción.
+- 45 pruebas en la app.
+
 # Gateway Hub (app Android) 0.0.16: modo conteo de Lucía
 
 - **Modo conteo**: di «vamos a contar», «a contar» o «nuevo conteo casa Pérez». Lucía escucha sin parar (pantalla

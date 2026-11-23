@@ -43,6 +43,9 @@ class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toSet(),
         else -> null
     }
     override fun now(): LocalDateTime = LocalDateTime.of(2026, 11, 21, 9, 5)
+    var level = 70
+    override fun volume() = level
+    override fun setVolume(percent: Int): Boolean { level = percent; return done.add("volume $percent") }
     val notes = mutableListOf<Triple<String, String, String>>()
     override fun saveNote(title: String, body: String, folder: String): Long? =
         if ("notas" in installed) { notes += Triple(title, body, folder); notes.size.toLong() } else null
