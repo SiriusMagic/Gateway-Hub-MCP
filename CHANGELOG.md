@@ -1,4 +1,4 @@
-# Sin publicar (app Android): Asistente
+# Gateway Hub (app Android) 0.0.14: Asistente
 
 - **Asistente** con su propio icono dentro de la app del hub: hablas o escribes y abre apps y hace cosas en la familia,
   **todo en el teléfono** (reconocimiento de voz de Android en el dispositivo, reglas en español, sin IA en la nube y sin
