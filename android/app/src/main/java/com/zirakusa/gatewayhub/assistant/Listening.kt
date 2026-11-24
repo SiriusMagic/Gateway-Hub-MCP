@@ -82,6 +82,8 @@ object Vocabulary {
         aleatorio mezcla orden repetir bucle siempre lista listas playlist sonando suena canta escuchando gusta favoritos favorita
         graves agudos ecualizador normal sonido detén conversaciones escribió archivo documento imágenes playa marca agua
         cuadrícula activa desactiva mes cuándo próxima viene
+        estás tal triste feliz siento sola solo sí no confirmo confirma cancela cancelar consulta web google investiga genera
+        imagen dibuja entonces multiplicación
     """.trim().split(Regex("\\s+")).toSet()
 
     /** The grammar (JSON list): the base words, the app names and the people's names (each word of them). */
@@ -105,17 +107,19 @@ object Hearing {
         // Several orders in one breath («llama a Luis y dime la hora»): the free recognizer keeps all of them.
         if (Intents.split(f) { Parser.parse(it).action != Action.UNKNOWN }.size > 1) return f
         val byList = Parser.parse(l)
-        if (byList.action == Action.UNKNOWN && Parser.parse(f).action != Action.UNKNOWN) return f
+        val byFree = Parser.parse(f)
+        if (byList.action == Action.UNKNOWN && byFree.action != Action.UNKNOWN) return f
+        if (byFree.action == Action.WEB_SEARCH && byList.action == Action.WEB_SEARCH && !byFree["query"].isNullOrBlank()) return f
+        if (byFree["calculation"] != null && byList["calculation"] == null &&
+            (byList.action == Action.VOLUME || byList.action == byFree.action)) return f
         // A family app's tool or a note with free words (a task, a city, a name): the free recognizer has them, when it heard
         // the same order.
         if (byList.action in setOf(Action.TOOL, Action.NOTE)) {
-            val byFree = Parser.parse(f)
             if (byFree.action == byList.action && byFree["tool"] == byList["tool"]) return f
         }
         // A call or a message to someone the list doesn't know («llama a [unk]»): the free recognizer's name, closer to what
         // was said; the contact is then matched by how it sounds.
         if (byList.action in setOf(Action.CALL, Action.MESSAGE) && "[unk]" in limited) {
-            val byFree = Parser.parse(f)
             if (byFree.action == byList.action && !byFree["who"].isNullOrBlank()) return f
         }
         // A message: the order from the list, the words to send from the free one.

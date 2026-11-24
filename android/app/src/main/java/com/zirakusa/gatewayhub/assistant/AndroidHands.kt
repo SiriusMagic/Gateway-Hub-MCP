@@ -93,6 +93,28 @@ class AndroidHands(context: Context) : Hands {
 
     override fun dial(number: String) = start(Intent(Intent.ACTION_DIAL, "tel:${Uri.encode(number)}".toUri()), Catalog.byId("telefono"))
 
+    override fun placeCall(number: String): Boolean {
+        if (!number.matches(Regex("[+0-9 ().-]+"))) return false
+        if (ContextCompat.checkSelfPermission(app, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
+            throw Hands.NoCallPermission()
+        return launchExternal(Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null)))
+    }
+
+    override fun searchWeb(query: String): Boolean {
+        val url = Uri.Builder().scheme("https").authority("www.google.com").path("search")
+            .appendQueryParameter("q", query).build()
+        return launchExternal(Intent(Intent.ACTION_VIEW, url).addCategory(Intent.CATEGORY_BROWSABLE))
+    }
+
+    private fun launchExternal(intent: Intent): Boolean = try {
+        app.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    } catch (_: ActivityNotFoundException) {
+        false
+    } catch (_: SecurityException) {
+        false
+    }
+
     override fun message(number: String, text: String?) = start(Intent(Intent.ACTION_SENDTO, "smsto:${Uri.encode(number)}".toUri())
         .apply { if (text != null) putExtra("sms_body", text) }, Catalog.byId("sms"))
 

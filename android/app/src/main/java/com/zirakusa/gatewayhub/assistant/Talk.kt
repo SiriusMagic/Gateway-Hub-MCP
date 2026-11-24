@@ -22,6 +22,20 @@ object Talk {
             Say.ALARM_SET -> res.getString(R.string.say_alarm, "%d:%02d".format(a[0].toInt(), a[1].toInt()))
             Say.TIMER_SET -> res.getString(R.string.say_timer, duration(a[0].toInt(), res))
             Say.CALLING -> res.getString(R.string.say_calling, a[0])
+            Say.CONFIRM_CALL -> res.getString(R.string.say_confirm_call, a[0]) + " " + res.getString(R.string.say_confirm_hint)
+            Say.CALL_STARTED -> res.getString(R.string.say_call_started, a[0])
+            Say.NEED_CALL_PERMISSION -> res.getString(R.string.say_need_call_permission)
+            Say.CALCULATED -> res.getString(R.string.say_calculated, a[0])
+            Say.MATH_ERROR -> res.getString(R.string.say_math_error)
+            Say.WEB_OPENED -> res.getString(R.string.say_web_opened, a[0])
+            Say.WEB_QUERY -> res.getString(R.string.say_web_query)
+            Say.WEB_UNAVAILABLE -> res.getString(R.string.say_web_unavailable)
+            Say.QUICK -> res.getString(when (a[0]) {
+                "image_unavailable" -> R.string.say_image_unavailable
+                "sad" -> R.string.say_sad
+                "happy" -> R.string.say_happy
+                else -> R.string.say_greeting
+            })
             Say.MESSAGING -> res.getString(R.string.say_messaging, a[0])
             Say.NO_CONTACT -> res.getString(R.string.say_no_contact, a[0])
             Say.NEED_CONTACTS -> res.getString(R.string.say_need_contacts)
@@ -49,7 +63,8 @@ object Talk {
             Say.TORCH_ON -> res.getString(R.string.say_torch_on)
             Say.TORCH_OFF -> res.getString(R.string.say_torch_off)
         }
-        return (listOf(head) + r.lines + listOfNotNull(r.volume?.let { res.getString(R.string.say_volume, it) })).filter { it.isNotBlank() }.joinToString("\n")
+        return (listOf(head) + r.lines + listOfNotNull(r.volume?.let { res.getString(R.string.say_volume, it) }))
+            .filter { it.isNotBlank() }.joinToString("\n")
     }
 
     private fun duration(s: Int, res: Resources) = when {
@@ -65,6 +80,7 @@ object Talk {
         Action.WEATHER -> R.string.do_weather; Action.AGENDA -> R.string.do_agenda; Action.TODAY -> R.string.do_today; Action.TIME -> R.string.do_time
         Action.DATE -> R.string.do_date; Action.PHOTO -> R.string.do_photo; Action.SCAN -> R.string.do_scan; Action.SPEED -> R.string.do_speed
         Action.COUNT -> R.string.do_count; Action.VOLUME -> R.string.do_volume; Action.ANSWER -> R.string.do_answer; Action.HANG_UP -> R.string.do_hang_up; Action.NOTE -> R.string.do_note; Action.TORCH -> R.string.do_torch; Action.TOOL -> R.string.do_tool; Action.OPEN -> R.string.do_open; Action.UNKNOWN -> R.string.do_unknown
+        Action.CALCULATE -> R.string.do_calculate; Action.WEB_SEARCH -> R.string.do_web_search
         Action.PHONE_MCP -> R.string.phone_mcp_title; Action.CHAT -> R.string.local_chat; Action.HUB -> R.string.local_hub
     })
 }

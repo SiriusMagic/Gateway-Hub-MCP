@@ -7,7 +7,7 @@ package com.zirakusa.gatewayhub.assistant
  */
 object Intents {
     private val wake = Regex("^(?:(?:hey|oye|ey|hola|ok)\\s+)?(?:luna|lucia|lucía)\\b[,.:!]*\\s*", RegexOption.IGNORE_CASE)
-    private val joints = Regex("\\s*(?:[,;]|\\s(?:y luego|y despues|y después|y tambien|y también|luego|despues|después|tambien|también|y|e)\\s)\\s*", RegexOption.IGNORE_CASE)
+    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|luego|despues|después|tambien|también|y(?!\s+(?:m[aá]s|menos)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
     private val asks = Regex("^(?:(?:por favor|porfa|porfavor)\\s+)?(?:ayudame|ayúdame|me ayudas|me puedes ayudar|necesito ayuda|dime|me dices|quisiera saber|quiero saber|podrias decirme|podrías decirme|recuerdame decirte)(?:\\s+(?:con|a|sobre))?\\s+", RegexOption.IGNORE_CASE)
     private val thanks = Regex("[,.!¡¿?\\s]*(?:por favor|porfa|gracias|muchas gracias)[.!]*$", RegexOption.IGNORE_CASE)
     /** Short subjects that mean a question («la hora» → «qué hora es»). */
@@ -16,8 +16,8 @@ object Intents {
         "mi agenda" to "qué tengo hoy", "la agenda" to "qué tengo hoy")
 
     /** «Sí» to a question Lucía asked. */
-    fun yes(text: String) = Regex("^(?:si|claro|confirmo|hazlo|dale|adelante|ok|okey|de acuerdo|vale|por supuesto)\\b")
-        .containsMatchIn(Words.normalize(text).replace('ñ', 'n'))
+    fun yes(text: String) = Confirmation.yes.matches(Words.normalize(text))
+
 
     /** What was said without «Hey Luna», «por favor», «gracias» and «ayúdame con»; a bare subject becomes its question. */
     fun clean(text: String): String {
@@ -32,6 +32,7 @@ object Intents {
      */
     fun split(text: String, understood: (String) -> Boolean): List<String> {
         val whole = clean(text)
+        if (QuickOrders.webQuery(whole) != null) return listOf(whole)
         val parts = whole.split(joints).map(::clean).filter { it.isNotBlank() }
         return if (parts.size >= 2 && parts.all(understood)) parts else listOf(whole)
     }

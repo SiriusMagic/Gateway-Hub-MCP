@@ -17,8 +17,8 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 33
-        versionName = "0.0.33"
+        versionCode = 34
+        versionName = "0.0.34"
         // Where llama.cpp's source already is (same pinned commit), for machines that can't download it: -PllamaSourceDir=…
         (project.findProperty("llamaSourceDir") as String?)?.let { dir ->
             externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=$dir" } }

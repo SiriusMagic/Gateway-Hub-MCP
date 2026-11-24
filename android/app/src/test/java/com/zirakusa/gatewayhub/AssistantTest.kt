@@ -36,6 +36,12 @@ open class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toS
     override fun media(key: MediaKey) = done.add("media $key")
     override fun alarm(hour: Int, minute: Int) = done.add("alarm $hour:$minute")
     override fun timer(seconds: Int) = done.add("timer $seconds")
+    var outgoingAllowed = true
+    override fun placeCall(number: String): Boolean {
+        if (!outgoingAllowed) throw Hands.NoCallPermission()
+        return done.add("call $number")
+    }
+    override fun searchWeb(query: String) = done.add("web $query")
     override fun dial(number: String) = done.add("dial $number")
     override fun message(number: String, text: String?) = done.add("sms $number ${text ?: ""}".trim())
     override fun person(name: String): Person? {
@@ -111,10 +117,11 @@ class AssistantTest {
         assertEquals(Say.RECOMMENDED, brain.handle("recomendaciones del día", byVoice = true).reply.say)
         brain.handle("alarma a las 6 y media de la tarde"); brain.handle("temporizador de 10 minutos"); brain.handle("pausa")
         val call = brain.handle("llama a Ana")
-        assertEquals(Say.CALLING, call.reply.say); assertEquals("Ana Pérez", call.reply.args[0])
+        assertEquals(Say.CONFIRM_CALL, call.reply.say); assertEquals("Ana Pérez", call.reply.args[0])
+        assertEquals(Say.CALL_STARTED, brain.handle("sí").reply.say)
         brain.handle("mándale un mensaje a Anabel que ya voy")
-        brain.handle("llama al 611")
-        assertEquals(listOf("music *", "recommended", "alarm 18:30", "timer 600", "media PAUSE", "dial 0991234567", "sms 0987654321 ya voy", "dial 611"), hands.done)
+        brain.handle("marca 611")
+        assertEquals(listOf("music *", "recommended", "alarm 18:30", "timer 600", "media PAUSE", "call 0991234567", "sms 0987654321 ya voy", "dial 611"), hands.done)
         val weather = brain.handle("qué tiempo hace")
         assertEquals(Say.SUMMARY, weather.reply.say); assertEquals(2, weather.reply.lines.size); assertTrue(weather.ok)
         assertEquals(Say.NOTHING_TODAY, brain.handle("qué tengo hoy").reply.say)

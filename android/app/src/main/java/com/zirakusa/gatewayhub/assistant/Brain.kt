@@ -10,7 +10,7 @@ data class Summary(val title: String, val lines: List<String>, val empty: String
 
 /**
  * What the assistant does on the phone; the app gives Android, tests a fake. Each returns false when it couldn't. Calls
- * and messages only open the screen with the number or text ready: the user presses «Llamar» or «Enviar».
+ * can open the dialer or start a confirmed call. Messages open the compose screen.
  */
 interface Hands {
     fun installed(app: FamilyApp): Boolean
@@ -21,6 +21,8 @@ interface Hands {
     fun alarm(hour: Int, minute: Int): Boolean
     fun timer(seconds: Int): Boolean
     fun dial(number: String): Boolean
+    fun placeCall(number: String): Boolean = false
+    fun searchWeb(query: String): Boolean = false
     fun message(number: String, text: String?): Boolean
     /** Null: not found; throws [NoContacts] without the permission. */
     fun person(name: String): Person?
@@ -44,6 +46,7 @@ interface Hands {
     fun volume(): Int
     fun setVolume(percent: Int): Boolean
     fun now(): LocalDateTime = LocalDateTime.now()
+    class NoCallPermission : Exception()
     class NoContacts : Exception()
     class NoPhone : Exception()
     class ToolOff : Exception()
@@ -55,7 +58,8 @@ enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
     NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
-    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED
+    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
+    WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CALL_STARTED, NEED_CALL_PERMISSION
 }
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
@@ -74,6 +78,9 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
 
     fun handle(heard: String, byVoice: Boolean = false, c: Command = commandFor(heard)): Turn {
         val start = clock()
+        outgoingCalls.answer(heard)?.let { (reply, ok) ->
+            return Turn(heard, byVoice, Command(Action.CALL), Catalog.byId("telefono"), reply, ok, clock() - start)
+        }
         // The answer to a question Lucía just asked («¿Borro la lista Rock?» → «sí»).
         pending?.let { p -> answer(Words.normalize(heard).replace('ñ', 'n'))?.let { (reply, ok) ->
             return Turn(heard, byVoice, Command(Action.TOOL, mapOf("app" to p.app.id, "tool" to p.skill.tool)), p.app, reply, ok, clock() - start)
@@ -93,7 +100,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
@@ -131,7 +138,18 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             Action.TOOL -> tool(c, app!!)
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
-            Action.UNKNOWN, Action.CHAT, Action.HUB, Action.PHONE_MCP -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
+            Action.CALCULATE -> c["calculation"]?.let { Reply(Say.CALCULATED, listOf(it)) to true }
+                ?: (Reply(Say.MATH_ERROR) to false)
+            Action.WEB_SEARCH -> c["query"].orEmpty().let { query ->
+                when {
+                    query.isBlank() -> Reply(Say.WEB_QUERY) to true
+                    hands.searchWeb(query) -> Reply(Say.WEB_OPENED, listOf(query)) to true
+                    else -> Reply(Say.WEB_UNAVAILABLE) to false
+                }
+            }
+            Action.CHAT -> c["quick"]?.let { Reply(Say.QUICK, listOf(it)) to (it != "image_unavailable") }
+                ?: (Reply(Say.NOT_UNDERSTOOD) to false)
+            Action.UNKNOWN, Action.HUB, Action.PHONE_MCP -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
         }
     }
 
@@ -139,7 +157,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private class Pending(val app: FamilyApp, val skill: Skill, val sent: org.json.JSONObject, val said: Map<String, Any?>, val until: Long)
     private var pending: Pending? = null
     /** Lucía asked «¿…?» and waits for «sí» or «no». */
-    val asking get() = pending != null
+    val asking get() = pending != null || outgoingCalls.asking
 
     /**
      * A family app's tool: the item first when the skill needs one («la lista Rock», «la alarma de las 7»), then the question
@@ -192,24 +210,31 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         val p = pending ?: return null
         if (clock() > p.until) { pending = null; return null }
         return when {
-            Regex("^(?:si|claro|confirmo|confirma|hazlo|dale|adelante|ok|okay|de acuerdo|si por favor|si hazlo|correcto|eso)$").matches(t) -> {
+            Confirmation.yes.matches(t) -> {
                 pending = null
                 try { run(p.app, p.skill.tool, p.skill, p.sent, p.said) }
                 catch (_: Hands.ToolOff) { Reply(Say.TOOL_OFF, listOf(p.app.name)) to false }
                 catch (e: Hands.ToolError) { Reply(Say.TOOL_ERROR, listOf(p.app.name, e.message.orEmpty())) to false }
             }
-            Regex("^(?:no|cancela|cancelar|mejor no|no gracias|deja|dejalo|olvidalo|para)$").matches(t) -> { pending = null; Reply(Say.CANCELLED) to true }
+            Confirmation.no.matches(t) -> { pending = null; Reply(Say.CANCELLED) to true }
             else -> { pending = null; null }
         }
     }
 
-    /** «Llama a Ana» / «escríbele a Ana»: a number as said, or the contact's; only the screen opens, the user confirms. */
+    private val outgoingCalls = OutgoingCalls(hands, clock)
+    internal fun finishCallPermission(granted: Boolean) = outgoingCalls.finishPermission(granted)
+    internal fun cancelOutgoingCall() = outgoingCalls.cancel()
+
+    /** «Llama a Ana» / «escríbele a Ana»: a number as said, or the contact's. */
     private fun reach(c: Command, app: FamilyApp): Pair<Reply, Boolean> {
         val who = c["who"].orEmpty()
         val digits = who.filter { it.isDigit() || it == '+' }
-        val person = if (digits.count(Char::isDigit) >= 3) Person(who, digits)
+        val person = if (who.matches(Regex("[+0-9 .-]+")) && digits.count(Char::isDigit) >= 3) Person(who, digits)
             else try { hands.person(who) } catch (_: Hands.NoContacts) { return Reply(Say.NEED_CONTACTS) to false } ?: return Reply(Say.NO_CONTACT, listOf(who)) to false
-        val ok = if (c.action == Action.CALL) hands.dial(person.number) else hands.message(person.number, c["text"])
-        return if (ok) Reply(if (c.action == Action.CALL) Say.CALLING else Say.MESSAGING, listOf(person.name)) to true else Reply(Say.FAILED, listOf(app.name)) to false
+        if (c.action == Action.CALL) {
+            return if (c["dial_only"] == "1") outgoingCalls.dial(person) else outgoingCalls.request(person)
+        }
+        return if (hands.message(person.number, c["text"])) Reply(Say.MESSAGING, listOf(person.name)) to true
+            else Reply(Say.FAILED, listOf(app.name)) to false
     }
 }

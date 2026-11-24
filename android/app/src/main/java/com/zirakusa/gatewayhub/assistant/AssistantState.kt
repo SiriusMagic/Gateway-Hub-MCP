@@ -72,9 +72,12 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val assistant = local
         if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
         // The orders left after a question: they go on only after «sí».
-        val after = waiting.also { waiting = emptyList() }.takeIf { Intents.yes(heard) }.orEmpty()
+        val after = waiting.also { waiting = emptyList() }.takeIf { brain.asking && Intents.yes(heard) }.orEmpty()
         val mode = modeNow()
-        if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) return
+        if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) {
+            brain.cancelOutgoingCall()
+            return
+        }
         // Only the model: it understands everything; the rules only carry out its orders (and still ask «¿…?»).
         if (mode == AnswerMode.MODEL && assistant != null && !brain.asking) {
             localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders -> runAll(orders, byVoice) }
@@ -85,11 +88,15 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         if (plan.size > 1) return runAll(plan, byVoice)
         val command = brain.commandFor(plan[0]).takeIf { it.action != Action.UNKNOWN } ?: brain.commandFor(heard)
         if (mode == AnswerMode.BOTH && assistant != null && StoneRequests.matches(heard, command)) {
+            brain.cancelOutgoingCall()
             localTurns.stone(assistant, heard, heard, byVoice)
             return
         }
         val turn = brain.handle(heard, byVoice, command)
-        if (turn.reply.say == Say.NOT_UNDERSTOOD && mode == AnswerMode.BOTH && assistant != null) {
+        if (turn.reply.say == Say.NEED_CALL_PERMISSION) {
+            waiting = after
+            complete(turn)
+        } else if (turn.reply.say == Say.NOT_UNDERSTOOD && mode == AnswerMode.BOTH && assistant != null) {
             // The model says it in Lucía's own orders; only when there are none, it talks.
             localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders -> runAll(orders, byVoice) }
         } else if (after.isNotEmpty()) {
@@ -113,9 +120,21 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
             val turn = brain.handle(order, byVoice)
             complete(turn, speakIt = false)
             replies += turn.reply
-            if (turn.reply.say == Say.CONFIRM) { waiting = orders.drop(i + 1); break }
+            if (turn.reply.say in setOf(Say.CONFIRM, Say.CONFIRM_CALL, Say.NEED_CALL_PERMISSION)) {
+                waiting = orders.drop(i + 1)
+                break
+            }
         }
         if (byVoice && voiceAnswers) speakAll(replies.filter { it.say != Say.COUNTING })
+    }
+
+    internal fun finishCallPermission(granted: Boolean) {
+        val turn = last?.takeIf { it.reply.say == Say.NEED_CALL_PERMISSION } ?: return
+        val rest = waiting.also { waiting = emptyList() }
+        val (reply, ok) = brain.finishCallPermission(granted) ?: return
+        turns = turns.dropLast(1) + turn.copy(reply = reply, ok = ok)
+        if (turn.byVoice && voiceAnswers) speak(reply)
+        if (reply.say == Say.CALL_STARTED && rest.isNotEmpty()) runAll(rest, turn.byVoice)
     }
 
     fun confirmHub(confirmed: Boolean) { local?.let { localTurns.confirm(it, confirmed) } }
@@ -154,7 +173,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     fun late(reply: Reply) {
         val t = turns.lastOrNull() ?: return
         if (t.command.action !in setOf(Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA)) return
-        turns = turns.dropLast(1) + t.copy(reply = reply, ok = false)
+        turns = turns.dropLast(1) + t.copy(reply = reply.copy(volume = t.reply.volume), ok = false)
         pulse++
         if (t.byVoice && voiceAnswers) speak(reply)
     }

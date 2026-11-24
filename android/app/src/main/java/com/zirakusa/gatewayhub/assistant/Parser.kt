@@ -12,6 +12,7 @@ object Parser {
      * ([Volume]); what is left is the order. Only the volume alone is the VOLUME action.
      */
     fun parse(raw: String, today: java.time.LocalDate = java.time.LocalDate.now()): Command {
+        QuickOrders.parse(raw)?.let { return it }
         this.today = today
         val t = Words.normalize(raw)
         if (t.isEmpty()) return Command(Action.UNKNOWN)
@@ -88,7 +89,10 @@ object Parser {
 
         // Calls: «llama a Ana», «llama al 099 123 4567», «marca 611».
         Regex("^(llama|llamale|llamar|marca|marcale|telefonea)( a| al)? (.+)$").find(t)?.let { m ->
-            return Command(Action.CALL, mapOf("who" to m.groupValues[3].replace(Regex("^(el|la) "), "").trim()))
+            return Command(Action.CALL, buildMap {
+                put("who", m.groupValues[3].replace(Regex("^(el|la) "), "").trim())
+                if (m.groupValues[1] in setOf("marca", "marcale")) put("dial_only", "1")
+            })
         }
 
         // Music: recommendations first, then «reproduce música (de X)», «pon a X».

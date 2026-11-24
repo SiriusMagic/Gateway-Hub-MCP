@@ -50,6 +50,9 @@ class AssistantActivity : ComponentActivity() {
             Toast.makeText(this, R.string.contacts_in_settings, Toast.LENGTH_LONG).show()
         }
     }
+    private val outgoingCall = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (::state.isInitialized) state.finishCallPermission(granted)
+    }
     private val phone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private val forWake = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
         if (r[Manifest.permission.RECORD_AUDIO] == true) setWake(true) else Toast.makeText(this, R.string.wake_needs_mic, Toast.LENGTH_LONG).show()
@@ -71,7 +74,8 @@ class AssistantActivity : ComponentActivity() {
         hands.onSilent = { runOnUiThread { state.late(Reply(Say.NOT_PLAYING, listOf("Stone"))) } }
         state.onTurn = { t ->
             if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) }
-            if (t.byVoice) afterTurn()
+            if (t.reply.say == Say.NEED_CALL_PERMISSION) outgoingCall.launch(Manifest.permission.CALL_PHONE)
+            else if (t.byVoice || t.reply.say == Say.NEED_CONTACTS) afterTurn()
         }
         count = CountEars(this, grammar = { TallyWords.grammar(state.tallyLines) }, heard = { runOnUiThread { counted(it) } },
             partial = { runOnUiThread { state.partial = it } }, level = { runOnUiThread { state.level = it } },
