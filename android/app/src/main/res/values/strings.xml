@@ -144,7 +144,8 @@
     <string name="do_torch">Linterna</string>
     <string name="do_answer">Contestar</string>
     <string name="do_hang_up">Colgar</string>
-    <string name="say_need_contacts">Para llamar por nombre, permite los contactos.</string>
+    <string name="say_need_contacts">Para llamar por nombre, permite los contactos (o instala Teléfono).</string>
+    <string name="contacts_in_settings">Toca «Permisos» → «Contactos» → «Permitir».</string>
     <string name="say_time">Son las %1$s.</string>
     <string name="say_date">Hoy es %1$s.</string>
     <string name="say_nothing_today">No hay nada para hoy.</string>

@@ -49,7 +49,8 @@ class LuciaTest {
         assertTrue(listOf("reproduce", "música", "alarma", "recomendaciones", "siete", "ana", "pérez", "josé", "luis", "stone", "cámara", "[unk]").all { it in words })
         assertEquals(words.size, words.toSet().size)
         assertEquals("pon mis recomendaciones día", Hearing.pick("pon mis recomendaciones día", "pon visa home naciones el liga"))
-        assertEquals("abre la cámara", Hearing.pick("[unk] [unk]", "abre la cámara"))            // the list missed it, the free one has it
+        assertEquals("abre la cámara", Hearing.pick("[unk] [unk]", "abre la cámara"))
+        assertEquals("llama a dis led jefe", Hearing.pick("llama a [unk] jefe", "llama a dis led jefe"))   // a name the list doesn't know            // the list missed it, the free one has it
         assertEquals("manda un mensaje a ana que llego en diez minutos", Hearing.pick("manda un mensaje a ana", "manda un mensaje a ana que llego en diez minutos"))
         assertEquals("reproduce música", Hearing.pick("reproduce música [unk]", ""))
     }

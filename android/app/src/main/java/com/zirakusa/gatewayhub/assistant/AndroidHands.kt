@@ -96,14 +96,37 @@ class AndroidHands(context: Context) : Hands {
     override fun message(number: String, text: String?) = start(Intent(Intent.ACTION_SENDTO, "smsto:${Uri.encode(number)}".toUri())
         .apply { if (text != null) putExtra("sms_body", text) }, Catalog.byId("sms"))
 
+    /**
+     * The contact said: from the phone's contacts with the permission, otherwise through Teléfono (it already has it),
+     * so Lucía needs no permission of her own. Close names are tried too («Vox» finds «Box»).
+     */
     override fun person(name: String): Person? {
-        if (ContextCompat.checkSelfPermission(app, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) throw Hands.NoContacts()
-        val uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(name))
-        val found = ArrayList<Person>()
-        app.contentResolver.query(uri, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY, ContactsContract.CommonDataKinds.Phone.NUMBER), null, null, null)?.use { c ->
-            while (c.moveToNext() && found.size < 20) found += Person(c.getString(0).orEmpty(), c.getString(1).orEmpty())
-        }
+        val allowed = ContextCompat.checkSelfPermission(app, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        val found = if (allowed) contacts(name).ifEmpty { People.guesses(name).flatMap(::contacts).distinct() }
+            else byPhoneApp(name) ?: throw Hands.NoContacts()
         return People.best(found, name)
+    }
+
+    private fun contacts(query: String): List<Person> {
+        val uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(query))
+        val found = ArrayList<Person>()
+        runCatching {
+            app.contentResolver.query(uri, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY, ContactsContract.CommonDataKinds.Phone.NUMBER), null, null, null)?.use { c ->
+                while (c.moveToNext() && found.size < 50) found += Person(c.getString(0).orEmpty(), c.getString(1).orEmpty())
+            }
+        }
+        return found
+    }
+
+    /** Teléfono's contacts_search; null when Teléfono is missing, too old or can't read the contacts either. */
+    private fun byPhoneApp(name: String): List<Person>? {
+        fun search(q: String): List<Person>? = runCatching {
+            tool(Catalog.byId("telefono"), "contacts_search", org.json.JSONObject().put("query", q.take(100)).put("limit", 50))
+        }.getOrNull()?.optJSONArray("contacts")?.let { list ->
+            (0 until list.length()).mapNotNull { list.optJSONObject(it) }.map { Person(it.optString("name"), it.optString("phone").takeIf { p -> p != "null" }.orEmpty()) }
+        }
+        val first = search(name) ?: return null
+        return first.ifEmpty { People.guesses(name).flatMap { search(it).orEmpty() }.distinct() }
     }
 
     /** The «Hoy» summary each family app gives (only to apps signed by the same developer, like this one). */

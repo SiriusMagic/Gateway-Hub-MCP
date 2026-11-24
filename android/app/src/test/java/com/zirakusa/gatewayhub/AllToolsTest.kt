@@ -63,14 +63,17 @@ class AllToolsTest {
             "qué redes wifi hay cerca" to "network_wifi_nearby", "dónde estoy" to "compass_location", "mis mediciones" to "level_measurements",
             "qué apps tengo" to "launcher_apps", "qué hay en mi dock" to "launcher_dock", "pon el flash de la cámara en automático" to "camera_flash",
             "enciende la linterna de la cámara" to "camera_flash", "temporizador de la cámara a 10 segundos" to "camera_timer", "toma una foto" to "camera_capture",
-            "tómame una selfie" to "camera_capture",
+            "tómame una selfie" to "camera_capture", "qué tal mi señal" to "network_signal", "cuál es mi ping" to "network_latency",
+            "mis grabaciones" to "rec_list", "busca la grabación de la reunión" to "rec_list",
         ).forEach { (said, want) -> assertEquals(said, want, tool(said)) }
         val move = args("pospón la reunión con Ana para el viernes a las 4")
         assertEquals("reunion con ana", move.getString("event")); assertEquals("2026-11-27", move.getString("date")); assertEquals("04:00", move.getString("time"))
         assertEquals("km", args("convierte 5 kilómetros a millas").getString("from")); assertEquals("length", args("convierte 5 kilómetros a millas").getString("category"))
         assertEquals("2026-11-23", args("fotos de ayer").getString("from"))
         assertEquals("torch", args("enciende la linterna de la cámara").getString("flash")); assertEquals("auto", args("pon el flash de la cámara en automático").getString("flash"))
-        assertTrue(args("tómame una selfie").getBoolean("selfie"))
+        assertTrue(args("tómame una selfie").getBoolean("selfie")); assertEquals("la reunion", args("busca la grabación de la reunión").getString("query"))
+        // Lucía never records: «graba» only opens Grabadora, where the user taps the button.
+        assertEquals(Action.OPEN, p("abre la grabadora").action)
         // Lucía's own orders stay: the phone's torch, a photo app opened by name.
         assertEquals(Action.TORCH, p("enciende la linterna").action); assertEquals(Action.OPEN, p("abre la cámara").action)
     }

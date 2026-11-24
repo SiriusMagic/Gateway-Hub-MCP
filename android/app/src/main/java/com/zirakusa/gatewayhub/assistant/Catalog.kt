@@ -27,6 +27,7 @@ object Catalog {
         FamilyApp("redes", "Redes", listOf("com.zirakusa.redes"), listOf("redes", "analizar redes", "wifi", "internet")),
         FamilyApp("brujula", "Brújula", listOf("com.zirakusa.brujula"), listOf("brujula")),
         FamilyApp("nivel", "Nivel", listOf("com.zirakusa.nivel"), listOf("nivel", "nivel de burbuja")),
+        FamilyApp("grabadora", "Grabadora", listOf("com.zirakusa.grabadora"), listOf("grabadora", "grabaciones", "notas de voz")),
         FamilyApp("inicio", "Inicio", listOf("com.zirakusa.launcher"), listOf("inicio", "launcher")),
     )
 

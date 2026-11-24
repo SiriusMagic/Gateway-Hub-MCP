@@ -106,6 +106,12 @@ object Hearing {
             val byFree = Parser.parse(f)
             if (byFree.action == byList.action && byFree["tool"] == byList["tool"]) return f
         }
+        // A call or a message to someone the list doesn't know («llama a [unk]»): the free recognizer's name, closer to what
+        // was said; the contact is then matched by how it sounds.
+        if (byList.action in setOf(Action.CALL, Action.MESSAGE) && "[unk]" in limited) {
+            val byFree = Parser.parse(f)
+            if (byFree.action == byList.action && !byFree["who"].isNullOrBlank()) return f
+        }
         // A message: the order from the list, the words to send from the free one.
         if (byList.action == Action.MESSAGE) {
             val said = Regex("(?:^| )(?:que|diciendo|diciendole|diciéndole) (.+)$").find(f)?.groupValues?.get(1)

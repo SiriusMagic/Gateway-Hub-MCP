@@ -109,6 +109,7 @@ export const FAMILY: RemoteApp[] = [
   app("network_", "Redes", "Redes", "com.zirakusa.redes", "The phone's network: status, nearby Wi-Fi (without BSSID), speed tests and their history."),
   app("compass_", "Brújula", "Brújula", "com.zirakusa.brujula", "Heading of the phone and, if allowed, its approximate location. Read only."),
   app("level_", "Nivel", "Nivel", "com.zirakusa.nivel", "The bubble level: reading, calibration and saved measurements. Read only."),
+  app("rec_", "Grabadora", "Grabadora", "com.zirakusa.grabadora", "The user's voice recordings: names, dates, lengths and flags; rename with write access. Never the audio; the AI never records and never deletes."),
   app("launcher_", "Inicio", "Inicio", "com.zirakusa.launcher", "The home screen: apps list, dock order, «Hoy» cards. It never opens or installs apps."),
 ];
 export const familyModules = FAMILY.map(remoteModule);

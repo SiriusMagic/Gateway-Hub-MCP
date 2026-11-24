@@ -108,6 +108,11 @@ object FamilySkills {
         Skill("network_speed_test", "redes", "Medir velocidad", confirm = "¿Mido la velocidad? Usa unos megas de tus datos.",
             read = fixed({ Args().put("allow_mobile", true) }, "mide la velocidad(?: de internet)?", "haz una prueba de velocidad", "que tan rapido es mi internet")),
         Skill("network_speed_history", "redes", "Pruebas anteriores", read = whole("(?:mis )?pruebas de velocidad(?: anteriores)?", "historial de velocidad")),
+        Skill("network_signal", "redes", "Señal del Wi‑Fi", read = whole("(?:que tal |como esta |como va )?(?:mi |la )?senal(?: del wifi| de wifi| del internet)?", "(?:que tan )?fuerte (?:esta|es) (?:mi |el )?wifi")),
+        Skill("network_latency", "redes", "Latencia", read = whole("(?:cual es |como esta |como va )?(?:mi |la |el )?(?:latencia|ping)(?: del internet| de internet)?")),
+        Skill("rec_list", "grabadora", "Mis grabaciones", read = { s, d ->
+            whole("(?:mis |las )?grabaciones", "(?:que )?grabaciones tengo", "mis notas de voz")(s, d)
+                ?: one("busca (?:la |las )?grabaci(?:on|ones) (?:de |del |sobre )?(.+)", "query")(s, d) }),
         Skill("network_wifi_nearby", "redes", "Wi‑Fi cercanas", read = whole("(?:que )?redes (?:wifi )?(?:hay )?cerca(?:nas)?", "wifis cercanas")),
         Skill("compass_location", "brujula", "Dónde estoy", read = whole("donde estoy", "(?:cual es )?mi ubicacion")),
         Skill("level_measurements", "nivel", "Mediciones", read = whole("(?:mis )?mediciones(?: del nivel)?")),
