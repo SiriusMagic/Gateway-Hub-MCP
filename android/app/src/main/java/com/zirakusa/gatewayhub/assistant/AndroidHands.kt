@@ -48,21 +48,40 @@ class AndroidHands(context: Context) : Hands {
     private val stone get() = Catalog.byId("stone")
 
     /** Android's «play from search»: an empty query means «anything», which Stone plays shuffled. */
+    /** Called when music was asked for but nothing sounds a few seconds later (see [PlayCheck]). */
+    var onSilent: () -> Unit = {}
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { button(KeyEvent.KEYCODE_MEDIA_PLAY) },
+        later = { ms, run -> main.postDelayed(run, ms) }, silent = { onSilent() })
+
     override fun playMusic(query: String?): Boolean {
         val play = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).putExtra(SearchManager.QUERY, query.orEmpty())
             .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, if (query == null) "vnd.android.cursor.item/*" else MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
-        return start(play, stone, fallback = false) || (open(stone) && media(MediaKey.RESUME))
+        // An older Stone does not know the order: it is opened, and PlayCheck presses «play» once it is up.
+        val ok = start(play, stone, fallback = false) || open(stone)
+        if (ok) check.start()
+        return ok
     }
 
-    override fun playRecommended(): Boolean = start(Intent(PLAY_RECOMMENDED), stone, fallback = false) || playMusic(null)
+    override fun playRecommended(): Boolean {
+        if (!start(Intent(PLAY_RECOMMENDED), stone, fallback = false)) return playMusic(null)
+        check.start(); return true
+    }
+
+    /** A media button, for whatever player has the music. */
+    private fun button(code: Int): Boolean {
+        val a = audio ?: return false
+        a.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code)); a.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
+        return true
+    }
 
     override fun media(key: MediaKey): Boolean {
         val code = when (key) { MediaKey.PAUSE -> KeyEvent.KEYCODE_MEDIA_PAUSE; MediaKey.RESUME -> KeyEvent.KEYCODE_MEDIA_PLAY
             MediaKey.NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT; MediaKey.PREVIOUS -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
             // Players go back to the start of the song on «previous» once a few seconds have played.
             MediaKey.RESTART -> KeyEvent.KEYCODE_MEDIA_PREVIOUS }
-        val audio = app.getSystemService(AudioManager::class.java) ?: return false
-        audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code)); audio.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
+        if (!button(code)) return false
+        if (key == MediaKey.PAUSE) check.cancel() else check.start()
         return true
     }
 

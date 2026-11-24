@@ -1,3 +1,10 @@
+# Gateway Hub 0.0.23: «reproduce música» suena de verdad
+
+- Antes, con un Stone anterior a 1.7.24, Lucía/Luna abría Stone y mandaba «play» demasiado pronto: se perdía y no sonaba.
+  Ahora comprueba que el teléfono **está sonando**: si a los 2,5 s no suena, vuelve a dar «play» (Stone ya está listo);
+  si a los 6 s sigue en silencio, lo dice («Abrí Stone, pero no empezó a sonar…») y el mapa lo marca como **Falló**,
+  en vez de afirmar que está reproduciendo. Igual con «recomendaciones» y «dale play».
+
 # Gateway Hub 0.0.22: «Vincular con token» conoce toda la familia
 
 - Pegar el enlace o token de cualquier app ya dice cuál es: Stone Video (`stv_`), Teléfono, SMS, Reloj, Calendario,

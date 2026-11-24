@@ -50,6 +50,8 @@ class AssistantActivity : ComponentActivity() {
         voice = Voice(this)
         hands = AndroidHands(this)
         state = AssistantState(Brain(hands)) { if (it.say != Say.COUNTING) voice.say(Talk.text(it, resources)) }
+        // Music asked for but silent: Lucía says so instead of «Reproduciendo».
+        hands.onSilent = { runOnUiThread { state.late(Reply(Say.NOT_PLAYING, listOf("Stone"))) } }
         state.onTurn = { t -> if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) } }
         count = CountEars(this, grammar = { TallyWords.grammar(state.tallyLines) }, heard = { runOnUiThread { counted(it) } },
             partial = { runOnUiThread { state.partial = it } }, level = { runOnUiThread { state.level = it } },
