@@ -1,5 +1,10 @@
 # Gateway Hub 0.0.32: intérprete del modelo (sentimientos, MCP o automático)
 
+- **Instala `GatewayHub-0.0.32.apk`**: actualiza tu Gateway Hub y trae todo (Lucía, modelos locales, MCP). Tiene la misma
+  firma que Stone 1.7.28 y el resto de la familia. «Lucía Prueba» 0.0.28 y Stone Prueba 1.7.27 están firmadas con otra
+  clave: pueden quedarse instaladas aparte o desinstalarse. Ya no se publica una «Lucía Prueba» desde aquí, porque no se
+  instalaría encima de la de 0.0.28.
+
 - **Ajustes de Lucía → «Intérprete del modelo»** (con el modo Modelo o Ambos):
   - *Sentimientos* (por defecto, recomendado): el modelo traduce a órdenes de Lucía y sus reglas las hacen y preguntan «¿…?».
   - *MCP*: el modelo elige una herramienta de las apps de la familia en el teléfono (por su enlace con el Hub, sin
