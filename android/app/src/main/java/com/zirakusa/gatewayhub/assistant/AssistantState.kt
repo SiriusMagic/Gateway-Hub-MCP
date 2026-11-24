@@ -24,7 +24,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     /** The mode for this order: the model only when one is chosen, and not with the screen off or locked if so set. */
     internal fun modeNow(): AnswerMode {
-        val model = local?.models?.let { it.supported && it.selected != null } == true
+        val model = local?.models?.let { it.supported && it.hasModel } == true
         return when {
             !model -> AnswerMode.RULES
             rulesWhenLocked && locked() -> AnswerMode.RULES

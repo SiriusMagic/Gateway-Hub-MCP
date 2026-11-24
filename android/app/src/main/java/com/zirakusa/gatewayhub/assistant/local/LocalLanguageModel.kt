@@ -35,7 +35,7 @@ class LocalLanguageModel {
     private var weights = 0L
 
     suspend fun generate(
-        model: LocalModel,
+        template: Template,
         file: File,
         messages: List<ChatMessage>,
         deterministic: Boolean = false,
@@ -50,7 +50,7 @@ class LocalLanguageModel {
                 loadedFile = file
             }
             ensureActive()
-            val session = NativeLlama.begin(weights, prompt(model, messages).toByteArray(),
+            val session = NativeLlama.begin(weights, prompt(template, messages).toByteArray(),
                 Runtime.getRuntime().availableProcessors().coerceIn(1, 4), if (deterministic) 512 else 320, deterministic)
             check(session != 0L)
             try {
@@ -91,14 +91,43 @@ class LocalLanguageModel {
     companion object {
         val supported: Boolean get() = Build.SUPPORTED_64_BIT_ABIS.contains("arm64-v8a") && android.os.Process.is64Bit()
 
-        internal fun prompt(model: LocalModel, messages: List<ChatMessage>): String = buildString {
-            // Both curated models use ChatML. Qwen3's empty thinking block selects its non-thinking mode.
-            for ((role, text) in messages) {
-                val safe = text.replace("<|im_start|>", "").replace("<|im_end|>", "").replace("<|endoftext|>", "")
-                append("<|im_start|>").append(role).append('\n').append(safe).append("<|im_end|>\n")
+        internal fun prompt(model: LocalModel, messages: List<ChatMessage>) = prompt(model.template, messages)
+
+        /** Special markers people could type are removed, so a message can't pretend to be another turn. */
+        private val markers = Regex("<\\|[a-z_]+\\|>|<(?:start|end)_of_turn>|</?s>|\\[/?INST]|<bos>|<eos>")
+
+        internal fun prompt(template: Template, messages: List<ChatMessage>): String = buildString {
+            val safe = messages.map { it.copy(text = it.text.replace(markers, "")) }
+            when (template) {
+                // Both curated models use ChatML. Qwen3's empty thinking block selects its non-thinking mode.
+                Template.CHATML, Template.QWEN3 -> {
+                    for ((role, text) in safe) append("<|im_start|>").append(role).append('\n').append(text).append("<|im_end|>\n")
+                    append("<|im_start|>assistant\n")
+                    if (template == Template.QWEN3) append("<think>\n\n</think>\n\n")
+                }
+                Template.LLAMA3 -> {
+                    append("<|begin_of_text|>")
+                    for ((role, text) in safe) append("<|start_header_id|>").append(role).append("<|end_header_id|>\n\n").append(text).append("<|eot_id|>")
+                    append("<|start_header_id|>assistant<|end_header_id|>\n\n")
+                }
+                Template.PHI3 -> {
+                    for ((role, text) in safe) append("<|").append(role).append("|>\n").append(text).append("<|end|>\n")
+                    append("<|assistant|>\n")
+                }
+                // Gemma and Mistral have no system turn: it goes before the first message of the person.
+                Template.GEMMA, Template.MISTRAL -> {
+                    val system = safe.filter { it.role == "system" }.joinToString("\n\n") { it.text }
+                    var first = true
+                    if (template == Template.GEMMA) append("<bos>") else append("<s>")
+                    for ((role, text) in safe.filter { it.role != "system" }) {
+                        val said = if (first && role == "user" && system.isNotBlank()) "$system\n\n$text" else text
+                        if (role == "user") first = false
+                        if (template == Template.GEMMA) append("<start_of_turn>").append(if (role == "assistant") "model" else "user").append('\n').append(said).append("<end_of_turn>\n")
+                        else if (role == "user") append("[INST] ").append(said).append(" [/INST]") else append(said).append("</s>")
+                    }
+                    if (template == Template.GEMMA) append("<start_of_turn>model\n")
+                }
             }
-            append("<|im_start|>assistant\n")
-            if (model == LocalModel.QWEN3) append("<think>\n\n</think>\n\n")
         }
     }
 }

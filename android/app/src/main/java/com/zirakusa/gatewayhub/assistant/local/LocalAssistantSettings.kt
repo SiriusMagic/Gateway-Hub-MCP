@@ -53,6 +53,25 @@ import com.zirakusa.gatewayhub.ui.HubColors
     }
     models.downloadMessage?.let { Text(stringResource(it), color = HubColors.Bad) }
 
+    // A .gguf already on the phone (downloaded with the browser, or by another app into Descargas): used in place.
+    val canChange = !local.busy && local.pending == null
+    for (model in models.linked) {
+        Text(stringResource(R.string.local_model_size, model.name, model.sizeLabel), color = HubColors.Text)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(models.selectedLinked == model, { models.selectLinked(model) }, enabled = canChange,
+                label = { Text(stringResource(if (models.selectedLinked == model) R.string.local_active else R.string.local_use)) })
+            TextButton({ models.unlink(model) }, enabled = canChange) { Text(stringResource(R.string.local_unlink)) }
+        }
+    }
+    val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let(models::link)
+    }
+    Text(stringResource(R.string.local_link_hint), color = HubColors.Muted)
+    TextButton({ runCatching { pick.launch(arrayOf("application/octet-stream", "*/*")) } }, enabled = canChange) {
+        Text(stringResource(R.string.local_link))
+    }
+    models.linkMessage?.let { Text(stringResource(it), color = HubColors.Bad) }
+
     Text(stringResource(R.string.local_tone), color = HubColors.Text)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         for (tone in ConversationTone.entries) {

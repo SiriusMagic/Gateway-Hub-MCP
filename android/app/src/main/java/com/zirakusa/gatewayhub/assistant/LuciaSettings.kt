@@ -92,7 +92,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
                         }
                     }
                 }
-                if (state.mode != AnswerMode.RULES && local.models.selected == null)
+                if (state.mode != AnswerMode.RULES && !local.models.hasModel)
                     Text(stringResource(R.string.mode_needs_model), color = HubColors.Bad, fontSize = 14.sp)
                 Line(stringResource(R.string.mode_locked), stringResource(R.string.mode_locked_hint), state.rulesWhenLocked, actions.setRulesWhenLocked)
                 Button(stringResource(R.string.assistant_advanced)) { state.page = AssistantPage.ADVANCED }

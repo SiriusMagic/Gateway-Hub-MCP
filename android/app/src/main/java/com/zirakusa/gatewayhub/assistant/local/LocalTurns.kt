@@ -14,7 +14,7 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
     fun route(assistant: LocalAssistant, heard: String, byVoice: Boolean): Boolean {
         val chatQuery = chatQuery(heard)
         if (chatQuery != null) {
-            if (assistant.models.selected == null) {
+            if (!assistant.models.hasModel) {
                 complete(generated(heard, byVoice, Action.CHAT, SystemClock.elapsedRealtime(),
                     message(R.string.local_chat_model_first), false))
             } else chat(assistant, heard, chatQuery, byVoice)
@@ -64,7 +64,7 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
     fun stone(assistant: LocalAssistant, heard: String, query: String, byVoice: Boolean) {
         val start = SystemClock.elapsedRealtime()
         fun finish(text: String, ok: Boolean = false) = complete(generated(heard, byVoice, Action.PHONE_MCP, start, text, ok))
-        if (assistant.models.selected == null) {
+        if (!assistant.models.hasModel) {
             finish(message(R.string.local_chat_model_first))
             return
         }
@@ -80,7 +80,7 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         fun fail(id: Int) = complete(result(message(id)))
         when {
             assistant.hub.link == null -> fail(R.string.local_hub_connect_first)
-            assistant.models.selected == null -> fail(R.string.local_hub_model_first)
+            !assistant.models.hasModel -> fail(R.string.local_hub_model_first)
             else -> assistant.work(onFailure = ::fail) {
                 val call = assistant.decide(request)
                 when {

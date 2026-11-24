@@ -27,6 +27,7 @@ enum class LocalModel(
     QWEN25("Qwen2.5 1.5B", "1,12 GB", 1_117_320_736, "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
         "Qwen2.5-1.5B-Instruct-GGUF/resolve/91cad51170dc346986eccefdc2dd33a9da36ead9/qwen2.5-1.5b-instruct-q4_k_m.gguf");
 
+    val template get() = if (this == QWEN3) Template.QWEN3 else Template.CHATML
     val url get() = URI("https://huggingface.co/Qwen/$source").toURL()
     val fileName get() = source.substringAfterLast('/')
 }

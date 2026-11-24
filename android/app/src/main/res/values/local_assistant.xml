@@ -8,6 +8,11 @@
     <string name="local_download">Descargar</string>
     <string name="local_cancel">Cancelar</string>
     <string name="local_use">Usar</string>
+    <string name="local_link">Usar un modelo que ya tengo (.gguf)</string>
+    <string name="local_link_hint">Si ya descargaste un modelo .gguf (con el navegador, en Descargas…), elígelo: se usa donde está, sin copiarlo, así no ocupa dos veces. Los modelos dentro de otra app (PocketPal…) son privados de esa app y Android no deja leerlos.</string>
+    <string name="local_unlink">Quitar</string>
+    <string name="local_link_not_gguf">Elige un archivo .gguf (un modelo de lenguaje).</string>
+    <string name="local_link_failed">Android no dejó guardar el permiso para leer ese archivo. Prueba con uno de Descargas.</string>
     <string name="local_active">En uso</string>
     <string name="local_delete">Eliminar</string>
     <string name="local_tone">Tono de conversación</string>

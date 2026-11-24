@@ -99,7 +99,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         }
         val local = state.local
         val busy = local?.busy == true
-        val showModelSetup = local?.models?.supported == true && local.models.selected == null
+        val showModelSetup = local?.models?.supported == true && !local.models.hasModel
         val showIntro = state.turns.isEmpty() || showModelSetup
         val introCount = if (showIntro) 1 else 0
         val list = rememberLazyListState()

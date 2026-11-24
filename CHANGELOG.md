@@ -1,3 +1,12 @@
+# Gateway Hub 0.0.33: usar un modelo .gguf que ya tienes, sin descargarlo otra vez
+
+- **Lucía → Avanzado → «Usar un modelo que ya tengo (.gguf)»**: eliges el archivo (Descargas, tarjeta de memoria…) y se
+  usa donde está, sin copiarlo: cada modelo ocupa espacio una sola vez. Se puede «Usar» o «Quitar» (el archivo no se
+  borra).
+- Formato de conversación según el modelo: Qwen (ChatML, Qwen3 sin «pensar»), Gemma, Llama 3, Phi‑3/4 y Mistral; los
+  demás, ChatML.
+- Los modelos dentro de otra app (por ejemplo PocketPal, en su carpeta privada) no se pueden leer: Android no lo permite.
+
 # Gateway Hub 0.0.32: intérprete del modelo (sentimientos, MCP o automático)
 
 - **Instala `GatewayHub-0.0.32.apk`**: actualiza tu Gateway Hub y trae todo (Lucía, modelos locales, MCP). Tiene la misma

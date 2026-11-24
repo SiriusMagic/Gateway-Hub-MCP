@@ -166,9 +166,8 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     private suspend fun generate(
         messages: List<ChatMessage>, deterministic: Boolean = false, onText: suspend (String) -> Unit = {}
     ): String {
-        val model = models.selected ?: throw UnsupportedOperationException()
-        val file = models.file(model) ?: throw UnsupportedOperationException()
-        return engine.generate(model, file, messages, deterministic) { withContext(Dispatchers.Main.immediate) { onText(it) } }
+        val (template, file) = models.current() ?: throw UnsupportedOperationException()
+        return engine.generate(template, file, messages, deterministic) { withContext(Dispatchers.Main.immediate) { onText(it) } }
     }
 
     private suspend fun HubMcp.discoverOrFail() = try {
