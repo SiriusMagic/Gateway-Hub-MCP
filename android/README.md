@@ -20,7 +20,10 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK listo para instalar: [`GatewayHub-0.0.17.apk`](GatewayHub-0.0.17.apk) (`com.zirakusa.gatewayhub`).
+APK de esta rama: [Gateway Hub y Lucía 0.0.26 de prueba](GatewayHub-0.0.26-lucia-preview.apk).
+Se instala junto a Gateway Hub como `com.zirakusa.gatewayhub.lucia.preview` y aparece como **Lucía Prueba**.
+Sus modelos y su sesión se guardan aparte. Las acciones entre apps protegidas por firma requieren apps compatibles
+firmadas con la misma clave.
 
 ## Conversación local en Lucía
 
@@ -52,7 +55,7 @@ La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.131134
 
 ```sh
 cd android
-./gradlew :app:testDebugUnitTest :app:lintDebug :app:assemblePreview
+./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleLuciaPreview
 # Prueba real opcional contra un hub: crea un agente de prueba y lo revoca al terminar
 GATEWAY_HUB_URL=https://… GATEWAY_HUB_TOKEN=… ./gradlew :app:testDebugUnitTest --tests '*LiveHubTest'
 ```
@@ -60,4 +63,5 @@ GATEWAY_HUB_URL=https://… GATEWAY_HUB_TOKEN=… ./gradlew :app:testDebugUnitTe
 - Las capturas de cada pantalla quedan en `app/build/screenshots/`.
 - El APK instalable sale en `app/build/outputs/apk/preview/app-preview.apk`. Usa la misma
   configuración que Stone (AGP 8.13.2, Kotlin 2.3.21, para que R8 entienda los metadatos), está
-  firmado con la clave de depuración de la máquina y su `versionCode` empieza en 1.
+  firmado con la clave de depuración de la máquina. La variante para instalar en paralelo sale en
+  `app/build/outputs/apk/luciaPreview/app-luciaPreview.apk`.

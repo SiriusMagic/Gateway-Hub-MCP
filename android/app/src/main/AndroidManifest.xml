@@ -72,7 +72,7 @@
         <!-- Asistente: its own icon, and the phone's assist gesture when chosen as the assistant. -->
         <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/lucia"
             android:icon="@mipmap/ic_lucia" android:roundIcon="@mipmap/ic_lucia" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
-            android:taskAffinity="com.zirakusa.gatewayhub.assistant">
+            android:taskAffinity="${applicationId}.assistant">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

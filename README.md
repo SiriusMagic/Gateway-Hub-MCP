@@ -36,10 +36,9 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[`android/`](android/README.md) contiene **Gateway Hub para Android 0.0.12**, la app nativa del propietario:
-agentes, **escáner de apps compatibles**, apps y métricas. El APK está en `android/GatewayHub-0.0.12.apk`. Usa la API JSON
-`/api/admin/*`, que solo acepta el token del propietario en la cabecera y no responde a navegadores
-(sin CORS).
+[Descarga Gateway Hub y Lucía 0.0.26 de prueba](android/GatewayHub-0.0.26-lucia-preview.apk).
+Esta variante se instala junto a la app habitual. Abre **Lucía Prueba** para usar el asistente sin una sesión del Hub.
+Consulta las instrucciones en [Gateway Hub para Android](android/README.md).
 
 ## Uso (desde el teléfono, sin pegar tokens en ningún chat)
 

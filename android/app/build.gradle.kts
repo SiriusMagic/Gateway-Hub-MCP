@@ -17,8 +17,8 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 25
-        versionName = "0.0.25"
+        versionCode = 26
+        versionName = "0.0.26"
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
         // Lucía's voice recognition (Vosk) only ships for phones' processors: 64 and 32-bit ARM.
@@ -47,6 +47,12 @@ android {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
+        }
+        // Side-by-side build for phones whose installed Gateway Hub uses a different signing key.
+        create("luciaPreview") {
+            initWith(getByName("preview"))
+            applicationIdSuffix = ".lucia.preview"
+            matchingFallbacks += listOf("preview", "release")
         }
     }
 }
