@@ -207,7 +207,6 @@
     <string name="summary_permission">Resumen de las apps de la familia</string>
     <string name="lucia">Lucía</string>
     <string name="lucia_open">Abrir Lucía</string>
-    <string name="lucia_manage_hub">Administrar Gateway Hub</string>
     <string name="lucia_open_offline">Abrir Lucía (funciona sin conectar el hub)</string>
     <string name="lucia_settings">Ajustes de Lucía</string>
     <string name="back">Atrás</string>

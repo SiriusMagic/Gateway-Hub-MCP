@@ -37,7 +37,8 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 ## App Android
 
 [Descarga Gateway Hub y Lucía 0.0.26 de prueba](android/GatewayHub-0.0.26-lucia-preview.apk).
-Esta variante se instala junto a la app habitual. Abre **Lucía Prueba** para usar el asistente sin una sesión del Hub.
+Esta variante se instala junto a la app habitual. La versión 0.0.27 incorpora MCP local con Stone
+y requiere las actualizaciones firmadas con la clave habitual de ambas apps.
 Consulta las instrucciones en [Gateway Hub para Android](android/README.md).
 
 ## Uso (desde el teléfono, sin pegar tokens en ningún chat)

@@ -1,11 +1,15 @@
 package com.zirakusa.gatewayhub
 
+import android.content.Context
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.zirakusa.gatewayhub.assistant.AssistantActions
+import com.zirakusa.gatewayhub.assistant.AssistantPage
 import com.zirakusa.gatewayhub.assistant.AssistantScreen
 import com.zirakusa.gatewayhub.assistant.AssistantState
 import com.zirakusa.gatewayhub.assistant.Brain
@@ -45,11 +49,32 @@ class AssistantScreenshotsTest {
         compose.onRoot().captureRoboImage("build/screenshots/assistant-turns.png")
         // The whole brain lives in her settings: Voz → Notas → Conteo, with «Hecho» marked apart.
         state.send("vamos a contar", byVoice = true); state.endTally()
-        state.settingsOpen = true
+        state.page = AssistantPage.SETTINGS
         compose.onNodeWithText("Mapa de Lucía").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Hecho").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-map.png")
+    }
+
+    @Test fun mcpOpensFromTheDrawerWithoutConnectingAndKeepsTheConversation() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val state = AssistantState(Brain(FakeHands()))
+        var externalRequests = 0
+        compose.setContent {
+            HubTheme { AssistantScreen(state, AssistantActions(manageHub = { externalRequests++ })) }
+        }
+        compose.onNodeWithText("Reproduce música").performClick()
+        compose.onNodeWithContentDescription(context.getString(R.string.assistant_menu)).performClick()
+        compose.onNodeWithText(context.getString(R.string.phone_mcp_title)).performClick()
+        compose.onNodeWithText(context.getString(R.string.scanner_none)).assertExists()
+        assertEquals(0, externalRequests)
+
+        compose.onNodeWithText(context.getString(R.string.phone_mcp_connect_external)).performClick()
+        assertEquals(1, externalRequests)
+        compose.onNodeWithContentDescription(context.getString(R.string.assistant_menu)).performClick()
+        compose.onNodeWithText(context.getString(R.string.assistant_chat_tab)).performClick()
+        compose.onNodeWithText("Reproduce música").assertExists()
+        assertEquals(1, state.turns.size)
     }
 
     /** «Vamos a contar» turns the screen into the count; − and + fix a line; the total is big enough to read from afar. */

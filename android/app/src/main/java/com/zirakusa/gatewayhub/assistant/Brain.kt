@@ -70,13 +70,14 @@ data class Turn(val heard: String, val byVoice: Boolean, val command: Command, v
 /** Understands and acts. Pure apart from its [Hands]. */
 class Brain(private val hands: Hands, private val clock: () -> Long = System::currentTimeMillis) {
     companion object { const val CONFIRM_MS = 60_000L }
-    fun handle(heard: String, byVoice: Boolean = false): Turn {
+    internal fun commandFor(heard: String) = Parser.parse(heard, hands.now().toLocalDate())
+
+    fun handle(heard: String, byVoice: Boolean = false, c: Command = commandFor(heard)): Turn {
         val start = clock()
         // The answer to a question Lucía just asked («¿Borro la lista Rock?» → «sí»).
         pending?.let { p -> answer(Words.normalize(heard).replace('ñ', 'n'))?.let { (reply, ok) ->
             return Turn(heard, byVoice, Command(Action.TOOL, mapOf("app" to p.app.id, "tool" to p.skill.tool)), p.app, reply, ok, clock() - start)
         } }
-        val c = Parser.parse(heard, hands.now().toLocalDate())
         val app = when (c.action) { Action.OPEN, Action.TOOL -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
         // The volume first, so music never starts too loud; then the order.
         val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null
@@ -130,7 +131,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             Action.TOOL -> tool(c, app!!)
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
-            Action.UNKNOWN, Action.CHAT, Action.HUB -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
+            Action.UNKNOWN, Action.CHAT, Action.HUB, Action.PHONE_MCP -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
         }
     }
 

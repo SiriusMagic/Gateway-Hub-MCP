@@ -26,11 +26,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -59,9 +60,11 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
 /** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {
     if (state.tally != null) return CountScreen(state, counting)
-    if (state.brainOpen) return BrainPage(state)
-    if (state.settingsOpen) return LuciaSettings(state, actions)
-    Talking(state, actions)
+    if (state.brainOpen) {
+        androidx.activity.compose.BackHandler { state.brainOpen = false }
+        return BrainPage(state)
+    }
+    AssistantWorkspace(state, actions) { showMenu -> Talking(state, actions, showMenu) }
     state.local?.pending?.let { pending ->
         AlertDialog(
             onDismissRequest = { state.confirmHub(false) },
@@ -78,9 +81,10 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
     }
 }
 
-@Composable private fun Talking(state: AssistantState, actions: AssistantActions) =
+@Composable private fun Talking(state: AssistantState, actions: AssistantActions, showMenu: () -> Unit) =
     Column(Modifier.fillMaxSize().background(HubColors.Background).statusBarsPadding().navigationBarsPadding().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            IconButton(showMenu) { Icon(Icons.Default.Menu, stringResource(R.string.assistant_menu), tint = HubColors.Text) }
             Column(Modifier.weight(1f)) {
                 Text(state.name.shown, color = HubColors.Text, fontSize = 24.sp)
                 val h = state.health
@@ -91,17 +95,24 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
                 Icon(if (state.voiceAnswers) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                     stringResource(if (state.voiceAnswers) R.string.voice_on else R.string.voice_off), tint = HubColors.Muted)
             }
-            IconButton({ state.settingsOpen = true }) { Icon(Icons.Default.Settings, stringResource(R.string.lucia_settings), tint = HubColors.Muted) }
         }
         val local = state.local
         val busy = local?.busy == true
+        val showModelSetup = local?.models?.supported == true && local.models.selected == null
+        val showIntro = state.turns.isEmpty() || showModelSetup
+        val introCount = if (showIntro) 1 else 0
         val list = rememberLazyListState()
         LaunchedEffect(state.last, busy) {
-            if (busy) list.scrollToItem(state.turns.size.coerceAtLeast(1))
-            else if (state.turns.isNotEmpty()) list.animateScrollToItem(state.turns.lastIndex)
+            if (busy) list.scrollToItem(state.turns.size + introCount)
+            else if (state.turns.isNotEmpty()) list.animateScrollToItem(state.turns.lastIndex + introCount)
         }
         LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (state.turns.isEmpty()) item { Examples(state, actions.makeDefault) }
+            if (showIntro) item {
+                if (showModelSetup) {
+                    Button({ state.page = AssistantPage.MODELS }) { Text(stringResource(R.string.assistant_choose_model)) }
+                }
+                if (state.turns.isEmpty()) Examples(state, actions.makeDefault)
+            }
             items(state.turns) { t -> TurnBubbles(t) }
             if (busy) item {
                 Text(local.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,

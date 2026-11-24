@@ -20,6 +20,10 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
             } else chat(assistant, heard, chatQuery, byVoice)
             return true
         }
+        StoneRequests.explicit(heard)?.let { query ->
+            stone(assistant, heard, query, byVoice)
+            return true
+        }
         val hubQuery = hubQuery(heard) ?: return false
         runHub(assistant, heard, hubQuery, byVoice)
         return true
@@ -29,6 +33,19 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         val start = SystemClock.elapsedRealtime()
         assistant.work(onFailure = { complete(generated(heard, byVoice, Action.CHAT, start, message(it), false)) }) {
             complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(query)))
+        }
+    }
+
+    fun stone(assistant: LocalAssistant, heard: String, query: String, byVoice: Boolean) {
+        val start = SystemClock.elapsedRealtime()
+        fun finish(text: String, ok: Boolean = false) = complete(generated(heard, byVoice, Action.PHONE_MCP, start, text, ok))
+        if (assistant.models.selected == null) {
+            finish(message(R.string.local_chat_model_first))
+            return
+        }
+        assistant.work(onFailure = { finish(message(it)) }) {
+            val answer = assistant.askStone(query)
+            finish(answer ?: message(R.string.phone_mcp_no_tool), answer != null)
         }
     }
 

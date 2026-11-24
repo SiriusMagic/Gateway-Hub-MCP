@@ -10,17 +10,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -32,8 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.gatewayhub.R
-import com.zirakusa.gatewayhub.assistant.local.HubConnectionSettings
-import com.zirakusa.gatewayhub.assistant.local.LocalModelSettings
 import com.zirakusa.gatewayhub.ui.HubColors
 
 /**
@@ -42,13 +37,8 @@ import com.zirakusa.gatewayhub.ui.HubColors
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable fun LuciaSettings(state: AssistantState, actions: AssistantActions) =
-    Column(Modifier.fillMaxSize().background(HubColors.Background).statusBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
+    Column(Modifier.fillMaxSize().background(HubColors.Background).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton({ state.settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back), tint = HubColors.Text) }
-            Text(stringResource(R.string.lucia_settings), color = HubColors.Text, fontSize = 22.sp)
-        }
-        Button(stringResource(R.string.lucia_manage_hub), actions.manageHub)
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(HubColors.Card).clickable { state.brainOpen = true }.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -79,9 +69,8 @@ import com.zirakusa.gatewayhub.ui.HubColors
             Text(stringResource(if (state.canAppear) R.string.appear_yes else R.string.appear_hint), color = HubColors.Muted, fontSize = 14.sp)
             if (!state.canAppear) Button(stringResource(R.string.appear_go), actions.allowAppear)
         }
-        state.local?.let { local ->
-            Card { LocalModelSettings(local) }
-            Card { HubConnectionSettings(local) }
+        state.local?.takeIf { it.models.supported }?.let {
+            Card { Button(stringResource(R.string.assistant_advanced)) { state.page = AssistantPage.ADVANCED } }
         }
         Card {
             Text(stringResource(R.string.voice_title), color = HubColors.Text, fontSize = 17.sp)

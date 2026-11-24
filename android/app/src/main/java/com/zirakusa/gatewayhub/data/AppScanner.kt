@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 /** An app on this phone that declares support for the Gateway Hub (only what it declares; nothing is started). */
 data class LocalApp(val packageName: String, val label: String, val version: String, val prefix: String?, val sameDeveloper: Boolean,
     /** content:// authority that gives the hub its link (Redireccionar a Hub); null when the app has none. */
-    val linkAuthority: String? = null)
+    val linkAuthority: String? = null, val localMcpAuthority: String? = null)
 
 /** What the hub says about one app (from /api/admin/scan). */
 data class RemoteStatus(val prefix: String, val title: String, val androidPackage: String?, val remote: Boolean,
@@ -33,8 +33,11 @@ class PackageScanner(private val context: Context) : LocalAppSource {
             val version = runCatching { pm.getPackageInfo(pkg, 0).versionName }.getOrNull().orEmpty()
             // The authority must belong to that same package: an app cannot point the hub at another app's provider.
             val authority = info.metaData?.getString(META_LINK)?.takeIf { it.startsWith("$pkg.") && Regex("^[A-Za-z0-9._]+$").matches(it) }
+            val localAuthority = info.metaData?.getString(META_LOCAL_MCP)?.takeIf {
+                it == "$pkg.localmcp" && pm.resolveContentProvider(it, 0)?.packageName == pkg
+            }
             LocalApp(pkg, info.applicationInfo.loadLabel(pm).toString().take(60), version, prefix,
-                pm.checkSignatures(context.packageName, pkg) == PackageManager.SIGNATURE_MATCH, authority)
+                pm.checkSignatures(context.packageName, pkg) == PackageManager.SIGNATURE_MATCH, authority, localAuthority)
         }
     }
 
@@ -42,6 +45,7 @@ class PackageScanner(private val context: Context) : LocalAppSource {
         /** Declared by compatible apps (Stone: MainActivity) together with [META_PREFIX]. */
         const val ACTION = "com.zirakusa.gatewayhub.action.APP"
         const val META_PREFIX = "com.zirakusa.gatewayhub.module"
+        const val META_LOCAL_MCP = "com.zirakusa.gatewayhub.local_mcp"
         const val META_LINK = "com.zirakusa.gatewayhub.link"
     }
 }

@@ -27,12 +27,22 @@ firmadas con la misma clave.
 
 ## Conversación local en Lucía
 
-Al abrir Gateway Hub sin conexión configurada se abre Lucía. Desde **Lucía › Ajustes › Administrar Gateway Hub** puedes entrar al panel del propietario.
+Al abrir Gateway Hub aparece el **Chat**. Desde el menú lateral abre **Modelos**, **MCP** o **Ajustes**.
 
-1. Abre Lucía › Ajustes › **Modelos locales** en un Android ARM64. Descarga **Qwen3 4B** (2,50 GB, recomendado para la primera prueba en un teléfono de 8 GB de RAM o más) o **Qwen2.5 1.5B** (1,12 GB). Las descargas se comprueban con SHA-256 antes de activar el modelo.
-2. Instala una voz de síntesis en español sin conexión si Lucía lo indica. En modo avión, toca el micrófono y prueba «hoy me siento cansado, ¿qué me sugieres?». Puedes elegir un tono en los ajustes. Empieza la frase con «charla» para enviarla directamente al modelo. El historial de la conversación se mantiene en memoria mientras Lucía está abierta.
-3. Prueba «abre Stone», «pausa la música» y «reanuda la música». Las órdenes del teléfono y el MCP local de apps compatibles siguen pasando por el asistente de Android.
-4. Para usar el Hub por internet, crea un enlace dedicado en **Agentes** y pégalo en Lucía › Ajustes › **Gateway Hub MCP**. Prueba «busca mis notas de viaje en el Hub». Los cambios requieren confirmación en pantalla. El enlace se guarda cifrado y solo se envía al Hub configurado.
+1. En **Modelos**, descarga **Qwen3 4B** (2,50 GB) o **Qwen2.5 1.5B** (1,12 GB). En un teléfono ARM64,
+   Lucía comprueba el SHA-256 antes de activar el modelo. Instala una voz en español sin conexión desde
+   **Ajustes** si quieres oír las respuestas.
+2. En **MCP** puedes revisar las apps instaladas sin una sesión del Hub. En Stone 1.7.27 abre
+   **Ajustes › Modo MCP › Permitir MCP local**. Con Stone abierto previamente y el modelo seleccionado,
+   prueba «¿qué canciones de Daft Punk hay en Stone?» o «¿qué está sonando?». Puedes hacerlo en modo avión.
+3. En **MCP › Conectar un LLM externo**, usa el acceso de propietario para entrar a **Agentes**, elegir
+   permisos y copiar el enlace del agente. Para que Lucía consulte un Hub remoto, pega un enlace de agente
+   en **Ajustes › Avanzado** y usa una petición como «busca mis notas de viaje en el Hub». Los cambios en
+   el Hub requieren confirmación en pantalla.
+
+El código de 0.0.27 está en esta rama. Su APK para actualizar Gateway Hub requiere la clave de firma habitual,
+que debe coincidir con la de Stone para que Android conceda el permiso local.
+
 
 La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.13113456 y CMake 3.31.6. CMake descarga una revisión fija de [llama.cpp](https://github.com/ggml-org/llama.cpp) para la variante ARM64.
 

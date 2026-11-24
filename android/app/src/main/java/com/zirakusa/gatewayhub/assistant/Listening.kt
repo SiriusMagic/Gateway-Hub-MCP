@@ -1,6 +1,7 @@
 package com.zirakusa.gatewayhub.assistant
 
 import com.zirakusa.gatewayhub.assistant.local.LocalTurns
+import com.zirakusa.gatewayhub.assistant.local.StoneRequests
 import org.json.JSONArray
 import kotlin.math.sqrt
 
@@ -99,7 +100,8 @@ object Hearing {
     fun pick(limited: String, free: String, conversational: Boolean = false): String {
         val l = limited.replace("[unk]", "").replace(Regex("\\s+"), " ").trim()
         val f = free.trim()
-        if (conversational && (LocalTurns.chatQuery(f) != null || LocalTurns.hubQuery(f) != null)) return f
+        if (conversational && (LocalTurns.chatQuery(f) != null || LocalTurns.hubQuery(f) != null ||
+            StoneRequests.matches(f, Parser.parse(f)))) return f
         val byList = Parser.parse(l)
         if (byList.action == Action.UNKNOWN && Parser.parse(f).action != Action.UNKNOWN) return f
         // A family app's tool or a note with free words (a task, a city, a name): the free recognizer has them, when it heard

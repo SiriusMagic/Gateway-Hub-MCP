@@ -65,6 +65,6 @@ object Talk {
         Action.WEATHER -> R.string.do_weather; Action.AGENDA -> R.string.do_agenda; Action.TODAY -> R.string.do_today; Action.TIME -> R.string.do_time
         Action.DATE -> R.string.do_date; Action.PHOTO -> R.string.do_photo; Action.SCAN -> R.string.do_scan; Action.SPEED -> R.string.do_speed
         Action.COUNT -> R.string.do_count; Action.VOLUME -> R.string.do_volume; Action.ANSWER -> R.string.do_answer; Action.HANG_UP -> R.string.do_hang_up; Action.NOTE -> R.string.do_note; Action.TORCH -> R.string.do_torch; Action.TOOL -> R.string.do_tool; Action.OPEN -> R.string.do_open; Action.UNKNOWN -> R.string.do_unknown
-        Action.CHAT -> R.string.local_chat; Action.HUB -> R.string.local_hub
+        Action.PHONE_MCP -> R.string.phone_mcp_title; Action.CHAT -> R.string.local_chat; Action.HUB -> R.string.local_hub
     })
 }

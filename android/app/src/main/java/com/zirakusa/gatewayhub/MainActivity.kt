@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -15,6 +14,7 @@ import com.zirakusa.gatewayhub.data.KeystoreSessionStore
 import com.zirakusa.gatewayhub.data.PackageScanner
 import com.zirakusa.gatewayhub.data.ProviderLinker
 import com.zirakusa.gatewayhub.ui.HomeScreen
+import com.zirakusa.gatewayhub.ui.HubTab
 import com.zirakusa.gatewayhub.ui.HubTheme
 import com.zirakusa.gatewayhub.ui.HubViewModel
 import com.zirakusa.gatewayhub.ui.LoginScreen
@@ -31,8 +31,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val managingHub = intent.action == ACTION_MANAGE_HUB
-        if (!managingHub && !vm.state.value.connected) {
+        if (intent.action != ACTION_MANAGE_HUB) {
             goToLucia()
             return
         }
@@ -42,11 +41,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             HubTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
-                when {
-                    state.connected -> HomeScreen(state, vm)
-                    managingHub -> LoginScreen(state, vm::connect)
-                    else -> LaunchedEffect(Unit) { goToLucia() }
-                }
+                if (state.connected) HomeScreen(state, vm, HubTab.AGENTS)
+                else LoginScreen(state, vm::connect)
             }
         }
     }

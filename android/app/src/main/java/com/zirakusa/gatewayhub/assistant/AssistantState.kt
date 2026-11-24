@@ -3,6 +3,7 @@ package com.zirakusa.gatewayhub.assistant
 import androidx.compose.runtime.getValue
 import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.assistant.local.LocalTurns
+import com.zirakusa.gatewayhub.assistant.local.StoneRequests
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,7 +20,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var level by mutableFloatStateOf(0f)
     var voiceAnswers by mutableStateOf(true)
     /** Lucía's settings page and what the phone allows (the activity keeps these up to date). */
-    var settingsOpen by mutableStateOf(false)
+    internal var page by mutableStateOf(AssistantPage.CHAT)
     /** «Mapa de Lucía», opened from her settings. */
     var brainOpen by mutableStateOf(false)
     var wake by mutableStateOf(false)
@@ -47,7 +48,12 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val assistant = local
         if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
         if (assistant?.models?.supported == true && localTurns.route(assistant, heard, byVoice)) return
-        val turn = brain.handle(heard, byVoice)
+        val command = brain.commandFor(heard)
+        if (assistant?.models?.supported == true && assistant.models.selected != null && StoneRequests.matches(heard, command)) {
+            localTurns.stone(assistant, heard, heard, byVoice)
+            return
+        }
+        val turn = brain.handle(heard, byVoice, command)
         if (turn.reply.say == Say.NOT_UNDERSTOOD && assistant?.models?.selected != null && assistant.models.supported) {
             localTurns.chat(assistant, heard, heard, byVoice)
         } else {

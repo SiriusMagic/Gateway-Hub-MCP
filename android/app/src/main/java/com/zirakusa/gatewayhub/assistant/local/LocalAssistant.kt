@@ -21,6 +21,7 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     private var turnJob: Job? = null
     private var history = emptyList<ChatMessage>()
 
+    internal val phoneMcp = PhoneMcp(app)
     val hub = HubConnection(app, scope) { !busy && pending == null }
     val models = LocalModels(app, scope, canChange = { !busy && pending == null }, onUnselected = { engine.close() })
     var tone by mutableStateOf(ConversationTone.entries.firstOrNull { it.name == prefs.getString("local_tone", null) } ?: ConversationTone.NATURAL)
@@ -51,7 +52,11 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
             } catch (error: LinkageError) {
                 onFailure(R.string.local_model_error)
             } catch (error: Exception) {
-                onFailure(if (error is McpFailure) error.hubMessage() else R.string.local_model_error)
+                onFailure(when (error) {
+                    is McpFailure -> error.hubMessage()
+                    is PhoneMcpError -> error.status.label
+                    else -> R.string.local_model_error
+                })
             } finally {
                 busy = false
                 canStop = false
@@ -73,16 +78,28 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
 
     internal suspend fun decide(query: String): Pending? {
         val client = HubMcp(hub.link ?: throw McpFailure.Authorization())
-        val permitted = client.discoverOrFail()
-        val candidates = McpSelection.candidates(query, permitted)
+        val selection = choose(query, client.discoverOrFail()) ?: return null
+        return Pending(client, selection)
+    }
+
+    internal suspend fun askStone(query: String): String? {
+        val app = phoneMcp.stone()
+        if (app.status != PhoneMcpStatus.READY) throw PhoneMcpError(app.status)
+        val selection = choose(query, app.tools) ?: return null
+        val answer = StoneRequests.answer(selection.tool.name, phoneMcp.call(app, selection), this.app.resources)
+        history = (history + ChatMessage("user", query) + ChatMessage("assistant", answer)).takeLast(8)
+        return answer
+    }
+
+    private suspend fun choose(query: String, tools: List<McpTool>): McpSelection? {
+        val candidates = McpSelection.candidates(query, tools)
         if (candidates.isEmpty()) return null
         val instruction = "Selecciona una herramienta que coincida con la petición en español. " +
             "Devuelve exclusivamente JSON con las claves tool (nombre exacto) y arguments (objeto). " +
             "Si ninguna herramienta coincide o faltan datos obligatorios, devuelve {}. No inventes identificadores.\n" +
             candidates.joinToString("\n", transform = McpTool::describe)
         val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true)
-        val selection = McpSelection.parse(answer, candidates) ?: return null
-        return Pending(client, selection)
+        return McpSelection.parse(answer, candidates)
     }
 
     internal fun review(call: Pending) { pending = call }

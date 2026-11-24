@@ -1,0 +1,30 @@
+<resources>
+    <string name="assistant_menu">Abrir menú</string>
+    <string name="assistant_chat_tab">Chat</string>
+    <string name="assistant_choose_model">Elegir modelo</string>
+    <string name="assistant_advanced">Avanzado</string>
+    <string name="phone_mcp_title">MCP</string>
+    <string name="phone_mcp_apps">Apps de este teléfono</string>
+    <string name="phone_mcp_ready">MCP local disponible</string>
+    <string name="phone_mcp_off">Activa «Permitir MCP local» en Stone → Ajustes → Modo MCP.</string>
+    <string name="phone_mcp_signature">Firma incompatible para MCP local.</string>
+    <string name="phone_mcp_declared">App compatible detectada. Disponibilidad local sin verificar.</string>
+    <string name="phone_mcp_unavailable">El MCP local no pudo responder. Abre Stone y vuelve a intentarlo.</string>
+    <string name="phone_mcp_stone_missing">Stone no está disponible en este teléfono.</string>
+    <string name="phone_mcp_connect_external">Conectar un LLM externo</string>
+    <string name="phone_mcp_tools">Herramientas</string>
+    <string name="phone_mcp_known">Herramientas que conoce Lucía</string>
+    <string name="phone_mcp_search">Buscar en la biblioteca</string>
+    <string name="phone_mcp_player">Consultar el reproductor</string>
+    <string name="phone_mcp_open_failed">No se pudo abrir esta app.</string>
+    <string name="phone_mcp_no_tool">No encontré una herramienta local para esa petición.</string>
+    <string name="phone_mcp_no_track">Stone no tiene ninguna canción seleccionada.</string>
+    <string name="phone_mcp_no_songs">Stone no encontró canciones que coincidan.</string>
+    <string name="phone_mcp_track">%1$s, de %2$s</string>
+    <string name="phone_mcp_playing">Está sonando %1$s.</string>
+    <string name="phone_mcp_paused">Stone tiene seleccionada %1$s y está en pausa.</string>
+    <plurals name="phone_mcp_songs">
+        <item quantity="one">Encontré %d resultado en Stone.</item>
+        <item quantity="other">Encontré %d resultados en Stone.</item>
+    </plurals>
+</resources>
