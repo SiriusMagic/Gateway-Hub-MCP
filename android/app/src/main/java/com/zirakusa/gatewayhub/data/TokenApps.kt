@@ -17,6 +17,7 @@ object TokenApps {
         "cld_" to TokenApp("calendar_", "Calendario"), "cli_" to TokenApp("weather_", "Clima"), "cam_" to TokenApp("camera_", "Cámara"),
         "qrc_" to TokenApp("qr_", "QR"), "red_" to TokenApp("network_", "Redes"), "bru_" to TokenApp("compass_", "Brújula"),
         "niv_" to TokenApp("level_", "Nivel"), "ini_" to TokenApp("launcher_", "Inicio"),
+        "grb_" to TokenApp("rec_", "Grabadora"),
     )
     private val TOKEN = Regex("""(?:[?&]token=|\b)([a-z]{3}_)[A-Za-z0-9_-]{20,}""")
 

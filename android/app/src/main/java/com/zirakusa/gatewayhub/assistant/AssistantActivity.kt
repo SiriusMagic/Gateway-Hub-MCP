@@ -42,7 +42,14 @@ class AssistantActivity : ComponentActivity() {
     private var beeper: ToneGenerator? = null
     private var resumeCount = false
     private val mic = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (it) { if (state.tally != null) countOn(greet = true) else listen() } }
-    private val contacts = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> if (ok) state.last?.let { state.send(it.heard, it.byVoice) } }
+    private val contacts = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        if (ok) state.last?.let { state.send(it.heard, it.byVoice) }
+        // Said «no» for good: Android shows no dialog any more, so the app's page opens, where «Contactos» can be allowed.
+        else if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) runCatching {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
+            Toast.makeText(this, R.string.contacts_in_settings, Toast.LENGTH_LONG).show()
+        }
+    }
     private val phone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private val forWake = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
         if (r[Manifest.permission.RECORD_AUDIO] == true) setWake(true) else Toast.makeText(this, R.string.wake_needs_mic, Toast.LENGTH_LONG).show()

@@ -50,14 +50,34 @@ object Vosk {
 
     fun text(json: String, key: String = "text") = runCatching { JSONObject(json).optString(key) }.getOrDefault("")
 
-    /** The names of the contacts, so «llama a Ana» is heard (only with the contacts permission). */
+    /**
+     * The names of the contacts, so «llama a Ana» is heard: from the phone with the permission, otherwise from Teléfono (it
+     * already has it), by each first letter. Kept 10 minutes.
+     */
     fun people(context: Context): List<String> {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) return emptyList()
-        return runCatching {
+        cached?.let { (at, names) -> if (System.currentTimeMillis() - at < 600_000) return names }
+        val names = if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) runCatching {
             context.contentResolver.query(ContactsContract.Contacts.CONTENT_URI, arrayOf(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY), null, null, null)?.use { c ->
                 buildList { while (c.moveToNext() && size < 500) add(c.getString(0).orEmpty()) }
             }.orEmpty()
-        }.getOrDefault(emptyList())
+        }.getOrDefault(emptyList()) else fromPhoneApp(context)
+        cached = System.currentTimeMillis() to names
+        return names
+    }
+
+    @Volatile private var cached: Pair<Long, List<String>>? = null
+
+    private fun fromPhoneApp(context: Context): List<String> {
+        val hands = AndroidHands(context.applicationContext)
+        val phone = Catalog.byId("telefono")
+        val names = LinkedHashSet<String>()
+        for (letter in "abcdefghijklmnñopqrstuvwxyz") {
+            val list = runCatching { hands.tool(phone, "contacts_search", JSONObject().put("query", letter.toString()).put("limit", 50)) }
+                .getOrNull()?.optJSONArray("contacts") ?: if (letter == 'a') return emptyList() else continue
+            for (i in 0 until list.length()) list.optJSONObject(i)?.optString("name")?.takeIf { it.isNotBlank() }?.let(names::add)
+            if (names.size >= 500) break
+        }
+        return names.toList()
     }
 }
 

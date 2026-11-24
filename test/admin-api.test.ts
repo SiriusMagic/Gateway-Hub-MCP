@@ -24,7 +24,7 @@ test("state lists modules, agents without hashes and metrics", async () => {
   assert.equal(body.version, "0.0.3");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
   assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "calc_", "files_", "video_", "phone_", "sms_", "clock_",
-    "calendar_", "notas_", "weather_", "camera_", "qr_", "network_", "compass_", "level_", "launcher_", "notes_", "utils_"]);
+    "calendar_", "notas_", "weather_", "camera_", "qr_", "network_", "compass_", "level_", "rec_", "launcher_", "notes_", "utils_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
   assert.equal(body.agents[0].tokenHash, undefined);

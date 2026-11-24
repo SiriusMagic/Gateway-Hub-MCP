@@ -17,10 +17,10 @@ object Speech {
     private val nouns = mapOf("alarms" to "alarmas", "tasks" to "tareas", "notes" to "notas", "events" to "eventos", "holidays" to "feriados",
         "messages" to "mensajes", "calls" to "llamadas", "birthdays" to "cumpleaños", "contacts" to "contactos", "files" to "archivos",
         "items" to "códigos", "history" to "códigos", "codes" to "códigos", "days" to "días", "results" to "resultados",
-        "playlists" to "listas", "threads" to "conversaciones", "photos" to "fotos", "media" to "fotos")
+        "playlists" to "listas", "threads" to "conversaciones", "photos" to "fotos", "media" to "fotos", "recordings" to "grabaciones")
     private val singular = mapOf("alarmas" to "alarma", "tareas" to "tarea", "notas" to "nota", "eventos" to "evento", "feriados" to "feriado",
         "mensajes" to "mensaje", "llamadas" to "llamada", "contactos" to "contacto", "archivos" to "archivo", "códigos" to "código",
-        "días" to "día", "resultados" to "resultado", "listas" to "lista", "conversaciones" to "conversación", "fotos" to "foto")
+        "días" to "día", "resultados" to "resultado", "listas" to "lista", "conversaciones" to "conversación", "fotos" to "foto", "grabaciones" to "grabación")
     private val names = listOf("title", "text", "name", "label", "holiday", "who", "from", "display_name", "city", "number", "path", "preview")
     private val months = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
 

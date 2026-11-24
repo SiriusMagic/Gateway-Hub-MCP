@@ -1,3 +1,23 @@
+# Lucía Prueba 0.0.28
+
+- El chat abre directamente y ofrece Modelos, MCP y Ajustes desde el menú lateral.
+- Un modelo descargado puede consultar la biblioteca y lo que suena en Stone Prueba con MCP local.
+- Esta compilación incorpora las mejoras de contactos, Grabadora y Redes de Gateway Hub 0.0.26.
+- Los APK de Lucía Prueba y Stone Prueba están juntos en [android/](android/README.md).
+
+# Gateway Hub 0.0.26: Lucía encuentra a tus contactos y llega Grabadora
+
+- **«Llama a …» sin permiso propio**: si Lucía no tiene el permiso de contactos, los busca a través de Teléfono (que ya lo
+  tiene). Si dices que no para siempre, abre la página de la app para permitirlo.
+- **Nombres parecidos**: el orden da igual («jefe Disled» = «Disled Jefe») y entiende lo que suena igual («Vox» → «Box»,
+  «Jessica» → «Yesica», «Dizled» → «Disled»). Si dos contactos se parecen igual, no adivina.
+- **Por voz**: los nombres de tus contactos entran en el vocabulario de Lucía (también vía Teléfono). Si el nombre no lo
+  conoce, usa lo que oyó el reconocedor libre y lo compara por cómo suena.
+- **Grabadora** en la familia: «mis grabaciones», «busca la grabación de la reunión», «abre la grabadora». Lucía nunca
+  graba ni borra: solo abre la app; grabar es tu toque.
+- **Redes**: «qué tal mi señal», «cuál es mi ping».
+- Servidor: módulo `rec_` (Grabadora) para el token `grb_`.
+
 # Gateway Hub 0.0.25: Lucía sabe usar casi todas las herramientas de la familia
 
 - **Pregunta antes de cambiar algo**: lo que borra, edita, mueve o hace una foto se confirma con «sí» o «no» (espera 60 s;

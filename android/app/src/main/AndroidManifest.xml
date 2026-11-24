@@ -57,6 +57,7 @@
         <package android:name="com.zirakusa.redes" />
         <package android:name="com.zirakusa.brujula" />
         <package android:name="com.zirakusa.nivel" />
+        <package android:name="com.zirakusa.grabadora" />
         <package android:name="com.zirakusa.launcher" />
     </queries>
     <application android:label="@string/app_name" android:icon="@mipmap/ic_launcher"

@@ -123,6 +123,13 @@ class AssistantTest {
         assertEquals(Say.NO_CONTACT, brain.handle("llama a Pedro").reply.say)                        // never a guess between people
         assertEquals(Person("Ana Pérez", "1"), People.best(listOf(Person("Ana Pérez", "1"), Person("Ana María", "2")), "ana pérez"))
         assertEquals(Person("Mamá ❤", "3"), People.best(listOf(Person("Mamá ❤", "3")), "mi mama"))
+        // Names as heard or typed: any order, sounds alike, and one person with two numbers is still one person.
+        val book = listOf(Person("Disled Jefe", "4"), Person("Disled Jefe", "5"), Person("Box Ramírez", "6"), Person("Yesica Mora", "7"), Person("Pedro Ruiz", "8"))
+        assertEquals("4", People.best(book, "disled jefe")?.number); assertEquals("4", People.best(book, "jefe disled")?.number)
+        assertEquals("6", People.best(book, "vox")?.number); assertEquals("7", People.best(book, "jessica")?.number)
+        assertEquals("4", People.best(book, "dizled")?.number); assertEquals(null, People.best(book, "carlos"))
+        assertEquals(null, People.best(listOf(Person("Ana", "1"), Person("Ane", "2")), "ani"))     // two as close: no guess
+        assertTrue("bo" in People.guesses("vox")); assertTrue("je" in People.guesses("gessica"))
         hands.contactsAllowed = false
         assertEquals(Say.NEED_CONTACTS, brain.handle("llama a Ana").reply.say)
         hands.installed = emptySet()

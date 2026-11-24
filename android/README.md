@@ -20,10 +20,10 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK de esta rama: [Lucía Prueba 0.0.27](GatewayHub-0.0.27-lucia-preview.apk).
+APK de esta rama: [Lucía Prueba 0.0.28](GatewayHub-0.0.28-lucia-preview.apk).
 Se instala junto a Gateway Hub como `com.zirakusa.gatewayhub.lucia.preview` y aparece como **Lucía Prueba**.
-Actualiza la 0.0.26 de prueba y mantiene sus modelos y ajustes. Para consultas MCP locales, usa
-[Stone Prueba 1.7.27](https://github.com/SiriusMagic/Stone/blob/feat/lucia-mcp-local/android-native/Stone-1.7.27-lucia-preview.apk),
+Actualiza las versiones de prueba 0.0.26 y 0.0.27 y mantiene sus modelos y ajustes. Para consultas MCP locales, usa
+[Stone Prueba 1.7.27](Stone-1.7.27-lucia-preview.apk),
 firmado con la misma clave de prueba y con su propia biblioteca.
 
 ## Conversación local en Lucía
