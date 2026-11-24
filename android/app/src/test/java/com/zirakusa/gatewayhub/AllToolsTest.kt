@@ -64,6 +64,8 @@ class AllToolsTest {
             "qué apps tengo" to "launcher_apps", "qué hay en mi dock" to "launcher_dock", "pon el flash de la cámara en automático" to "camera_flash",
             "enciende la linterna de la cámara" to "camera_flash", "temporizador de la cámara a 10 segundos" to "camera_timer", "toma una foto" to "camera_capture",
             "tómame una selfie" to "camera_capture", "qué tal mi señal" to "network_signal", "cuál es mi ping" to "network_latency",
+            "pon el video de bad bunny" to "video_play", "busca el video de gatos" to "video_search", "busca gatos en stone video" to "video_search", "busca videos de gatos" to "gallery_search", "qué video es este" to "video_state",
+            "cuántos videos tengo en stone video" to "video_library_stats", "pon los videos en aleatorio" to "video_shuffle",
             "mis grabaciones" to "rec_list", "busca la grabación de la reunión" to "rec_list",
         ).forEach { (said, want) -> assertEquals(said, want, tool(said)) }
         val move = args("pospón la reunión con Ana para el viernes a las 4")
@@ -72,6 +74,9 @@ class AllToolsTest {
         assertEquals("2026-11-23", args("fotos de ayer").getString("from"))
         assertEquals("torch", args("enciende la linterna de la cámara").getString("flash")); assertEquals("auto", args("pon el flash de la cámara en automático").getString("flash"))
         assertTrue(args("tómame una selfie").getBoolean("selfie")); assertEquals("la reunion", args("busca la grabación de la reunión").getString("query"))
+        // Stone Video's own orders go to Stone Video with Stone's tool names.
+        listOf("pon el video de bad bunny", "pantalla completa", "pon la pantalla horizontal").forEach { assertEquals(it, "video", p(it)["app"]) }
+        assertEquals("bad bunny", p("pon el video de bad bunny").slots["video"] ?: args("pon el video de bad bunny").optString("video"))
         // Lucía never records: «graba» only opens Grabadora, where the user taps the button.
         assertEquals(Action.OPEN, p("abre la grabadora").action)
         // Lucía's own orders stay: the phone's torch, a photo app opened by name.

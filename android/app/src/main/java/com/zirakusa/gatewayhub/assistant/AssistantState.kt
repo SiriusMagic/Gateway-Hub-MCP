@@ -5,6 +5,7 @@ import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.assistant.local.LocalTurns
 import com.zirakusa.gatewayhub.assistant.local.StoneRequests
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -38,7 +39,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var tallySavedId by mutableStateOf<Long?>(null)
     var tallyFailed by mutableStateOf(false)
     /** Each new order restarts the light running through the graph. */
-    var pulse by mutableStateOf(0); private set
+    var pulse by mutableIntStateOf(0); private set
     val last get() = turns.lastOrNull()
     val health get() = Graph.health(turns)
     val heat get() = Graph.heat(turns)

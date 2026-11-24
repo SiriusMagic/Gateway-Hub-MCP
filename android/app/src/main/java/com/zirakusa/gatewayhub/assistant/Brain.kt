@@ -181,7 +181,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             return if (hands.capture(sent.optBoolean("selfie"))) Reply(Say.TOOL_RESULT, listOf(fill(skill?.done.orEmpty(), said))) to true
                 else Reply(Say.TOOL_OLD, listOf(app.name)) to false
         val r = hands.tool(app, skill?.call ?: name, sent) ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
-        val text = skill?.done?.let { fill(it, said) } ?: Speech.say(name, r, hands.now().toLocalDate(), org.json.JSONObject(said.filterValues { it != null }))
+        val text = skill?.done?.let { fill(it, said) } ?: Speech.say(skill?.call ?: name, r, hands.now().toLocalDate(), org.json.JSONObject(said.filterValues { it != null }))
         return Reply(Say.TOOL_RESULT, listOf(text)) to true
     }
 

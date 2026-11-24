@@ -17,8 +17,12 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 28
-        versionName = "0.0.28"
+        versionCode = 29
+        versionName = "0.0.29"
+        // Where llama.cpp's source already is (same pinned commit), for machines that can't download it: -PllamaSourceDir=…
+        (project.findProperty("llamaSourceDir") as String?)?.let { dir ->
+            externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=$dir" } }
+        }
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
         // Lucía's voice recognition (Vosk) only ships for phones' processors: 64 and 32-bit ARM.

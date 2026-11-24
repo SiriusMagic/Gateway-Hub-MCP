@@ -117,13 +117,13 @@ object StoneSkills {
                 else -> null
             }
         },
-        Skill("video_set_orientation", "stone", "Girar pantalla", done = "Pantalla {_how}.") { s, _ ->
+        Skill("video_set_orientation", "video", "Girar pantalla", done = "Pantalla {_how}.") { s, _ ->
             r("(?:pon|gira) (?:la pantalla|el video)(?: en)? (horizontal|vertical|automatica|automatico)").find(s.t)?.let { m ->
                 val o = when (m.groupValues[1]) { "horizontal" -> "landscape"; "vertical" -> "portrait"; else -> "auto" }
                 Args().put("orientation", o).put("_how", m.groupValues[1])
             }
         },
-        Skill("video_set_scale", "stone", "Tamaño del video", done = "Video: {_how}.") { s, _ ->
+        Skill("video_set_scale", "video", "Tamaño del video", done = "Video: {_how}.") { s, _ ->
             when {
                 r("(?:pon el video en )?pantalla completa|llena la pantalla").matches(s.t) -> Args().put("scale", "fill").put("_how", "pantalla completa")
                 r("(?:haz )?zoom al video|acerca el video").matches(s.t) -> Args().put("scale", "zoom").put("_how", "con zoom")
@@ -131,10 +131,24 @@ object StoneSkills {
                 else -> null
             }
         },
-        Skill("video_set_brightness", "stone", "Brillo", done = "Brillo {_how}.") { s, _ ->
+        Skill("video_set_brightness", "video", "Brillo", done = "Brillo {_how}.") { s, _ ->
             r("brillo (?:al |a )?(\\d{1,3})(?: por ciento)?").find(s.t)?.let { Args().put("percent", it.groupValues[1].toInt().coerceIn(2, 100)).put("_how", "al ${it.groupValues[1]} %") }
                 ?: if (r("brillo automatico").matches(s.t)) Args().put("auto", true).put("_how", "automático") else null
         },
+        // Stone Video: the same tools as Stone (it is a copy dedicated to video), asked to Stone Video. The keys differ
+        // (video_…) so each has its own node on the map; [Skill.call] is the real tool.
+        Skill("video_play", "video", "Poner video", call = "player_play_song", done = "Poniendo «{found}».",
+            lookup = SEARCH.copy(said = "video", with = { mapOf("query" to (it["video"] ?: ""), "limit" to 10) }),
+            read = one("(?:pon|ponme|reproduce|quiero ver|muestrame) (?:el |un )?(?:video|clip|mv) (?:de )?(.+)", "video")),
+        Skill("video_search", "video", "Buscar videos", call = "library_search",
+            read = { s, d -> one("busca (?:el |un )?(?:video|clip|mv) (?:de |del |sobre )?(.+)", "query")(s, d)
+                ?: one("busca (.+) en stone video", "query")(s, d) }),
+        Skill("video_state", "video", "¿Qué video es?", call = "player_state",
+            read = whole("que video (?:es este|estoy viendo|esta sonando|suena|es)", "como se llama este video")),
+        Skill("video_library_stats", "video", "Mis videos", call = "library_stats",
+            read = whole("cuantos videos (?:tengo|hay) en stone video", "(?:mis videos|estadisticas) de stone video")),
+        Skill("video_shuffle", "video", "Videos al azar", call = "player_set_shuffle", done = "Videos en modo aleatorio.",
+            read = fixed({ Args().put("enabled", true) }, "(?:pon|activa) (?:los )?videos (?:en )?(?:aleatorio|al azar)", "mezcla los videos")),
         Skill("appearance_set_theme", "stone", "Tema de Stone", done = "Tema {_how} en Stone.") { s, _ ->
             r("(?:pon|cambia) (?:el )?(?:tema|fondo) (?:de stone )?(?:a |en )?(${keyOf(themes)})").find(s.t)?.let { Args().put("theme", themes.getValue(it.groupValues[1])).put("_how", it.groupValues[1]) }
         },

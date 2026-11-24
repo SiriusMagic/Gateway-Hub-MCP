@@ -2,6 +2,7 @@ package com.zirakusa.gatewayhub.assistant.local
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
@@ -30,7 +31,7 @@ class LocalModels(
         private set
     var downloading by mutableStateOf<LocalModel?>(null)
         private set
-    var progress by mutableStateOf(0f)
+    var progress by mutableFloatStateOf(0f)
         private set
     var downloadMessage by mutableStateOf<Int?>(null)
         private set

@@ -31,7 +31,7 @@ enum class LocalModel(
     val fileName get() = source.substringAfterLast('/')
 }
 
-class ModelStore(context: Context) {
+class ModelStore(private val context: Context) {
     private val directory = File(context.filesDir, "lucia-models")
     private fun target(model: LocalModel) = File(directory, model.fileName)
 
@@ -43,7 +43,9 @@ class ModelStore(context: Context) {
             if (!directory.isDirectory && !directory.mkdirs()) throw ModelDownloadError.Storage()
             // A killed process can leave a partial file. The shared lock protects active downloads.
             directory.listFiles { _, name -> name.startsWith("model-") && name.endsWith(".part") }?.forEach { it.delete() }
-            if (directory.usableSpace < model.size) throw ModelDownloadError.Storage()
+            val storage = context.getSystemService(android.os.storage.StorageManager::class.java)
+            val free = runCatching { storage.getAllocatableBytes(storage.getUuidForPath(directory)) }.getOrDefault(0L)
+            if (free < model.size) throw ModelDownloadError.Storage()
             val connection = (model.url.openConnection() as HttpsURLConnection).apply {
                 connectTimeout = 15_000
                 readTimeout = 15_000

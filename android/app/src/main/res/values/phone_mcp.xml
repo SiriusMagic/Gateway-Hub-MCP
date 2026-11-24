@@ -10,6 +10,7 @@
     <string name="phone_mcp_signature">Firma incompatible para MCP local.</string>
     <string name="phone_mcp_declared">App compatible detectada. Disponibilidad local sin verificar.</string>
     <string name="phone_mcp_unavailable">El MCP local no pudo responder. Abre Stone y vuelve a intentarlo.</string>
+    <string name="phone_mcp_link_off">Activa «Redireccionar a Hub» en la app (Ajustes → Modo MCP) para ver sus herramientas.</string>
     <string name="phone_mcp_stone_missing">Stone no está disponible en este teléfono.</string>
     <string name="phone_mcp_connect_external">Conectar un LLM externo</string>
     <string name="phone_mcp_tools">Herramientas</string>
@@ -23,6 +24,11 @@
     <string name="phone_mcp_track">%1$s, de %2$s</string>
     <string name="phone_mcp_playing">Está sonando %1$s.</string>
     <string name="phone_mcp_paused">Stone tiene seleccionada %1$s y está en pausa.</string>
+    <plurals name="phone_mcp_listed">
+        <item quantity="one">%1$d herramienta en este teléfono</item>
+        <item quantity="many">%1$d herramientas en este teléfono</item>
+        <item quantity="other">%1$d herramientas en este teléfono</item>
+    </plurals>
     <plurals name="phone_mcp_songs">
         <item quantity="one">Encontré %d resultado en Stone.</item>
         <item quantity="other">Encontré %d resultados en Stone.</item>

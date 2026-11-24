@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,7 +74,8 @@ import com.zirakusa.gatewayhub.ui.HubColors
     HubCard {
         Text(row.app.label, color = HubColors.Text, fontSize = 18.sp)
         row.app.version.takeIf { it.isNotBlank() }?.let { Text(it, color = HubColors.Muted) }
-        Text(stringResource(row.status.label), color = if (row.status == PhoneMcpStatus.READY) HubColors.Good else HubColors.Muted)
+        Text(if (row.status == PhoneMcpStatus.LISTED) pluralStringResource(R.plurals.phone_mcp_listed, row.tools.size, row.tools.size) else stringResource(row.status.label),
+            color = if (row.status == PhoneMcpStatus.READY || row.status == PhoneMcpStatus.LISTED) HubColors.Good else HubColors.Muted)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton({
                 openFailed = try {
@@ -90,16 +92,24 @@ import com.zirakusa.gatewayhub.ui.HubColors
         if (expanded) {
             if (row.tools.isNotEmpty()) {
                 row.tools.forEach { tool ->
-                    val title = when (tool.name) {
-                        "library_search" -> R.string.phone_mcp_search
-                        else -> R.string.phone_mcp_player
+                    when (tool.name) {
+                        "library_search" -> if (row.status == PhoneMcpStatus.READY) Text(stringResource(R.string.phone_mcp_search), color = HubColors.Text) else ToolRow(tool)
+                        "player_state" -> if (row.status == PhoneMcpStatus.READY) Text(stringResource(R.string.phone_mcp_player), color = HubColors.Text) else ToolRow(tool)
+                        else -> ToolRow(tool)
                     }
-                    Text(stringResource(title), color = HubColors.Text)
                 }
             } else {
                 Text(stringResource(R.string.phone_mcp_known), color = HubColors.Muted)
                 known.forEach { Text(it, color = HubColors.Text) }
             }
         }
+    }
+}
+
+/** One tool as the app lists it: its title (or name) and the first line of what it does. */
+@Composable private fun ToolRow(tool: com.zirakusa.gatewayhub.assistant.local.McpTool) {
+    Column(Modifier.padding(vertical = 2.dp)) {
+        Text(tool.title.ifBlank { tool.name }, color = HubColors.Text)
+        tool.description.lineSequence().firstOrNull()?.take(120)?.takeIf { it.isNotBlank() }?.let { Text(it, color = HubColors.Muted, fontSize = 13.sp) }
     }
 }

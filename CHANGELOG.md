@@ -1,3 +1,17 @@
+# Gateway Hub 0.0.29: Stone Video con herramientas y órdenes, sobre la versión con modelos locales
+
+- Parte de la rama con modelos locales (Lucía Prueba 0.0.28), ya unida a `main`. Dos APK: `GatewayHub-0.0.29.apk`
+  (Gateway Hub) y `GatewayHub-0.0.29-lucia-preview.apk` (Lucía Prueba, se instala aparte).
+- **MCP → Apps de este teléfono**: cada app de la familia (Stone Video, Reloj, Notas…) muestra sus herramientas, que pide
+  por su enlace con el Hub en el teléfono. Si su «Redireccionar a Hub» está apagado, lo dice. El modelo local sigue
+  usando solo Stone.
+- **Lucía y Stone Video**: «pon el video de …», «busca el video de …», «busca … en stone video», «qué video es este»,
+  «cuántos videos tengo en stone video», «pon los videos en aleatorio». «Pantalla completa», «pon la pantalla
+  horizontal» y «brillo al 40 por ciento» van ahora a Stone Video.
+- **«Llama a …»**: sigue lo de 0.0.26 (contactos vía Teléfono, nombres en cualquier orden y por cómo suenan).
+- Lint sin avisos (contador de pulso y progreso, espacio libre para modelos, plurales).
+- Compilar sin acceso a codeload.github.com: `-PllamaSourceDir=<carpeta con llama.cpp en el mismo commit>`.
+
 # Lucía Prueba 0.0.28
 
 - El chat abre directamente y ofrece Modelos, MCP y Ajustes desde el menú lateral.

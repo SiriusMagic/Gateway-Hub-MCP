@@ -18,7 +18,11 @@ internal enum class PhoneMcpStatus(val label: Int) {
     SIGNATURE(R.string.phone_mcp_signature),
     DECLARED(R.string.phone_mcp_declared),
     UNAVAILABLE(R.string.phone_mcp_unavailable),
-    MISSING(R.string.phone_mcp_stone_missing)
+    MISSING(R.string.phone_mcp_stone_missing),
+    /** A family app answered with its tools (through its hub link). */
+    LISTED(R.string.phone_mcp_ready),
+    /** Its «Redireccionar a Hub» is off. */
+    LINK_OFF(R.string.phone_mcp_link_off)
 }
 
 internal data class PhoneMcpApp(val app: LocalApp, val status: PhoneMcpStatus, val tools: List<McpTool> = emptyList())
@@ -54,7 +58,7 @@ internal class PhoneMcp(private val context: Context) {
 
     private fun inspect(app: LocalApp): PhoneMcpApp {
         if (!app.sameDeveloper) return PhoneMcpApp(app, PhoneMcpStatus.SIGNATURE)
-        if (!isStone(app) || app.localMcpAuthority == null) return PhoneMcpApp(app, PhoneMcpStatus.DECLARED)
+        if (!isStone(app) || app.localMcpAuthority == null) return family(app)
         return try {
             val result = rpc(app, "tools/list")
             val list = result.optJSONArray("tools") ?: JSONArray()
@@ -64,6 +68,32 @@ internal class PhoneMcp(private val context: Context) {
             PhoneMcpApp(app, if (tools.isEmpty()) PhoneMcpStatus.UNAVAILABLE else PhoneMcpStatus.READY, tools)
         } catch (error: PhoneMcpError) {
             PhoneMcpApp(app, error.status)
+        }
+    }
+
+    /**
+     * Any other family app (Stone Video, Reloj, Notas…): its tools as it lists them through its hub link, the same channel
+     * Lucía uses on the phone. Only listed here; the local model still calls Stone alone.
+     */
+    private fun family(app: LocalApp): PhoneMcpApp {
+        val authority = app.linkAuthority ?: return PhoneMcpApp(app, PhoneMcpStatus.DECLARED)
+        val request = JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", "tools/list").toString()
+        return try {
+            val bundle = context.contentResolver.call("content://$authority".toUri(), "tool", null, Bundle().apply { putString("request", request) })
+                ?: return PhoneMcpApp(app, PhoneMcpStatus.DECLARED)
+            when (bundle.getString("error")) {
+                null -> Unit
+                "REDIRECT_OFF" -> return PhoneMcpApp(app, PhoneMcpStatus.LINK_OFF)
+                else -> return PhoneMcpApp(app, PhoneMcpStatus.UNAVAILABLE)
+            }
+            val list = JSONObject(bundle.getString("response") ?: return PhoneMcpApp(app, PhoneMcpStatus.DECLARED))
+                .optJSONObject("result")?.optJSONArray("tools") ?: JSONArray()
+            val tools = (0 until list.length()).mapNotNull { list.optJSONObject(it)?.let(McpTool::parse) }
+            PhoneMcpApp(app, if (tools.isEmpty()) PhoneMcpStatus.UNAVAILABLE else PhoneMcpStatus.LISTED, tools)
+        } catch (_: SecurityException) {
+            PhoneMcpApp(app, PhoneMcpStatus.SIGNATURE)
+        } catch (_: Exception) {
+            PhoneMcpApp(app, PhoneMcpStatus.UNAVAILABLE)
         }
     }
 
