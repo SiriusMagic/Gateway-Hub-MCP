@@ -27,7 +27,6 @@ internal class PhoneMcpError(val status: PhoneMcpStatus) : Exception()
 /** Discovers Stone over Android IPC. This client has no URL, relay or Hub credential. */
 internal class PhoneMcp(private val context: Context) {
     private val scanner = PackageScanner(context)
-    private val stonePackages = Catalog.byId("stone").packages
 
     suspend fun inventory(): List<PhoneMcpApp> = withContext(Dispatchers.IO) {
         scanner.installed().sortedBy { it.label.lowercase() }.map(::inspect)
@@ -51,7 +50,7 @@ internal class PhoneMcp(private val context: Context) {
         result.optJSONObject("structuredContent") ?: throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)
     }
 
-    private fun isStone(app: LocalApp) = app.prefix == "music_" && app.packageName in stonePackages
+    private fun isStone(app: LocalApp) = app.prefix == "music_" && app.packageName in Catalog.stoneMcpPackages
 
     private fun inspect(app: LocalApp): PhoneMcpApp {
         if (!app.sameDeveloper) return PhoneMcpApp(app, PhoneMcpStatus.SIGNATURE)

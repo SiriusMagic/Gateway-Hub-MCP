@@ -36,10 +36,10 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[Descarga Gateway Hub y Lucía 0.0.26 de prueba](android/GatewayHub-0.0.26-lucia-preview.apk).
-Esta variante se instala junto a la app habitual. La versión 0.0.27 incorpora MCP local con Stone
-y requiere las actualizaciones firmadas con la clave habitual de ambas apps.
-Consulta las instrucciones en [Gateway Hub para Android](android/README.md).
+[Descarga Lucía Prueba 0.0.27](android/GatewayHub-0.0.27-lucia-preview.apk).
+Para probar las consultas MCP locales, instala también [Stone Prueba 1.7.27](https://github.com/SiriusMagic/Stone/blob/feat/lucia-mcp-local/android-native/Stone-1.7.27-lucia-preview.apk).
+Los dos APK de prueba se instalan junto a las apps habituales. Consulta las instrucciones en
+[Gateway Hub para Android](android/README.md).
 
 ## Uso (desde el teléfono, sin pegar tokens en ningún chat)
 

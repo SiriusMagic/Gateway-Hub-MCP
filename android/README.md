@@ -20,10 +20,11 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK de esta rama: [Gateway Hub y Lucía 0.0.26 de prueba](GatewayHub-0.0.26-lucia-preview.apk).
+APK de esta rama: [Lucía Prueba 0.0.27](GatewayHub-0.0.27-lucia-preview.apk).
 Se instala junto a Gateway Hub como `com.zirakusa.gatewayhub.lucia.preview` y aparece como **Lucía Prueba**.
-Sus modelos y su sesión se guardan aparte. Las acciones entre apps protegidas por firma requieren apps compatibles
-firmadas con la misma clave.
+Actualiza la 0.0.26 de prueba y mantiene sus modelos y ajustes. Para consultas MCP locales, usa
+[Stone Prueba 1.7.27](https://github.com/SiriusMagic/Stone/blob/feat/lucia-mcp-local/android-native/Stone-1.7.27-lucia-preview.apk),
+firmado con la misma clave de prueba y con su propia biblioteca.
 
 ## Conversación local en Lucía
 
@@ -40,8 +41,7 @@ Al abrir Gateway Hub aparece el **Chat**. Desde el menú lateral abre **Modelos*
    en **Ajustes › Avanzado** y usa una petición como «busca mis notas de viaje en el Hub». Los cambios en
    el Hub requieren confirmación en pantalla.
 
-El código de 0.0.27 está en esta rama. Su APK para actualizar Gateway Hub requiere la clave de firma habitual,
-que debe coincidir con la de Stone para que Android conceda el permiso local.
+Los APK de prueba usan la misma firma para el permiso de MCP local.
 
 
 La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.13113456 y CMake 3.31.6. CMake descarga una revisión fija de [llama.cpp](https://github.com/ggml-org/llama.cpp) para la variante ARM64.

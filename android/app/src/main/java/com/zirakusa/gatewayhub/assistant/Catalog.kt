@@ -1,5 +1,7 @@
 package com.zirakusa.gatewayhub.assistant
 
+import com.zirakusa.gatewayhub.BuildConfig
+
 /** A family app the assistant knows: its ids (release and test builds), its name and what people call it. */
 data class FamilyApp(val id: String, val name: String, val packages: List<String>, val aliases: List<String>,
     /** A screen inside another app's package (Contactos lives in Teléfono): opened by its class, not the package's icon. */
@@ -7,8 +9,14 @@ data class FamilyApp(val id: String, val name: String, val packages: List<String
 
 /** The family, and which app does each action. Pure. */
 object Catalog {
+    private const val STONE_PREVIEW = "com.zirakusa.stone.kotlin.preview.lucia"
+    private val regularStone = listOf("com.zirakusa.stone", "com.zirakusa.stone.kotlin.preview")
+    private val isLuciaPreview = BuildConfig.APPLICATION_ID == "com.zirakusa.gatewayhub.lucia.preview"
+    private val stonePackages = if (isLuciaPreview) listOf(STONE_PREVIEW) + regularStone else regularStone
+    internal val stoneMcpPackages = if (isLuciaPreview) listOf(STONE_PREVIEW) else regularStone
+
     val apps = listOf(
-        FamilyApp("stone", "Stone", listOf("com.zirakusa.stone", "com.zirakusa.stone.kotlin.preview"), listOf("stone", "musica", "reproductor", "canciones")),
+        FamilyApp("stone", "Stone", stonePackages, listOf("stone", "musica", "reproductor", "canciones")),
         FamilyApp("video", "Stone Video", listOf("com.zirakusa.stone.video"), listOf("stone video", "videos", "video")),
         FamilyApp("luma", "Luma", listOf("app.luma.gallery"), listOf("luma", "galeria", "fotos", "imagenes")),
         FamilyApp("camara", "Cámara", listOf("com.zirakusa.camara"), listOf("camara")),
