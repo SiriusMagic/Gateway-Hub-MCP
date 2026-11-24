@@ -39,7 +39,9 @@ class AndroidHands(context: Context) : Hands {
     }
 
     override fun open(app: FamilyApp): Boolean {
-        val launch = pkg(app)?.let(pm::getLaunchIntentForPackage) ?: return false
+        // A screen inside a package (Contactos in Teléfono) first; otherwise the first installed package's icon.
+        val inside = app.activity?.let { a -> app.packages.map { Intent().setClassName(it, a) }.firstOrNull { it.resolveActivity(pm) != null } }
+        val launch = inside ?: pkg(app)?.let(pm::getLaunchIntentForPackage) ?: return false
         return try { this.app.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true } catch (_: ActivityNotFoundException) { false }
     }
 

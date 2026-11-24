@@ -1,7 +1,9 @@
 package com.zirakusa.gatewayhub.assistant
 
 /** A family app the assistant knows: its ids (release and test builds), its name and what people call it. */
-data class FamilyApp(val id: String, val name: String, val packages: List<String>, val aliases: List<String>)
+data class FamilyApp(val id: String, val name: String, val packages: List<String>, val aliases: List<String>,
+    /** A screen inside another app's package (Contactos lives in Teléfono): opened by its class, not the package's icon. */
+    val activity: String? = null)
 
 /** The family, and which app does each action. Pure. */
 object Catalog {
@@ -16,7 +18,9 @@ object Catalog {
         FamilyApp("notas", "Notas", listOf("com.zirakusa.notas"), listOf("notas", "tareas", "apuntes")),
         FamilyApp("filem", "Filem", listOf("com.zirakusa.filem"), listOf("filem", "archivos", "descargas")),
         FamilyApp("calculadora", "Calculadora", listOf("com.zirakusa.calculadora"), listOf("calculadora")),
-        FamilyApp("contactos", "Contactos", listOf("com.zirakusa.contactos"), listOf("contactos", "agenda de contactos")),
+        // Since Teléfono 0.3.0 Contactos is inside Teléfono; the old separate app still works when installed.
+        FamilyApp("contactos", "Contactos", listOf("com.zirakusa.telefono", "com.zirakusa.contactos"), listOf("contactos", "agenda de contactos"),
+            activity = "com.zirakusa.contactos.MainActivity"),
         FamilyApp("telefono", "Teléfono", listOf("com.zirakusa.telefono"), listOf("telefono", "llamadas", "marcador")),
         FamilyApp("sms", "SMS", listOf("com.zirakusa.sms"), listOf("sms", "mensajes")),
         FamilyApp("qr", "QR", listOf("com.zirakusa.qr"), listOf("qr", "lector de qr", "codigos")),
@@ -42,7 +46,8 @@ object Catalog {
     }
 
     fun byId(id: String) = apps.first { it.id == id }
-    fun byPackage(pkg: String) = apps.firstOrNull { pkg in it.packages }
+    /** The app whose own icon a package is (Teléfono, not the Contactos screen inside it). */
+    fun byPackage(pkg: String) = apps.firstOrNull { pkg in it.packages && it.activity == null } ?: apps.firstOrNull { pkg in it.packages }
 
     /** The app named in a phrase: the longest alias that appears as whole words («stone video» before «stone»). */
     fun find(text: String): FamilyApp? = apps.flatMap { a -> a.aliases.map { it to a } }.sortedByDescending { it.first.length }

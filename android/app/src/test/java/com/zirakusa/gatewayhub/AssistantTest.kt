@@ -141,6 +141,13 @@ class AssistantTest {
         assertEquals(Say.ANSWERED, brain.handle("contesta").reply.say)                             // any phone app: Android answers
     }
 
+    @Test fun contactsLiveInsideTelefono() {
+        assertEquals("telefono", Catalog.byPackage("com.zirakusa.telefono")!!.id)
+        val c = Catalog.byId("contactos")
+        assertEquals("com.zirakusa.contactos.MainActivity", c.activity); assertTrue("com.zirakusa.telefono" in c.packages)
+        assertEquals("contactos", Parser.parse("abre contactos")["app"])
+    }
+
     @Test fun notesAndTorch() {
         assertEquals("mañana compro pan", p("Anota que mañana compro pan")["text"]); assertEquals(Action.NOTE, p("crea una nota comprar leche").action)
         assertEquals("1", p("enciende la linterna")["on"]); assertEquals("0", p("apaga la linterna")["on"]); assertEquals(Action.TORCH, p("prende la luz").action)

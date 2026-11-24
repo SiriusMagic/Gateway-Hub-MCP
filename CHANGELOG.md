@@ -1,3 +1,8 @@
+# Gateway Hub (app Android) 0.0.20: Contactos dentro de Teléfono
+
+- «Abre contactos» abre la pantalla de Contactos que ahora vive dentro de Teléfono (0.3.0). Si todavía tienes la app
+  Contactos aparte y un Teléfono anterior, abre esa.
+
 # Gateway Hub (app Android) 0.0.19: Lucía contesta llamadas, notas rápidas y linterna
 
 - **Llamadas**: «Oye Lucía, contesta», «atiende la llamada», «cuelga», «rechaza la llamada». La primera vez pide el
