@@ -22,7 +22,7 @@ import com.zirakusa.gatewayhub.data.ScannedApp
 /** Finds compatible apps and their state without turning anything on (the hub only sends tools/list). */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable fun ScannerList(apps: List<ScannedApp>?, busy: Boolean, autoSync: Boolean, scan: () -> Unit,
-    setAutoSync: (Boolean) -> Unit, autoLink: (String) -> Unit) {
+    setAutoSync: (Boolean) -> Unit, autoLink: (String) -> Unit, connectAll: () -> Unit = {}) {
     HubCard {
         Text(stringResource(R.string.scanner_title), fontWeight = FontWeight.Bold, fontSize = 17.sp)
         Text(stringResource(R.string.scanner_hint), Modifier.padding(top = 4.dp), color = HubColors.Muted, fontSize = 13.sp)
@@ -36,6 +36,9 @@ import com.zirakusa.gatewayhub.data.ScannedApp
         Button(scan, Modifier.fillMaxWidth().padding(top = 10.dp), enabled = !busy) {
             Icon(Icons.Default.Radar, null, Modifier.size(18.dp)); Text(stringResource(R.string.scanner_run), Modifier.padding(start = 6.dp))
         }
+        // One tap for the whole family: each app turns «Redireccionar a Hub» on and is linked.
+        OutlinedButton(connectAll, Modifier.fillMaxWidth().padding(top = 6.dp), enabled = !busy) { Text(stringResource(R.string.scanner_connect_all)) }
+        Text(stringResource(R.string.scanner_connect_all_hint), Modifier.padding(top = 4.dp), color = HubColors.Muted, fontSize = 12.sp)
     }
     apps?.forEach { ScannedCard(it, busy, autoLink) }
     if (apps?.isEmpty() == true) Text(stringResource(R.string.scanner_none), Modifier.padding(16.dp), color = HubColors.Muted)

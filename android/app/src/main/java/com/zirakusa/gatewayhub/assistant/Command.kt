@@ -2,7 +2,7 @@ package com.zirakusa.gatewayhub.assistant
 
 /** What the user asked for. Each one is a node of the brain's graph. */
 enum class Action {
-    PLAY_MUSIC, PLAY_RECOMMENDED, MEDIA, ALARM, TIMER, CALL, MESSAGE, WEATHER, AGENDA, TODAY, TIME, DATE, PHOTO, SCAN, SPEED, COUNT, VOLUME, ANSWER, HANG_UP, NOTE, TORCH, OPEN, UNKNOWN
+    PLAY_MUSIC, PLAY_RECOMMENDED, MEDIA, ALARM, TIMER, CALL, MESSAGE, WEATHER, AGENDA, TODAY, TIME, DATE, PHOTO, SCAN, SPEED, COUNT, VOLUME, ANSWER, HANG_UP, NOTE, TORCH, TOOL, OPEN, UNKNOWN
 }
 
 /** Media buttons, for any player. */

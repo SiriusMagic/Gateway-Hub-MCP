@@ -1,3 +1,26 @@
+# Gateway Hub 0.0.21: «Conectar todas las apps» y Lucía usa las herramientas de cada app
+
+- **Conectar todas las apps** (Hub › Escáner): un toque activa «Redireccionar a Hub» en cada app tuya instalada y la
+  vincula. Dice cuántas se conectaron y cuál no pudo y por qué. Las apps deben tener su versión nueva (con «connect»);
+  una anterior se vincula igual si ya tenía el interruptor encendido.
+- **El hub en Cloudflare conoce toda la familia**: Stone Video (`video_`), Teléfono y Contactos (`phone_`), SMS, Reloj,
+  Calendario, Notas (`notas_`, porque `notes_` son las notas del hub), Clima, Cámara, QR, Redes, Brújula, Nivel e Inicio.
+  Hay que publicarlo: `npx wrangler deploy`.
+- **Lucía usa las herramientas MCP de cada app, sin internet** (por el canal firmado de cada app, con sus mismas reglas):
+  - Reloj: «¿cuál es mi próxima alarma?», «¿qué alarmas tengo?», «¿qué hora es en Madrid?».
+  - Notas: «¿qué tareas tengo?», «agrega tarea comprar pan», «marca la tarea comprar pan como hecha», «busca en mis
+    notas receta», «¿qué notas tengo?».
+  - Calendario: «¿qué tengo mañana / el viernes / el 3?», «crea un evento dentista mañana a las 3 de la tarde»,
+    «próximos feriados».
+  - Clima: «¿va a llover mañana?», «pronóstico». Teléfono: «¿tengo llamadas perdidas?», «¿quién me llamó?», «el número de
+    Ana», «¿quién cumple años esta semana?». SMS: «¿tengo mensajes sin leer?».
+  - Calculadora: «¿cuánto es 25 por 4?», «calcula raíz de 81». Luma: «¿cuántas fotos tengo?». Filem: «¿cuánto espacio me
+    queda?», «archivos recientes». QR: «últimos QR». Redes: «¿cómo está mi conexión?». Brújula: «¿hacia dónde estoy
+    mirando?». Nivel: «¿está nivelado?».
+  - Si una app no está conectada, Lucía lo dice («conecta Reloj al Hub…»).
+- En el **mapa de Lucía** cada herramienta cuelga de su app (Reloj → Próxima alarma, Notas → Mis tareas…).
+- El reconocimiento sin internet conoce las palabras nuevas; lo que se dice libre (una tarea, una ciudad) se toma tal cual.
+
 # Gateway Hub (app Android) 0.0.20: Contactos dentro de Teléfono
 
 - «Abre contactos» abre la pantalla de Contactos que ahora vive dentro de Teléfono (0.3.0). Si todavía tienes la app

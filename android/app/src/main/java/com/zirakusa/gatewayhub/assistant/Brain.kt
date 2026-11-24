@@ -32,19 +32,28 @@ interface Hands {
     fun endCall(): Boolean
     /** The phone's torch. */
     fun torch(on: Boolean): Boolean
+    /**
+     * Runs one MCP tool of a family app on the phone (no internet), through its own Modo MCP: its answer
+     * (structuredContent), or null when the app is too old to be asked. Throws [ToolOff] when the app's «Redireccionar a
+     * Hub» is off, [ToolError] when the tool refused.
+     */
+    fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? = null
     /** The phone's media volume, 0–100. */
     fun volume(): Int
     fun setVolume(percent: Int): Boolean
     fun now(): LocalDateTime = LocalDateTime.now()
     class NoContacts : Exception()
     class NoPhone : Exception()
+    class ToolOff : Exception()
+    class ToolError(val code: String, message: String) : Exception(message)
 }
 
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
     NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
-    ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF
+    ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
+    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR
 }
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
@@ -60,8 +69,8 @@ data class Turn(val heard: String, val byVoice: Boolean, val command: Command, v
 class Brain(private val hands: Hands, private val clock: () -> Long = System::currentTimeMillis) {
     fun handle(heard: String, byVoice: Boolean = false): Turn {
         val start = clock()
-        val c = Parser.parse(heard)
-        val app = when (c.action) { Action.OPEN -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
+        val c = Parser.parse(heard, hands.now().toLocalDate())
+        val app = when (c.action) { Action.OPEN, Action.TOOL -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
         // The volume first, so music never starts too loud; then the order.
         val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null
         val (reply, ok) = act(c, app)
@@ -111,10 +120,32 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
                 if (hands.saveNote(title, text, "Lucía") != null) Reply(Say.NOTED, listOf(text)) to true else Reply(Say.FAILED, listOf(app!!.name)) to false
             }
             Action.TORCH -> (c["on"] == "1").let { on -> done(hands.torch(on), Reply(if (on) Say.TORCH_ON else Say.TORCH_OFF)) }
+            Action.TOOL -> tool(c, app!!)
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
             Action.UNKNOWN -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
         }
+    }
+
+    /** A family app's tool; «marca la tarea X como hecha» first finds the task by its words. */
+    private fun tool(c: Command, app: FamilyApp): Pair<Reply, Boolean> {
+        val name = c["tool"]!!
+        return try {
+            var args = org.json.JSONObject().apply {
+                c.slots.forEach { (k, v) -> when { k.startsWith("arg:") -> put(k.removePrefix("arg:"), v); k.startsWith("num:") -> put(k.removePrefix("num:"), v.toInt()) } }
+            }
+            if (name == "tasks_complete") {
+                val wanted = Words.normalize(args.optString("text"))
+                val tasks = hands.tool(app, "tasks_list", org.json.JSONObject().put("include_done", false))?.optJSONArray("tasks")
+                    ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
+                val found = (0 until tasks.length()).map { tasks.getJSONObject(it) }.firstOrNull { Words.normalize(it.optString("text")).contains(wanted) }
+                    ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No encuentro esa tarea.")) to false
+                args = org.json.JSONObject().put("id", found.getLong("id"))
+            }
+            val r = hands.tool(app, name, args) ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
+            Reply(Say.TOOL_RESULT, listOf(Speech.say(name, r, hands.now().toLocalDate()))) to true
+        } catch (_: Hands.ToolOff) { Reply(Say.TOOL_OFF, listOf(app.name)) to false
+        } catch (e: Hands.ToolError) { Reply(Say.TOOL_ERROR, listOf(app.name, e.message.orEmpty())) to false }
     }
 
     /** «Llama a Ana» / «escríbele a Ana»: a number as said, or the contact's; only the screen opens, the user confirms. */

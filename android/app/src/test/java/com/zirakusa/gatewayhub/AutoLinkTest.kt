@@ -46,6 +46,23 @@ class AutoLinkTest {
         assertEquals("Stone vinculado y en línea.", vm.state.value.notice)
     }
 
+    /** «Conectar todas»: each app is asked to connect (it turns its redirect on) and linked, in one tap. */
+    @Test fun connectAllLinksEveryApp() {
+        val hub = Hub(); val asked = mutableListOf<String>()
+        val vm = vm(hub, MemorySessions("https://hub.example" to "owner"), listOf(stone), { LinkAnswer(stoneLink, null, null) }, asked); vm.settle()
+        vm.connectAll(); vm.settle()
+        assertEquals(listOf(stone.packageName), asked)
+        assertTrue(hub.sent.contains("POST /stone"))
+        assertEquals("1 apps conectadas al hub.", vm.state.value.notice)
+    }
+
+    @Test fun connectAllSaysWhichAppCouldNot() {
+        val hub = Hub(); val asked = mutableListOf<String>()
+        val vm = vm(hub, MemorySessions("https://hub.example" to "owner"), listOf(stone), { LinkAnswer(null, "NO_RELAY", "Sin relay") }, asked); vm.settle()
+        vm.connectAll(); vm.settle()
+        assertEquals("0 apps conectadas al hub.\nStone: Sin relay", vm.state.value.notice)
+    }
+
     @Test fun lumaIsLinkedByItselfThroughItsOwnRoute() {
         val luma = LocalApp("app.luma.gallery", "Luma", "0.5.0", "gallery_", true, "app.luma.gallery.hublink")
         val lumaLink = "https://relay.example/d/abcdefabcdefabcdefabcdef/mcp?token=lum_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"

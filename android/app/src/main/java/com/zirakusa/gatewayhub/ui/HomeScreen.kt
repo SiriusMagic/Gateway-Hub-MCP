@@ -59,7 +59,7 @@ enum class HubTab(val label: Int, val icon: ImageVector) {
                 HubTab.AGENTS -> AgentsList(hub.agents, hub.modules, vm::setPaused, vm::revoke)
                 HubTab.SCANNER -> {
                     TokenCard(state.loading, vm::linkToken)
-                    ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink)
+                    ScannerList(state.scan, state.loading, state.autoSync, vm::scan, vm::setAutoSync, vm::autoLink, vm::connectAll)
                 }
                 HubTab.METRICS -> MetricsList(hub)
             }
@@ -83,6 +83,8 @@ interface HubActions {
     fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int)
     fun linkToken(link: String)
     fun scan(); fun autoLink(packageName: String); fun setAutoSync(on: Boolean)
+    /** «Conectar todas las apps». */
+    fun connectAll()
 }
 
 /** Lucía works without the hub: she lives in this app, with her own icon too. */

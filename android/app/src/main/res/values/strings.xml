@@ -11,6 +11,8 @@
     <string name="scanner_title">Escáner de apps compatibles</string>
     <string name="scanner_hint">Busca en este teléfono las apps que funcionan con el hub y pregunta al hub su estado. Solo lee: no activa ni cambia nada.</string>
     <string name="scanner_run">Escanear ahora</string>
+    <string name="scanner_connect_all">Conectar todas las apps</string>
+    <string name="scanner_connect_all_hint">Activa «Redireccionar a Hub» en cada app tuya instalada y las vincula, sin entrar en ninguna.</string>
     <string name="scanner_none">No se encontró ninguna app compatible.</string>
     <string name="scan_installed">Instalada</string>
     <string name="scan_not_installed">No instalada aquí</string>
@@ -131,6 +133,10 @@
     <string name="say_noted">Anotado en Notas: %1$s</string>
     <string name="say_torch_on">Linterna encendida.</string>
     <string name="say_torch_off">Linterna apagada.</string>
+    <string name="say_tool_off">Para eso, conecta %1$s al Hub: Hub › Escáner › «Conectar todas las apps».</string>
+    <string name="say_tool_old">Actualiza %1$s para que pueda hacerlo.</string>
+    <string name="say_tool_error">%1$s: %2$s</string>
+    <string name="do_tool">Herramienta</string>
     <string name="do_note">Nota rápida</string>
     <string name="do_torch">Linterna</string>
     <string name="do_answer">Contestar</string>

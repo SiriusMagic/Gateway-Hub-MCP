@@ -91,4 +91,25 @@ export const calculatorAppModule = remoteModule(CALCULADORA);
 export const FILEM: RemoteApp = { prefix: "files_", title: "Archivos (Filem)", label: "Filem", androidPackage: "com.zirakusa.filem",
   summary: "Filem on the phone: list, search and read the user's files and folders; with write access also create folders, rename, copy, move and send to its trash." };
 export const filesAppModule = remoteModule(FILEM);
-export const REMOTE_APPS = [LUMA, CALCULADORA, FILEM];
+// The rest of the family (each with the same Modo MCP and relay). Their tools keep their own names; the prefix is added
+// only when a name does not carry it (Notas' tasks_create → notas_tasks_create). Notas is notas_ because notes_ is the
+// hub's own notes; Contactos lives inside Teléfono (its tools come as phone_contacts_…).
+const app = (prefix: string, title: string, label: string, androidPackage: string, summary: string): RemoteApp =>
+  ({ prefix, title, label, androidPackage, summary });
+export const FAMILY: RemoteApp[] = [
+  app("video_", "Stone Video", "Stone Video", "com.zirakusa.stone.video", "Stone Video on the phone: the user's videos and music videos, playback and library."),
+  app("phone_", "Teléfono y Contactos", "Teléfono", "com.zirakusa.telefono", "The user's calls (recent, missed) and contacts (search, birthdays, favourites; create with write access). The AI never dials and never deletes a contact; it can only ask the user to call."),
+  app("sms_", "SMS", "SMS", "com.zirakusa.sms", "The user's SMS conversations (verification codes always hidden). The AI never sends: it can only ask the user to send."),
+  app("clock_", "Reloj", "Reloj", "com.zirakusa.reloj", "The user's alarms (list, next, create, turn on/off, delete) and world time."),
+  app("calendar_", "Calendario", "Calendario", "com.zirakusa.calendario", "The user's calendar: events of a day, create and delete events, holidays of Ecuador."),
+  app("notas_", "Notas", "Notas", "com.zirakusa.notas", "The Notas app on the phone: notes, folders and tasks (locked notes and the trash never come out)."),
+  app("weather_", "Clima", "Clima", "com.zirakusa.clima", "The weather of the user's places (Open-Meteo): now, forecast, add and remove places."),
+  app("camera_", "Cámara", "Cámara", "com.zirakusa.camara", "The camera's settings and the names and times of photos taken; the AI never takes photos."),
+  app("qr_", "QR", "QR", "com.zirakusa.qr", "QR codes: read text into a code, make codes, history (Wi-Fi passwords never come out)."),
+  app("network_", "Redes", "Redes", "com.zirakusa.redes", "The phone's network: status, nearby Wi-Fi (without BSSID), speed tests and their history."),
+  app("compass_", "Brújula", "Brújula", "com.zirakusa.brujula", "Heading of the phone and, if allowed, its approximate location. Read only."),
+  app("level_", "Nivel", "Nivel", "com.zirakusa.nivel", "The bubble level: reading, calibration and saved measurements. Read only."),
+  app("launcher_", "Inicio", "Inicio", "com.zirakusa.launcher", "The home screen: apps list, dock order, «Hoy» cards. It never opens or installs apps."),
+];
+export const familyModules = FAMILY.map(remoteModule);
+export const REMOTE_APPS = [LUMA, CALCULADORA, FILEM, ...FAMILY];

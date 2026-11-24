@@ -23,7 +23,7 @@ import org.junit.Test
 import java.time.LocalDateTime
 
 /** Hands that only write down what they were asked, for the assistant's tests. */
-class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toSet(), var contactsAllowed: Boolean = true) : Hands {
+open class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toSet(), var contactsAllowed: Boolean = true) : Hands {
     val done = mutableListOf<String>()
     override fun installed(app: FamilyApp) = app.id in installed
     override fun open(app: FamilyApp) = done.add("open ${app.id}")
@@ -47,7 +47,7 @@ class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toSet(),
         "calendario" -> Summary("Hoy en tu calendario", emptyList(), "No hay eventos")
         else -> null
     }
-    override fun now(): LocalDateTime = LocalDateTime.of(2026, 11, 21, 9, 5)
+    override open fun now(): LocalDateTime = LocalDateTime.of(2026, 11, 21, 9, 5)
     var level = 70
     override fun volume() = level
     override fun setVolume(percent: Int): Boolean { level = percent; return done.add("volume $percent") }

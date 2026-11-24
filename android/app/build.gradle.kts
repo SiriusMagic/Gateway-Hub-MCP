@@ -10,8 +10,8 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20
-        versionName = "0.0.20"
+        versionCode = 21
+        versionName = "0.0.21"
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
         // Lucía's voice recognition (Vosk) only ships for phones' processors: 64 and 32-bit ARM.

@@ -122,6 +122,30 @@ class AndroidHands(context: Context) : Hands {
         return try { if (android.os.Build.VERSION.SDK_INT >= 28) t.endCall() else false } catch (_: SecurityException) { throw Hands.NoPhone() }
     }
 
+    /**
+     * One MCP tool of a family app, on the phone: the app's link channel (signature-protected) runs it with the hub's own
+     * token, through the same handler as the relay, so all its rules hold. No internet.
+     */
+    override fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? {
+        val p = pkg(app) ?: return null
+        val request = org.json.JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", "tools/call")
+            .put("params", org.json.JSONObject().put("name", name).put("arguments", args)).toString()
+        val answer = try { this.app.contentResolver.call("content://$p.hublink".toUri(), "tool", null, Bundle().apply { putString("request", request) }) }
+            catch (_: SecurityException) { throw Hands.ToolError("NO_PERMISSION", "Reinstala Gateway Hub después de la app.") }
+            catch (_: IllegalArgumentException) { return null } ?: return null
+        when (answer.getString("error")) {
+            null -> Unit
+            "REDIRECT_OFF" -> throw Hands.ToolOff()
+            else -> throw Hands.ToolError(answer.getString("error").orEmpty(), answer.getString("message").orEmpty())
+        }
+        val result = org.json.JSONObject(answer.getString("response") ?: return null).optJSONObject("result") ?: return null
+        val content = result.optJSONObject("structuredContent") ?: org.json.JSONObject()
+        if (result.optBoolean("isError")) content.optJSONObject("error").let { e ->
+            throw Hands.ToolError(e?.optString("code").orEmpty(), e?.optString("message").orEmpty())
+        }
+        return content
+    }
+
     /** The torch of the back camera; no permission needed. */
     override fun torch(on: Boolean): Boolean = runCatching {
         val cam = app.getSystemService(android.hardware.camera2.CameraManager::class.java) ?: return false

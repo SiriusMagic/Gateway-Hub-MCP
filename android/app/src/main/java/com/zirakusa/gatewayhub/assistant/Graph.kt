@@ -15,16 +15,21 @@ object Graph {
     const val VOICE = "in:voice"; const val TEXT = "in:text"; const val LUCIA = "app:lucia"
     fun action(a: Action) = "do:${a.name}"
     fun app(a: FamilyApp) = "app:${a.id}"
+    fun tool(name: String) = "tool:$name"
 
     /** The actions shown: opening an app is the app itself, and what was not understood stays at the input. */
-    val actions = Action.entries.filter { it != Action.UNKNOWN && it != Action.OPEN }
+    val actions = Action.entries.filter { it != Action.UNKNOWN && it != Action.OPEN && it != Action.TOOL }
     /** The parent of an action: its app, or Lucía. */
     fun parent(a: Action) = Catalog.appFor(a)?.let(::app) ?: LUCIA
 
-    /** Every app in the family (each one can be opened), Lucía first; each with its actions under it. */
-    fun tree(): List<Pair<Pair<String, String>, List<Action>>> =
-        listOf((LUCIA to "Lucía") to actions.filter { Catalog.appFor(it) == null }) +
-            Catalog.apps.map { a -> (app(a) to a.name) to actions.filter { Catalog.appFor(it) == a } }
+    /** One branch under an app: one of Lucía's actions or one of the app's own MCP tools. */
+    data class Child(val id: String, val action: Action? = null, val label: String = "")
+
+    /** Every app in the family (each one can be opened), Lucía first; each with its actions and its tools under it. */
+    fun tree(): List<Pair<Pair<String, String>, List<Child>>> =
+        listOf((LUCIA to "Lucía") to actions.filter { Catalog.appFor(it) == null }.map { Child(action(it), it) }) +
+            Catalog.apps.map { a -> (app(a) to a.name) to (actions.filter { Catalog.appFor(it) == a }.map { Child(action(it), it) } +
+                Skills.all.filter { it.app == a.id }.map { Child(tool(it.tool), label = it.label) }) }
 
     /** One row per action (an app without actions takes one row), so the drawing grows downwards. */
     fun rows() = tree().sumOf { max(1, it.second.size) }
@@ -36,7 +41,7 @@ object Graph {
         tree().forEach { (appNode, children) ->
             val size = max(1, children.size)
             out += Node(appNode.first, appNode.second, 1, 0.32f, (row + size / 2f) / total)
-            children.forEachIndexed { i, a -> out += Node(action(a), labels(a), 2, 0.64f, (row + i + 0.5f) / total) }
+            children.forEachIndexed { i, c -> out += Node(c.id, c.action?.let(labels) ?: c.label, 2, 0.64f, (row + i + 0.5f) / total) }
             row += size
         }
         return out
@@ -45,7 +50,7 @@ object Graph {
     fun edges(): List<Edge> {
         val tree = tree()
         val ins = listOf(VOICE, TEXT).flatMap { i -> tree.map { Edge(i, it.first.first) } }
-        val branches = tree.flatMap { (appNode, children) -> children.map { Edge(appNode.first, action(it)) } }
+        val branches = tree.flatMap { (appNode, children) -> children.map { Edge(appNode.first, it.id) } }
         return ins + branches
     }
 
@@ -56,6 +61,7 @@ object Graph {
         return when (a) {
             Action.UNKNOWN -> listOf(input)
             Action.OPEN -> listOfNotNull(input, app?.let(::app))
+            Action.TOOL -> listOfNotNull(input, app?.let(::app), command["tool"]?.let(::tool))
             else -> listOf(input, parent(a), action(a))
         } + listOfNotNull(action(Action.VOLUME).takeIf { volumeToo && a != Action.VOLUME })
     }

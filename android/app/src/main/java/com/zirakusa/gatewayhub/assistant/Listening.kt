@@ -71,6 +71,12 @@ object Vocabulary {
         dieciséis diecisiete dieciocho diecinueve veinte veinticinco treinta cuarenta cincuenta sesenta noventa por favor oye hola
         contar conteo modo vamos nuevo empieza quiero ayúdame casa volumen por ciento porciento sube súbele baja bájale subir bajar
         máximo mínimo mitad tope todo alto bajo fuerte suave más menos con hasta aumenta disminuye poco cambia
+        contesta atiende cuelga rechaza corta llamada anota apunta nota linterna luz enciende apaga prende reinicia repite
+        empezar principio otra vez quita dale play cuál cuáles cuántas cuántos cuándo suena próxima próximo próximos tarea
+        agrega añade crea hecha completada marca termina busca número celular quién quiénes cumple cumpleaños años llamó
+        perdidas sin leer nuevos cuánto son calcula raíz elevado dividido entre multiplicado espacio libre queda almacenamiento
+        recientes últimos conexión estado conectado hacia dónde mirando norte dirección nivelado derecho inclinación feriados
+        festivos evento cita reunión pronóstico semana lunes martes miércoles jueves viernes sábado domingo pasado este esta
     """.trim().split(Regex("\\s+")).toSet()
 
     /** The grammar (JSON list): the base words, the app names and the people's names (each word of them). */
@@ -91,6 +97,12 @@ object Hearing {
         val f = free.trim()
         val byList = Parser.parse(l)
         if (byList.action == Action.UNKNOWN && Parser.parse(f).action != Action.UNKNOWN) return f
+        // A family app's tool or a note with free words (a task, a city, a name): the free recognizer has them, when it heard
+        // the same order.
+        if (byList.action in setOf(Action.TOOL, Action.NOTE)) {
+            val byFree = Parser.parse(f)
+            if (byFree.action == byList.action && byFree["tool"] == byList["tool"]) return f
+        }
         // A message: the order from the list, the words to send from the free one.
         if (byList.action == Action.MESSAGE) {
             val said = Regex("(?:^| )(?:que|diciendo|diciendole|diciéndole) (.+)$").find(f)?.groupValues?.get(1)

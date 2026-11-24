@@ -23,7 +23,8 @@ test("state lists modules, agents without hashes and metrics", async () => {
   const { body } = await h.api("GET", "/state");
   assert.equal(body.version, "0.0.3");
   assert.equal(body.modules[0].androidPackage, "com.zirakusa.stone.kotlin.preview");
-  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "calc_", "files_", "notes_", "utils_"]);
+  assert.deepEqual(body.modules.map((m: any) => m.prefix), ["music_", "gallery_", "calc_", "files_", "video_", "phone_", "sms_", "clock_",
+    "calendar_", "notas_", "weather_", "camera_", "qr_", "network_", "compass_", "level_", "launcher_", "notes_", "utils_"]);
   assert.equal(body.agents[0].name, "Claude");
   assert.equal(body.agents[0].readOnly, true);
   assert.equal(body.agents[0].tokenHash, undefined);
@@ -132,6 +133,21 @@ test("the Calculadora app is calc_: its own tool names, its token, read through 
   await h.rpc("tools/call", { name: "calc_player_state", arguments: {} });
   assert.equal(calc.calls.at(-1)!.body.params.name, "player_state");
   assert.equal(calc.calls.at(-1)!.auth, "Bearer cal_" + "y".repeat(43));
+});
+
+test("the rest of the family links the same way: Reloj is clock_, Notas is notas_ (notes_ stays the hub's notes)", async () => {
+  const { fakeStone, MemoryStore, RELAY } = await import("./helpers.ts");
+  const app = fakeStone({ token: { name: "Hub", kind: "redirect", usage: "", mode: "write" } });
+  const h = hub(new MemoryStore(), app.fetcher);
+  const link = (t: string) => `https://${RELAY}/d/abcdefabcdefabcdefabcdef/mcp?token=${t}_` + "z".repeat(43);
+  assert.match((await h.api("POST", "/apps/clock_", { link: link("clk") })).body.message, /Reloj vinculad/);
+  await h.rpc("tools/call", { name: "clock_player_state", arguments: {} });
+  assert.equal(app.calls.at(-1)!.body.params.name, "player_state");            // the app gets its own tool name
+  assert.match((await h.api("POST", "/apps/notas_", { link: link("not") })).body.message, /Notas vinculad/);
+  const names = (await h.rpc("tools/list")).body.result.tools.map((t: any) => t.name);
+  assert.ok(names.includes("notas_player_state") && names.includes("notas_status"));
+  assert.ok(names.some((n: string) => n.startsWith("notes_")));                  // the hub's own notes are still there
+  assert.equal((await h.api("POST", "/apps/contacts_", { link: link("con") })).body.error.code, "NOT_FOUND");  // inside Teléfono now
 });
 
 test("the Filem app is files_: not linked → coded error, bad link refused, then its own tools with its token", async () => {

@@ -28,7 +28,7 @@ class ScreenshotsTest {
         override fun setPaused(id: String, paused: Boolean) {}; override fun revoke(id: String) {}
         override fun createAgent(name: String, apps: List<String>, readOnly: Boolean, days: Int) {}
         override fun linkToken(link: String) {}; override fun scan() {}
-        override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}
+        override fun autoLink(packageName: String) {}; override fun setAutoSync(on: Boolean) {}; override fun connectAll() {}
     }
 
     private fun shot(name: String, content: @androidx.compose.runtime.Composable () -> Unit) {

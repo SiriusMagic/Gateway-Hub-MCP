@@ -39,6 +39,10 @@ object Talk {
             Say.NO_CALL -> res.getString(R.string.say_no_call)
             Say.NEED_PHONE -> res.getString(R.string.say_need_phone)
             Say.NOTED -> res.getString(R.string.say_noted, a[0])
+            Say.TOOL_RESULT -> a[0]
+            Say.TOOL_OFF -> res.getString(R.string.say_tool_off, a[0])
+            Say.TOOL_OLD -> res.getString(R.string.say_tool_old, a[0])
+            Say.TOOL_ERROR -> res.getString(R.string.say_tool_error, a[0], a[1])
             Say.TORCH_ON -> res.getString(R.string.say_torch_on)
             Say.TORCH_OFF -> res.getString(R.string.say_torch_off)
         }
@@ -57,6 +61,6 @@ object Talk {
         Action.ALARM -> R.string.do_alarm; Action.TIMER -> R.string.do_timer; Action.CALL -> R.string.do_call; Action.MESSAGE -> R.string.do_message
         Action.WEATHER -> R.string.do_weather; Action.AGENDA -> R.string.do_agenda; Action.TODAY -> R.string.do_today; Action.TIME -> R.string.do_time
         Action.DATE -> R.string.do_date; Action.PHOTO -> R.string.do_photo; Action.SCAN -> R.string.do_scan; Action.SPEED -> R.string.do_speed
-        Action.COUNT -> R.string.do_count; Action.VOLUME -> R.string.do_volume; Action.ANSWER -> R.string.do_answer; Action.HANG_UP -> R.string.do_hang_up; Action.NOTE -> R.string.do_note; Action.TORCH -> R.string.do_torch; Action.OPEN -> R.string.do_open; Action.UNKNOWN -> R.string.do_unknown
+        Action.COUNT -> R.string.do_count; Action.VOLUME -> R.string.do_volume; Action.ANSWER -> R.string.do_answer; Action.HANG_UP -> R.string.do_hang_up; Action.NOTE -> R.string.do_note; Action.TORCH -> R.string.do_torch; Action.TOOL -> R.string.do_tool; Action.OPEN -> R.string.do_open; Action.UNKNOWN -> R.string.do_unknown
     })
 }

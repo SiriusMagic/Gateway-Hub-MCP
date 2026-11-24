@@ -11,7 +11,8 @@ object Parser {
      * An order and what comes with it: «pon música al 30 por ciento» is music plus a volume. The volume is taken out first
      * ([Volume]); what is left is the order. Only the volume alone is the VOLUME action.
      */
-    fun parse(raw: String): Command {
+    fun parse(raw: String, today: java.time.LocalDate = java.time.LocalDate.now()): Command {
+        this.today = today
         val t = Words.normalize(raw)
         if (t.isEmpty()) return Command(Action.UNKNOWN)
         val (volume, rest) = Volume.take(t)
@@ -32,6 +33,12 @@ object Parser {
             Regex("^(?:siguiente|la siguiente|el siguiente|salta|saltala|pasa|pasala|cambia|cambiala|otra|otro|adelanta)(?: (?:a la |al |la |el |de )?(?:siguiente )?(?:cancion|tema|musica))?(?: siguiente)?$").matches(t) -> return media(MediaKey.NEXT)
             Regex("^(?:anterior|la anterior|el anterior|cancion anterior|tema anterior|vuelve atras|regresa|atras|pon la anterior)$").matches(t) -> return media(MediaKey.PREVIOUS)
             Regex("^(?:continua|continuar|sigue|seguir|reanuda|reanudar|play|dale play|quita (?:la )?pausa|vuelve a poner|despausa|resume)$what$").matches(t) -> return media(MediaKey.RESUME)
+        }
+
+        // A family app's own tool («¿cuál es mi próxima alarma?», «agrega tarea comprar pan», «¿cuánto es 25 por 4?»): before the
+        // other rules, which would only open the app. Arguments go as «arg:…» slots (numbers as «num:…»).
+        Skills.find(t, today)?.let { (skill, args) ->
+            return Command(Action.TOOL, mapOf("app" to skill.app, "tool" to skill.tool) + args.values.map { e -> (if (e.value is Int) "num:${e.key}" else "arg:${e.key}") to e.value.toString() })
         }
 
         // The call ringing now: «contesta», «atiende la llamada», «cuelga», «rechaza la llamada». The user's own voice only;
@@ -109,6 +116,8 @@ object Parser {
         Catalog.find(t)?.takeIf { t.split(' ').size <= 3 }?.let { return Command(Action.OPEN, mapOf("app" to it.id)) }
         return Command(Action.UNKNOWN)
     }
+
+    private var today: java.time.LocalDate = java.time.LocalDate.now()
 
     private fun media(k: MediaKey) = Command(Action.MEDIA, mapOf("key" to k.name))
 }

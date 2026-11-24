@@ -104,6 +104,27 @@ class HubViewModel(
         notes.joinToString("\n").ifBlank { null }
     }
 
+    /**
+     * «Conectar todas»: every app of the same developer installed here turns «Redireccionar a Hub» on by itself (the user's
+     * tap is the consent) and is linked to the hub. One line per app that could not, so it is clear which one and why.
+     */
+    override fun connectAll() = run {
+        val local = localApps.installed()
+        val rows = ScanMerge.merge(local, requireApi().scan())
+        val problems = mutableListOf<String>(); var done = 0
+        for (row in rows) {
+            val app = row.local ?: continue; val remote = row.remote ?: continue
+            if (!app.sameDeveloper || app.linkAuthority == null || !remote.remote) continue
+            val answer = linker.connect(app)
+            val link = answer.link
+            if (link == null) { problems += "${app.label}: ${answer.message ?: answer.error}"; continue }
+            runCatching { if (remote.prefix == "music_") requireApi().linkStone(link) else requireApi().linkApp(remote.prefix, link) }
+                .onSuccess { done++ }.onFailure { problems += "${app.label}: ${it.message}" }
+        }
+        mutable.update { it.copy(scan = ScanMerge.merge(localApps.installed(), requireApi().scan())) }
+        (listOf("$done apps conectadas al hub.") + problems).joinToString("\n")
+    }
+
     /** Links one app now (button "Vincular automáticamente"). */
     override fun autoLink(packageName: String) = run {
         val row = mutable.value.scan?.firstOrNull { it.local?.packageName == packageName }
