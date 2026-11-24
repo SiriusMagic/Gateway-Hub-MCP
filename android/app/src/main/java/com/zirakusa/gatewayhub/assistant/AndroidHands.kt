@@ -165,6 +165,8 @@ class AndroidHands(context: Context) : Hands {
         return content
     }
 
+    override fun capture(selfie: Boolean) = start(Intent(CAPTURE).putExtra("selfie", selfie), Catalog.byId("camara"), fallback = false)
+
     /** The torch of the back camera; no permission needed. */
     override fun torch(on: Boolean): Boolean = runCatching {
         val cam = app.getSystemService(android.hardware.camera2.CameraManager::class.java) ?: return false
@@ -189,5 +191,8 @@ class AndroidHands(context: Context) : Hands {
         return try { app.startActivity(i); true } catch (_: ActivityNotFoundException) { false }
     }
 
-    companion object { const val PLAY_RECOMMENDED = "com.zirakusa.family.action.PLAY_RECOMMENDED" }
+    companion object {
+        const val PLAY_RECOMMENDED = "com.zirakusa.family.action.PLAY_RECOMMENDED"
+        const val CAPTURE = "com.zirakusa.family.action.CAPTURE"
+    }
 }

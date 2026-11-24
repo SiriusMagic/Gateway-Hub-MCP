@@ -11,10 +11,29 @@ import java.time.LocalDate
 /** A tool's arguments, plain (no Android): text and whole numbers. */
 class Args { val values = LinkedHashMap<String, Any>(); fun put(key: String, value: Any): Args = apply { values[key] = value } }
 
-/** [tool] names the skill (and its node on the map); [call] is the app's tool it runs (the same unless two skills share one). */
-data class Skill(val tool: String, val app: String, val label: String, val call: String = tool, private val read: (Said, LocalDate) -> Args?) {
+/**
+ * Before a tool, which item it is about: [tool] lists them, and in its [list] (or the answer itself when [list] is "", like
+ * the song playing) the item whose [field] matches what was said in [said] (exactly, else contained). Its [id] goes to the
+ * tool as [arg]; its name is kept as «found» for the answer. [with] gives the listing tool its own arguments.
+ */
+data class Lookup(val tool: String, val list: String, val field: String, val said: String, val id: String, val arg: String,
+    val with: (Map<String, Any>) -> Map<String, Any> = { emptyMap() },
+    /** A search: when no name matches, its first result (the app already ranked them). */
+    val first: Boolean = false)
+
+/**
+ * One tool of one app as things to say. [tool] names it (and its node on the map); [call] is the app's tool it runs (the
+ * same unless two share one); [confirm] is the question asked before it runs (it deletes, edits or takes a photo), [done]
+ * what is said after (both with {argument} gaps, «{found}» being the item looked up); [lookup] finds the item first.
+ */
+data class Skill(val tool: String, val app: String, val label: String, val call: String = tool, val confirm: String? = null,
+    val done: String? = null, val lookup: Lookup? = null, val also: Lookup? = null, private val read: (Said, LocalDate) -> Args?) {
     fun args(said: Said, today: LocalDate) = read(said, today)
 }
+
+/** Arguments whose name starts with «_» are only for Lucía's words (the field asked for, a value to repeat): never sent. */
+/** «Lista «{found}» borrada.» with the arguments in the gaps. */
+fun fill(template: String, args: Map<String, Any?>) = Regex("\\{([a-z_A-Z0-9]+)\\}").replace(template) { m -> args[m.groupValues[1]]?.toString().orEmpty() }
 
 /**
  * What was said, as the parser normalised it ([original], with ñ) and with ñ as n ([t]) so the phrases match either way
@@ -26,14 +45,18 @@ class Said(val original: String) {
 }
 
 object Skills {
-    private fun r(pattern: String) = Regex("^(?:$pattern)$")
+    internal fun r(pattern: String) = Regex("^(?:$pattern)$")
     /** A fixed set of arguments when one of [patterns] matches. */
-    private fun fixed(args: () -> Args, vararg patterns: String): (Said, LocalDate) -> Args? = { s, _ -> if (patterns.any { r(it).matches(s.t) }) args() else null }
+    internal fun fixed(args: () -> Args, vararg patterns: String): (Said, LocalDate) -> Args? = { s, _ -> if (patterns.any { r(it).matches(s.t) }) args() else null }
     private val num = Regex("(\\d+)")
-    private fun whole(vararg patterns: String): (Said, LocalDate) -> Args? = { s, _ -> if (patterns.any { r(it).matches(s.t) }) Args() else null }
-    private fun one(pattern: String, key: String): (Said, LocalDate) -> Args? = { s, _ ->
+    internal fun whole(vararg patterns: String): (Said, LocalDate) -> Args? = { s, _ -> if (patterns.any { r(it).matches(s.t) }) Args() else null }
+    internal fun one(pattern: String, key: String): (Said, LocalDate) -> Args? = { s, _ ->
         r(pattern).find(s.t)?.let { m -> (1 until m.groups.size).map { s.group(m, it) }.firstOrNull { it.isNotBlank() }?.trim() }?.let { Args().put(key, it) }
     }
+
+    /** The lookups several skills share: a playlist by its name, an alarm by its time. */
+    val PLAYLIST = Lookup("playlist_list", "playlists", "name", "name", "id", "playlistId")
+    val ALARM = Lookup("clock_alarms", "alarms", "time", "time", "id", "id")
 
     private const val WEEK = "lunes|martes|miercoles|jueves|viernes|sabado|domingo"
     private val days = listOf("lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo")
@@ -52,6 +75,20 @@ object Skills {
         }
     }
     private const val DAY = "hoy|manana|pasado manana|(?:el |este )?(?:$WEEK)|el \\d{1,2}"
+    /** The same words, for the other skill files. */
+    const val DAY_WORDS = DAY
+
+    /** A past day: «el lunes» is the last Monday, «el 3» this month's (or last month's when it has not come yet). */
+    fun dayBack(word: String, today: LocalDate): LocalDate? {
+        val w = word.trim().removePrefix("el ").removePrefix("este ").trim()
+        return when {
+            w == "hoy" -> today
+            w in days -> { val target = DayOfWeek.of(days.indexOf(w) + 1); var d = today; while (d.dayOfWeek != target) d = d.minusDays(1); d }
+            w.toIntOrNull() in 1..31 -> { val n = w.toInt(); val m = runCatching { today.withDayOfMonth(n) }.getOrNull()
+                if (m != null && !m.isAfter(today)) m else runCatching { today.minusMonths(1).withDayOfMonth(n) }.getOrNull() }
+            else -> null
+        }
+    }
 
     /** «25 por 4», «100 mas 10 por ciento», «raiz de 81» → what Calculadora understands. */
     fun expression(said: String): String {
@@ -67,7 +104,7 @@ object Skills {
         // Stone (Música): what the player itself does — its own tools, so it really happens, not just opens.
         Skill("player_set_shuffle", "stone", "Aleatorio", read = fixed({ Args().put("enabled", true) }, "(?:pon|activa|modo|en) (?:el )?(?:modo )?aleatorio",
             "mezcla (?:las canciones|la musica|todo)", "aleatorio", "reproduce (?:en )?aleatorio")),
-        Skill("player_set_shuffle_off", "stone", "Sin aleatorio", "player_set_shuffle", fixed({ Args().put("enabled", false) }, "(?:quita|desactiva|apaga|sin) (?:el )?(?:modo )?aleatorio",
+        Skill("player_set_shuffle_off", "stone", "Sin aleatorio", "player_set_shuffle", read = fixed({ Args().put("enabled", false) }, "(?:quita|desactiva|apaga|sin) (?:el )?(?:modo )?aleatorio",
             "en orden", "reproduce en orden")),
         Skill("player_set_repeat", "stone", "Repetir") { s, _ ->
             when {
@@ -77,7 +114,7 @@ object Skills {
                 else -> null
             }
         },
-        Skill("playlist_play", "stone", "Poner lista", read = one("(?:pon|ponme|reproduce|toca|escuchar) (?:la |mi )?(?:lista|playlist)(?: de reproduccion)?(?: de| llamada)? (.+)", "name")),
+        Skill("playlist_play", "stone", "Poner lista", done = "Poniendo la lista {found}.", lookup = PLAYLIST, read = one("(?:pon|ponme|reproduce|toca|escuchar) (?:la |mi )?(?:lista|playlist)(?: de reproduccion)?(?: de| llamada)? (.+)", "name")),
         Skill("playlist_list", "stone", "Mis listas", read = whole("(?:que|cuales) (?:listas|playlists) tengo", "mis (?:listas|playlists)")),
         Skill("player_state", "stone", "¿Qué suena?", read = whole("que (?:cancion )?(?:esta sonando|suena|es esta)", "como se llama esta cancion", "quien canta(?: esta cancion| esto)?",
             "que estoy escuchando")),
@@ -106,7 +143,8 @@ object Skills {
         Skill("tasks_list", "notas", "Mis tareas", read = whole("(?:que|cuales|cuantas) tareas (?:tengo|hay)(?: pendientes)?", "(?:dime |lee |muestrame )?mis tareas(?: pendientes)?",
             "tareas pendientes", "que tengo pendiente")),
         Skill("tasks_create", "notas", "Nueva tarea", read = one("(?:agrega|anade|crea|pon|apunta) (?:una |la )?(?:nueva )?tarea(?: de| para| que diga)? (.+)|nueva tarea (.+)", "text")),
-        Skill("tasks_complete", "notas", "Tarea hecha", read = one("(?:marca|pon) (?:la )?tarea (.+?) como (?:hecha|completada|terminada)|(?:ya )?(?:termine|hice|complete) (?:la )?tarea (.+)", "text")),
+        Skill("tasks_complete", "notas", "Tarea hecha", done = "Hecho: {found}.",
+            lookup = Lookup("tasks_list", "tasks", "text", "text", "id", "id", with = { mapOf("include_done" to false) }), read = one("(?:marca|pon) (?:la )?tarea (.+?) como (?:hecha|completada|terminada)|(?:ya )?(?:termine|hice|complete) (?:la )?tarea (.+)", "text")),
         Skill("notes_search", "notas", "Buscar notas", read = one("busca (?:en (?:mis )?notas|la nota|una nota|notas)(?: de| sobre| que diga)? (.+)", "query")),
         Skill("notes_list", "notas", "Mis notas", read = whole("(?:que|cuales|cuantas) notas tengo", "(?:dime |lee |muestrame )?mis notas", "mis ultimas notas")),
         // Calendario
@@ -151,7 +189,7 @@ object Skills {
         Skill("compass_heading", "brujula", "Dirección", read = whole("(?:hacia )?(?:donde|a donde) (?:estoy mirando|apunto|apunta el telefono)", "que direccion es", "donde esta el norte")),
         Skill("level_reading", "nivel", "¿Está nivelado?", read = whole("(?:esta|estoy) (?:nivelado|derecho|recto)", "lectura del nivel", "que inclinacion (?:tiene|hay)")),
         // More of Reloj, Calendario, SMS, Contactos, Luma, Filem and Cámara.
-        Skill("clock_alarm_enable", "reloj", "Encender/apagar alarma") { s, _ ->
+        Skill("clock_alarm_enable", "reloj", "Encender/apagar alarma", lookup = ALARM) { s, _ ->
             r("(?:(apaga|desactiva|quita|cancela)|(enciende|activa|pon)) (?:la )?alarma (?:de las |de la |de )?(.+)").find(s.t)?.let { m ->
                 Words.clock(m.groupValues[3])?.let { (h, min) -> Args().put("time", "%02d:%02d".format(h, min)).put("enabled", m.groupValues[2].isNotEmpty()) }
             }
@@ -182,7 +220,10 @@ object Skills {
         },
     )
 
+    /** Every skill: the ones above, then Stone's and the rest of the family's (in their own files). */
+    val every by lazy { all + StoneSkills.all + FamilySkills.all }
+
     /** The skill a phrase asks for, with its arguments. */
-    fun find(text: String, today: LocalDate): Pair<Skill, Args>? = Said(text).let { said -> all.firstNotNullOfOrNull { s -> s.args(said, today)?.let { s to it } } }
-    fun byTool(tool: String) = all.firstOrNull { it.tool == tool }
+    fun find(text: String, today: LocalDate): Pair<Skill, Args>? = Said(text).let { said -> every.firstNotNullOfOrNull { s -> s.args(said, today)?.let { s to it } } }
+    fun byTool(tool: String) = every.firstOrNull { it.tool == tool }
 }

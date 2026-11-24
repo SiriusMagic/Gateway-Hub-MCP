@@ -38,6 +38,8 @@ interface Hands {
      * Hub» is off, [ToolError] when the tool refused.
      */
     fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? = null
+    /** Cámara opens with a 3 s countdown (after the user's «sí»); false when Cámara is missing or too old. */
+    fun capture(selfie: Boolean): Boolean = false
     /** The phone's media volume, 0–100. */
     fun volume(): Int
     fun setVolume(percent: Int): Boolean
@@ -53,7 +55,7 @@ enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
     NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
-    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING
+    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED
 }
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
@@ -67,8 +69,13 @@ data class Turn(val heard: String, val byVoice: Boolean, val command: Command, v
 
 /** Understands and acts. Pure apart from its [Hands]. */
 class Brain(private val hands: Hands, private val clock: () -> Long = System::currentTimeMillis) {
+    companion object { const val CONFIRM_MS = 60_000L }
     fun handle(heard: String, byVoice: Boolean = false): Turn {
         val start = clock()
+        // The answer to a question Lucía just asked («¿Borro la lista Rock?» → «sí»).
+        pending?.let { p -> answer(Words.normalize(heard).replace('ñ', 'n'))?.let { (reply, ok) ->
+            return Turn(heard, byVoice, Command(Action.TOOL, mapOf("app" to p.app.id, "tool" to p.skill.tool)), p.app, reply, ok, clock() - start)
+        } }
         val c = Parser.parse(heard, hands.now().toLocalDate())
         val app = when (c.action) { Action.OPEN, Action.TOOL -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
         // The volume first, so music never starts too loud; then the order.
@@ -127,44 +134,70 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         }
     }
 
-    /** A family app's tool; «marca la tarea X como hecha» first finds the task by its words. */
+    /** A tool waiting for the user's «sí» (it deletes, edits or takes a photo), and until when it waits. */
+    private class Pending(val app: FamilyApp, val skill: Skill, val sent: org.json.JSONObject, val said: Map<String, Any?>, val until: Long)
+    private var pending: Pending? = null
+
+    /**
+     * A family app's tool: the item first when the skill needs one («la lista Rock», «la alarma de las 7»), then the question
+     * when it deletes or edits, then the tool itself with only the arguments it knows.
+     */
     private fun tool(c: Command, app: FamilyApp): Pair<Reply, Boolean> {
         val name = c["tool"]!!
+        val skill = Skills.byTool(name)
         return try {
-            var args = org.json.JSONObject().apply {
-                c.slots.forEach { (k, v) -> when { k.startsWith("arg:") -> put(k.removePrefix("arg:"), v); k.startsWith("num:") -> put(k.removePrefix("num:"), v.toInt())
-                    k.startsWith("bool:") -> put(k.removePrefix("bool:"), v.toBoolean()) } }
-            }
-            if (name == "tasks_complete") {
-                val wanted = Words.normalize(args.optString("text"))
-                val tasks = hands.tool(app, "tasks_list", org.json.JSONObject().put("include_done", false))?.optJSONArray("tasks")
+            val args = LinkedHashMap<String, Any?>()
+            c.slots.forEach { (k, v) -> when { k.startsWith("arg:") -> args[k.removePrefix("arg:")] = v; k.startsWith("num:") -> args[k.removePrefix("num:")] = v.toInt()
+                k.startsWith("bool:") -> args[k.removePrefix("bool:")] = v.toBoolean(); k.startsWith("dbl:") -> args[k.removePrefix("dbl:")] = v.toDouble() } }
+            val sent = org.json.JSONObject(args.filterValues { it != null })
+            // The items first: «la lista Rock», «la alarma de las 7», «esta canción» (two when needed: a song and a list).
+            listOfNotNull(skill?.lookup, skill?.also).forEachIndexed { i, l ->
+                val answer = hands.tool(app, l.tool, org.json.JSONObject(l.with(args.filterValues { it != null }.mapValues { it.value!! })))
                     ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
-                val found = (0 until tasks.length()).map { tasks.getJSONObject(it) }.firstOrNull { Words.normalize(it.optString("text")).contains(wanted) }
-                    ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No encuentro esa tarea.")) to false
-                args = org.json.JSONObject().put("id", found.getLong("id"))
+                val wanted = Words.normalize(args[l.said]?.toString().orEmpty())
+                val items = if (l.list.isEmpty()) listOf(answer) else answer.optJSONArray(l.list)?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it) } }.orEmpty()
+                val found = if (l.list.isEmpty()) items.firstOrNull() else
+                    items.firstOrNull { Words.normalize(it.optString(l.field)) == wanted } ?: items.firstOrNull { wanted.isNotEmpty() && Words.normalize(it.optString(l.field)).contains(wanted) }
+                        ?: items.firstOrNull().takeIf { l.first }
+                if (found == null || !found.has(l.id) || found.isNull(l.id) || found.optString(l.id).isBlank())
+                    return Reply(Say.TOOL_ERROR, listOf(app.name, if (l.list.isEmpty()) "No está sonando nada." else "No encuentro «${args[l.said] ?: "eso"}».")) to false
+                sent.remove(l.said); sent.put(l.arg, found.get(l.id).toString().let { v -> if (found.get(l.id) is Number) found.get(l.id) else v })
+                args[if (i == 0) "found" else "found2"] = found.optString(l.field).ifBlank { args[l.said]?.toString().orEmpty() }
             }
-            // «Pon la lista Rock», «apaga la alarma de las 7»: first which one, by its name or its time.
-            if (name == "playlist_play") {
-                val wanted = Words.normalize(args.optString("name"))
-                val lists = hands.tool(app, "playlist_list", org.json.JSONObject())?.optJSONArray("playlists") ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
-                val found = (0 until lists.length()).map { lists.getJSONObject(it) }.let { all ->
-                    all.firstOrNull { Words.normalize(it.optString("name")) == wanted } ?: all.firstOrNull { Words.normalize(it.optString("name")).contains(wanted) }
-                } ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No tengo una lista llamada «${args.optString("name")}».")) to false
-                args = org.json.JSONObject().put("playlistId", found.getString("id")).put("name", found.optString("name"))
+            sent.keys().asSequence().toList().filter { it.startsWith("_") }.forEach(sent::remove)
+            if (skill?.confirm != null) {
+                pending = Pending(app, skill, sent, args, clock() + CONFIRM_MS)
+                return Reply(Say.CONFIRM, listOf(fill(skill.confirm, args))) to true
             }
-            if (name == "clock_alarm_enable" && args.has("time")) {
-                val alarms = hands.tool(app, "clock_alarms", org.json.JSONObject())?.optJSONArray("alarms") ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
-                val found = (0 until alarms.length()).map { alarms.getJSONObject(it) }.firstOrNull { it.optString("time") == args.getString("time") }
-                    ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No hay una alarma a las ${args.getString("time")}.")) to false
-                args = org.json.JSONObject().put("id", found.getLong("id")).put("enabled", args.getBoolean("enabled")).put("time", args.getString("time"))
-            }
-            val call = Skills.byTool(name)?.call ?: name
-            // Only the arguments the app's tool knows go out (the helper ones, like a playlist's name, stay here).
-            val sent = org.json.JSONObject(args.toString()).apply { if (call == "playlist_play") remove("name"); if (call == "clock_alarm_enable") remove("time") }
-            val r = hands.tool(app, call, sent) ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
-            Reply(Say.TOOL_RESULT, listOf(Speech.say(name, r, hands.now().toLocalDate(), args))) to true
+            run(app, name, skill, sent, args)
         } catch (_: Hands.ToolOff) { Reply(Say.TOOL_OFF, listOf(app.name)) to false
         } catch (e: Hands.ToolError) { Reply(Say.TOOL_ERROR, listOf(app.name, e.message.orEmpty())) to false }
+    }
+
+    private fun run(app: FamilyApp, name: String, skill: Skill?, sent: org.json.JSONObject, said: Map<String, Any?>): Pair<Reply, Boolean> {
+        // The photo by voice is an order to Cámara, not a tool: it opens with a countdown the user sees and can stop.
+        if ((skill?.call ?: name) == FamilySkills.CAPTURE)
+            return if (hands.capture(sent.optBoolean("selfie"))) Reply(Say.TOOL_RESULT, listOf(fill(skill?.done.orEmpty(), said))) to true
+                else Reply(Say.TOOL_OLD, listOf(app.name)) to false
+        val r = hands.tool(app, skill?.call ?: name, sent) ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
+        val text = skill?.done?.let { fill(it, said) } ?: Speech.say(name, r, hands.now().toLocalDate(), org.json.JSONObject(said.filterValues { it != null }))
+        return Reply(Say.TOOL_RESULT, listOf(text)) to true
+    }
+
+    /** «Sí» / «no» to the question asked; null when the phrase is not an answer (then it is a new order). */
+    private fun answer(t: String): Pair<Reply, Boolean>? {
+        val p = pending ?: return null
+        if (clock() > p.until) { pending = null; return null }
+        return when {
+            Regex("^(?:si|claro|confirmo|confirma|hazlo|dale|adelante|ok|okay|de acuerdo|si por favor|si hazlo|correcto|eso)$").matches(t) -> {
+                pending = null
+                try { run(p.app, p.skill.tool, p.skill, p.sent, p.said) }
+                catch (_: Hands.ToolOff) { Reply(Say.TOOL_OFF, listOf(p.app.name)) to false }
+                catch (e: Hands.ToolError) { Reply(Say.TOOL_ERROR, listOf(p.app.name, e.message.orEmpty())) to false }
+            }
+            Regex("^(?:no|cancela|cancelar|mejor no|no gracias|deja|dejalo|olvidalo|para)$").matches(t) -> { pending = null; Reply(Say.CANCELLED) to true }
+            else -> { pending = null; null }
+        }
     }
 
     /** «Llama a Ana» / «escríbele a Ana»: a number as said, or the contact's; only the screen opens, the user confirms. */

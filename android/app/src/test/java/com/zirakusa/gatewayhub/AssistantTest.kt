@@ -94,7 +94,9 @@ class AssistantTest {
         assertEquals(Action.WEATHER, p("¿Qué tiempo hace?").action); assertEquals(Action.WEATHER, p("va a llover hoy").action)
         assertEquals(Action.AGENDA, p("qué tengo hoy").action); assertEquals(Action.TODAY, p("Buenos días").action)
         assertEquals(Action.TIME, p("¿Qué hora es?").action); assertEquals(Action.DATE, p("qué día es hoy").action)
-        assertEquals(Action.PHOTO, p("toma una foto").action); assertEquals(Action.SCAN, p("escanea un QR").action); assertEquals(Action.SPEED, p("haz una prueba de velocidad").action)
+        // A photo and a speed test now go to the apps' own tools (asked first); scanning still opens QR.
+        assertEquals("camera_capture", p("toma una foto")["tool"]); assertEquals(Action.SCAN, p("escanea un QR").action)
+        assertEquals("network_speed_test", p("haz una prueba de velocidad")["tool"])
         assertEquals("camara", p("Abre la cámara")["app"]); assertEquals("video", p("abre stone video")["app"]); assertEquals("filem", p("muéstrame mis archivos")["app"])
         assertEquals("calculadora", p("calculadora")["app"])
         assertEquals(Action.UNKNOWN, p("abre spotify").action); assertEquals("spotify", p("abre spotify")["app_name"])
@@ -174,7 +176,9 @@ class AssistantTest {
         assertEquals(listOf(Graph.VOICE, "app:stone", "do:PLAY_MUSIC"), turn.path); assertTrue(turn.ok)
         assertEquals(listOf(Graph.TEXT), brain.handle("cuéntame un chiste").path)
         assertEquals(listOf(Graph.TEXT, "app:notas", "do:COUNT"), brain.handle("vamos a contar").path)       // Conteo hangs from Notas
-        assertEquals(listOf(Graph.TEXT, Graph.LUCIA, "do:TIME"), brain.handle("qué hora es").path)
+        assertEquals(listOf(Graph.TEXT, "app:reloj", "do:TIME"), brain.handle("qué hora es").path)          // the hour hangs from Reloj, Lucía says it
+        assertEquals(listOf(Graph.TEXT, "app:calendario", "do:DATE"), brain.handle("qué día es hoy").path)
+        assertEquals(com.zirakusa.gatewayhub.assistant.Say.TIME, FakeHands(installed = emptySet()).let { Brain(it).handle("qué hora es").reply.say })   // without Reloj too
         assertEquals(listOf(Graph.TEXT, "app:luma"), brain.handle("abre la galería").path)
         assertTrue(Graph.edges().contains(Edge("app:notas", "do:COUNT")))
         assertFalse(Graph.edges().any { it.from == Graph.VOICE && it.to.startsWith("do:") })  // inputs only reach apps

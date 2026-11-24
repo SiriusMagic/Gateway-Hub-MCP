@@ -19,17 +19,20 @@ object Graph {
 
     /** The actions shown: opening an app is the app itself, and what was not understood stays at the input. */
     val actions = Action.entries.filter { it != Action.UNKNOWN && it != Action.OPEN && it != Action.TOOL }
+    /** Where an action hangs on the map when Lucía answers it herself: the hour is Reloj's, the date Calendario's. */
+    private val home = mapOf(Action.TIME to "reloj", Action.DATE to "calendario")
+    private fun owner(a: Action) = Catalog.appFor(a)?.id ?: home[a]
     /** The parent of an action: its app, or Lucía. */
-    fun parent(a: Action) = Catalog.appFor(a)?.let(::app) ?: LUCIA
+    fun parent(a: Action) = owner(a)?.let { "app:$it" } ?: LUCIA
 
     /** One branch under an app: one of Lucía's actions or one of the app's own MCP tools. */
     data class Child(val id: String, val action: Action? = null, val label: String = "")
 
     /** Every app in the family (each one can be opened), Lucía first; each with its actions and its tools under it. */
     fun tree(): List<Pair<Pair<String, String>, List<Child>>> =
-        listOf((LUCIA to "Lucía") to actions.filter { Catalog.appFor(it) == null }.map { Child(action(it), it) }) +
-            Catalog.apps.map { a -> (app(a) to a.name) to (actions.filter { Catalog.appFor(it) == a }.map { Child(action(it), it) } +
-                Skills.all.filter { it.app == a.id }.map { Child(tool(it.tool), label = it.label) }) }
+        listOf((LUCIA to "Lucía") to actions.filter { owner(it) == null }.map { Child(action(it), it) }) +
+            Catalog.apps.map { a -> (app(a) to a.name) to (actions.filter { owner(it) == a.id }.map { Child(action(it), it) } +
+                Skills.every.filter { it.app == a.id }.map { Child(tool(it.tool), label = it.label) }) }
 
     /** One row per action (an app without actions takes one row), so the drawing grows downwards. */
     fun rows() = tree().sumOf { max(1, it.second.size) }

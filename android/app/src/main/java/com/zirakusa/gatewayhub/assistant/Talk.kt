@@ -40,6 +40,8 @@ object Talk {
             Say.NEED_PHONE -> res.getString(R.string.say_need_phone)
             Say.NOTED -> res.getString(R.string.say_noted, a[0])
             Say.TOOL_RESULT -> a[0]
+            Say.CONFIRM -> a[0] + " " + res.getString(R.string.say_confirm_hint)
+            Say.CANCELLED -> res.getString(R.string.say_cancelled)
             Say.NOT_PLAYING -> res.getString(R.string.say_not_playing, a[0])
             Say.TOOL_OFF -> res.getString(R.string.say_tool_off, a[0])
             Say.TOOL_OLD -> res.getString(R.string.say_tool_old, a[0])

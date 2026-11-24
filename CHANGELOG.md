@@ -1,3 +1,30 @@
+# Gateway Hub 0.0.25: Lucía sabe usar casi todas las herramientas de la familia
+
+- **Pregunta antes de cambiar algo**: lo que borra, edita, mueve o hace una foto se confirma con «sí» o «no» (espera 60 s;
+  otra orden la cancela). Ej.: «borra la lista Gym» → «¿Borro la lista Gym? Las canciones no se borran.» → «sí».
+- **Busca primero de qué hablas**: la lista, la alarma, la nota, el evento, la canción o el archivo por su nombre; «esta
+  canción» es la que suena.
+- **Stone**: «pon la canción despacito», «pon X a continuación», «qué sigue», «vacía la cola», «ve al minuto 2», «más
+  rápido / más lento / velocidad normal», «dame 15 minutos más», «quita esta canción de favoritos», «mis canciones
+  favoritas», «mis artistas / álbumes / géneros / carpetas», «busca música nueva», «ordena mis canciones por artista»,
+  «muéstrame la letra», «busca la letra de esta canción», «crea una lista llamada gym», «agrega esta canción a la lista
+  gym», «quita esta canción de la lista gym», «qué canciones tiene la lista gym», «renombra la lista gym a correr»,
+  «borra la lista gym», «cambia el artista de esta canción a …», «deshaz el último cambio», «activa el ecualizador»,
+  «modo cine / dormilón / ahorro», «activa el fundido entre canciones», «pon la pantalla horizontal», «pantalla
+  completa», «brillo al 40 por ciento», «cambia el tema a negro», «cambia el color a rosa».
+- **Calendario**: «pospón la reunión con Ana para el viernes a las 4», «mueve el dentista al 30», «cancela la cita del
+  dentista» (Calendario 0.3.2 o posterior para posponer).
+- **Cámara**: «toma una foto», «tómame una selfie» (después de tu «sí», cuenta atrás de 3 s que un toque cancela; Cámara
+  0.2.2), «pon el flash de la cámara en automático», «enciende la linterna de la cámara», «temporizador de la cámara a
+  10 segundos», «mis últimas fotos de la cámara».
+- **Más**: Reloj («borra la alarma de las 7»), Notas («lee la nota receta», «agrega a la nota compras leche», «fija /
+  borra la nota…», «crea una carpeta trabajo», «borra la tarea…»), Clima («qué temperatura hace», «quita Quito del
+  clima»), SMS («lee los mensajes de Ana»), Teléfono («mis últimas llamadas»), Calculadora («convierte 5 kilómetros a
+  millas», «convierte 20 dólares a euros», «borra el historial de la calculadora»), Luma («mis álbumes», «fotos de
+  ayer»), Filem («borra / renombra el archivo…»), Redes («mide la velocidad de internet», «redes wifi cerca»), Brújula
+  («dónde estoy»), Nivel («mis mediciones»), Inicio («qué apps tengo», «qué hay en mi dock»).
+- **Mapa**: «Hora» cuelga de Reloj y «Fecha» de Calendario (Lucía las sigue diciendo aunque no estén instaladas).
+
 # Gateway Hub 0.0.24: Música completa en Lucía, y más Calendario, SMS y otras apps
 
 - **Música** (con las herramientas de Stone, sin internet; Stone 1.7.26 o posterior): «pon aleatorio», «quita el

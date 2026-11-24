@@ -133,6 +133,8 @@
     <string name="say_noted">Anotado en Notas: %1$s</string>
     <string name="say_torch_on">Linterna encendida.</string>
     <string name="say_torch_off">Linterna apagada.</string>
+    <string name="say_confirm_hint">Di «sí» o «no».</string>
+    <string name="say_cancelled">Cancelado, no hice nada.</string>
     <string name="say_not_playing">Abrí %1$s, pero no empezó a sonar. Elige una canción o actualiza %1$s y vuelve a pedírmelo.</string>
     <string name="say_tool_off">Para eso, conecta %1$s al Hub: Hub › Escáner › «Conectar todas las apps».</string>
     <string name="say_tool_old">Actualiza %1$s para que pueda hacerlo.</string>

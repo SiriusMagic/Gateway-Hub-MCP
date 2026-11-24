@@ -30,10 +30,16 @@ object Speech {
     fun say(tool: String, r: JSONObject, today: LocalDate, args: JSONObject = JSONObject()): String = when (tool) {
         "player_set_shuffle", "player_set_shuffle_off" -> if (args.optBoolean("enabled")) "Modo aleatorio activado." else "Aleatorio desactivado: en orden."
         "player_set_repeat" -> when (args.optString("mode")) { "one" -> "Repetiré esta canción."; "all" -> "Repetiré toda la lista."; else -> "Sin repetir." }
-        "playlist_play" -> "Poniendo la lista ${args.optString("name")}."
         "player_state" -> if (!r.optBoolean("playing") && r.optString("title").isBlank()) "No está sonando nada." else
             (if (r.optBoolean("playing")) "Suena " else "En pausa: ") + "«${r.optString("title")}»" + r.optString("artist").takeIf { it.isNotBlank() && it != "null" }?.let { " de $it" }.orEmpty() + "."
         "player_set_favorite" -> "Añadida a tus favoritos."
+        "library_lyrics" -> r.optString("lyrics").trim().takeIf { it.isNotBlank() }?.let { "«${r.optString("title")}»:\n" + it.lines().take(8).joinToString("\n") }
+            ?: "Esta canción no tiene letra guardada. Di «busca la letra»."
+        "notes_get" -> (r.optJSONObject("note") ?: r).let { n -> listOf(n.optString("title"), n.optString("body").ifBlank { n.optString("text") }.take(400)).filter { it.isNotBlank() }.joinToString(":\n") }
+        "weather_now" -> listOf("temperature", "temp", "temperature_c").firstNotNullOfOrNull { k -> r.opt(k)?.takeIf { it != JSONObject.NULL } }
+            ?.let { t -> "Ahora hay $t grados" + r.optString("sky").ifBlank { r.optString("condition") }.takeIf { it.isNotBlank() }?.let { ", $it" }.orEmpty() + "." } ?: list(r, today)
+        "calc_convert_units", "calc_convert_currency" -> listOf("result", "value", "text", "display").firstNotNullOfOrNull { k -> r.opt(k)?.takeIf { it != JSONObject.NULL }?.toString() }
+            ?.let { "Son $it." } ?: list(r, today)
         "player_sleep_timer" -> args.optInt("minutes").let { if (it == 0) "Temporizador de música cancelado." else "La música se detendrá en $it minutos." }
         "equalizer_set_preset" -> "Ecualizador: ${presets[args.optString("preset")] ?: args.optString("preset")}."
         "clock_alarm_enable" -> "Alarma de las ${args.optString("time")} ${if (args.optBoolean("enabled")) "encendida" else "apagada"}."

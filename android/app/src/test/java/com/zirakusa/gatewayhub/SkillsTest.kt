@@ -142,7 +142,7 @@ class SkillsTest {
         assertEquals("Poniendo la lista Rock de los 80.", brain.handle("pon la lista rock de los 80").reply.args[0])
         assertEquals("stone playlist_play {\"playlistId\":\"p9\"}", apps.asked.last())
         assertEquals("Alarma de las 07:00 apagada.", brain.handle("apaga la alarma de las 7").reply.args[0])
-        assertEquals("reloj clock_alarm_enable {\"id\":4,\"enabled\":false}", apps.asked.last())
+        assertEquals("reloj clock_alarm_enable {\"enabled\":false,\"id\":4}", apps.asked.last())
         assertEquals(Say.TOOL_ERROR, brain.handle("apaga la alarma de las 9").reply.say)
         assertEquals("Aleatorio desactivado: en orden.", brain.handle("quita el aleatorio").reply.args[0])
         assertEquals("stone player_set_shuffle {\"enabled\":false}", apps.asked.last())   // the real tool, not the map's name
