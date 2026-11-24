@@ -1,3 +1,12 @@
+# Gateway Hub 0.0.31: elige quién entiende lo que dices
+
+- **Ajustes de Lucía → «Quién entiende lo que dices»**: *Asistente* (solo reglas: al instante, sin modelo), *Modelo* (el
+  modelo lee todo y lo convierte en órdenes de Lucía o conversa) o *Ambos* (reglas primero, el modelo para lo que no
+  entienden; por defecto). Sin un modelo elegido responde siempre el asistente.
+- **«Pantalla apagada o bloqueada: solo asistente»** (activado): al oír «Oye Lucía» con el teléfono bloqueado responden
+  las reglas, rápido y con poca batería.
+- En modo *Modelo*, las órdenes que cambian algo siguen preguntando «¿…?» y la respuesta «sí / no» la recogen las reglas.
+
 # Gateway Hub 0.0.30: varias órdenes en una frase, y el modelo traduce a órdenes de Lucía
 
 - **Habla natural**: «Hey Luna, llama a Luis por favor y ayúdame con la hora» hace las dos cosas (abre el marcador con

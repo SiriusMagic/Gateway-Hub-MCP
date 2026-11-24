@@ -58,6 +58,14 @@ class IntentsTest {
         assertEquals(5, OrderReply.parse("{\"ordenes\": [" + (1..9).joinToString(",") { "\"pon una alarma a las $it\"" } + "]}", ::knows).size)
     }
 
+    @Test fun withoutAModelTheRulesAnswer() {
+        val state = AssistantState(Brain(FakeHands()))
+        state.mode = com.zirakusa.gatewayhub.assistant.AnswerMode.MODEL
+        assertEquals(com.zirakusa.gatewayhub.assistant.AnswerMode.RULES, state.modeNow())   // no model chosen
+        state.send("reproduce dark souls", byVoice = false)
+        assertEquals(Action.PLAY_MUSIC, state.last!!.command.action); assertEquals("dark souls", state.last!!.command["query"])
+    }
+
     @Test fun luciaDoesBothAndAnswersOnce() {
         val hands = object : FakeHands() {
             override fun person(name: String) = People.best(listOf(Person("Luis Mora", "0991112233")), name)

@@ -3,6 +3,16 @@
     <string name="assistant_chat_tab">Chat</string>
     <string name="assistant_choose_model">Elegir modelo</string>
     <string name="assistant_advanced">Avanzado</string>
+    <string name="mode_title">Quién entiende lo que dices</string>
+    <string name="mode_rules">Asistente</string>
+    <string name="mode_model">Modelo</string>
+    <string name="mode_both">Ambos</string>
+    <string name="mode_rules_hint">Solo las reglas de Lucía: al instante, sin internet y sin modelo. Si no entiende, te lo dice.</string>
+    <string name="mode_model_hint">El modelo lee todo y lo convierte en órdenes de Lucía, o conversa. Más natural, más lento. Lo que cambia algo sigue preguntando «¿…?».</string>
+    <string name="mode_both_hint">Primero las reglas (rápidas); lo que no entienden pasa al modelo.</string>
+    <string name="mode_needs_model">Descarga y elige un modelo en Avanzado; mientras tanto responde el asistente.</string>
+    <string name="mode_locked">Pantalla apagada o bloqueada: solo asistente</string>
+    <string name="mode_locked_hint">Al oír «Oye Lucía» con el teléfono bloqueado responden las reglas: rápido, poca batería.</string>
     <string name="phone_mcp_title">MCP</string>
     <string name="phone_mcp_apps">Apps de este teléfono</string>
     <string name="phone_mcp_ready">MCP local disponible</string>

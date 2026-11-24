@@ -69,8 +69,22 @@ import com.zirakusa.gatewayhub.ui.HubColors
             Text(stringResource(if (state.canAppear) R.string.appear_yes else R.string.appear_hint), color = HubColors.Muted, fontSize = 14.sp)
             if (!state.canAppear) Button(stringResource(R.string.appear_go), actions.allowAppear)
         }
-        state.local?.takeIf { it.models.supported }?.let {
-            Card { Button(stringResource(R.string.assistant_advanced)) { state.page = AssistantPage.ADVANCED } }
+        state.local?.takeIf { it.models.supported }?.let { local ->
+            Card {
+                Text(stringResource(R.string.mode_title), color = HubColors.Text, fontSize = 17.sp)
+                Text(stringResource(when (state.mode) { AnswerMode.RULES -> R.string.mode_rules_hint; AnswerMode.MODEL -> R.string.mode_model_hint
+                    AnswerMode.BOTH -> R.string.mode_both_hint }), color = HubColors.Muted, fontSize = 14.sp)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(AnswerMode.RULES to R.string.mode_rules, AnswerMode.MODEL to R.string.mode_model, AnswerMode.BOTH to R.string.mode_both).forEach { (m, label) ->
+                        FilterChip(state.mode == m, { actions.setMode(m) }, { Text(stringResource(label)) },
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = HubColors.Gold, selectedLabelColor = HubColors.Background))
+                    }
+                }
+                if (state.mode != AnswerMode.RULES && local.models.selected == null)
+                    Text(stringResource(R.string.mode_needs_model), color = HubColors.Bad, fontSize = 14.sp)
+                Line(stringResource(R.string.mode_locked), stringResource(R.string.mode_locked_hint), state.rulesWhenLocked, actions.setRulesWhenLocked)
+                Button(stringResource(R.string.assistant_advanced)) { state.page = AssistantPage.ADVANCED }
+            }
         }
         Card {
             Text(stringResource(R.string.voice_title), color = HubColors.Text, fontSize = 17.sp)

@@ -138,6 +138,8 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     /** A tool waiting for the user's «sí» (it deletes, edits or takes a photo), and until when it waits. */
     private class Pending(val app: FamilyApp, val skill: Skill, val sent: org.json.JSONObject, val said: Map<String, Any?>, val until: Long)
     private var pending: Pending? = null
+    /** Lucía asked «¿…?» and waits for «sí» or «no». */
+    val asking get() = pending != null
 
     /**
      * A family app's tool: the item first when the skill needs one («la lista Rock», «la alarma de las 7»), then the question

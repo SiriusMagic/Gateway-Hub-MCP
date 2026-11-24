@@ -55,7 +55,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
 class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, val makeDefault: () -> Unit = {},
     val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
     val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {}, val installVoice: () -> Unit = {},
-    val manageHub: () -> Unit = {})
+    val manageHub: () -> Unit = {}, val setMode: (AnswerMode) -> Unit = {}, val setRulesWhenLocked: (Boolean) -> Unit = {})
 
 /** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {

@@ -77,16 +77,22 @@ class AssistantActivity : ComponentActivity() {
             partial = { runOnUiThread { state.partial = it } }, level = { runOnUiThread { state.level = it } },
             failed = { runOnUiThread { countOff(); failed(it) } }, ended = { runOnUiThread { countOff() } })
         state.voiceAnswers = prefs.voiceAnswers; state.wake = prefs.wake; state.name = prefs.name; state.onlyCharging = prefs.onlyCharging
+        state.mode = prefs.mode; state.rulesWhenLocked = prefs.rulesWhenLocked
+        state.locked = {
+            !getSystemService(android.os.PowerManager::class.java).isInteractive ||
+                getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
+        }
         ears = VoskEars(this, heard = { text, final -> runOnUiThread { if (state.listening) state.heard(text, final) } },
             level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } },
-            conversational = { local.models.supported })
+            conversational = { state.modeNow() != AnswerMode.RULES })
         Vosk.model(this) { m -> runOnUiThread { state.modelReady = m != null } }   // warm up while the screen opens
         setContent {
             HubTheme {
                 AssistantScreen(state, AssistantActions(listen = ::listen, stop = ::stop, makeDefault = ::makeDefault, setWake = ::askWake,
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
                     allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
-                    installVoice = ::installVoice, manageHub = {
+                    installVoice = ::installVoice, setMode = { prefs.mode = it; state.mode = it },
+                    setRulesWhenLocked = { prefs.rulesWhenLocked = it; state.rulesWhenLocked = it }, manageHub = {
                         startActivity(Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_MANAGE_HUB))
                     }),
                     CountActions(pause = ::countOff, resume = { countOn(greet = false) }, save = ::saveCount, discard = { countOff(); state.endTally() },

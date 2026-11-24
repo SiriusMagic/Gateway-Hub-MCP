@@ -13,6 +13,23 @@ import androidx.compose.runtime.setValue
 class AssistantState(private val brain: Brain, private val speak: (Reply) -> Unit = {},
     /** Several answers said as one (several orders in one sentence); by default one after another. */
     private val speakAll: (List<Reply>) -> Unit = { it.lastOrNull()?.let(speak) }) {
+    /** Who understands what is said: the rules, the model or both (rules first). */
+    var mode by mutableStateOf(AnswerMode.BOTH)
+    /** With the screen off or locked, only the rules (fast, light, and nothing personal goes to a long answer). */
+    var rulesWhenLocked by mutableStateOf(true)
+    /** The phone is off or locked right now (the activity knows). */
+    internal var locked: () -> Boolean = { false }
+
+    /** The mode for this order: the model only when one is chosen, and not with the screen off or locked if so set. */
+    internal fun modeNow(): AnswerMode {
+        val model = local?.models?.let { it.supported && it.selected != null } == true
+        return when {
+            !model -> AnswerMode.RULES
+            rulesWhenLocked && locked() -> AnswerMode.RULES
+            else -> mode
+        }
+    }
+
     /** Orders said after one that asks «¿…?»: they run after the «sí». */
     private var waiting = emptyList<String>()
     internal var local: LocalAssistant? = null
@@ -54,17 +71,23 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
         // The orders left after a question: they go on only after «sí».
         val after = waiting.also { waiting = emptyList() }.takeIf { Intents.yes(heard) }.orEmpty()
-        if (assistant?.models?.supported == true && localTurns.route(assistant, heard, byVoice)) return
+        val mode = modeNow()
+        if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) return
+        // Only the model: it understands everything; the rules only carry out its orders (and still ask «¿…?»).
+        if (mode == AnswerMode.MODEL && assistant != null && !brain.asking) {
+            localTurns.translate(assistant, heard, byVoice, ::knows) { orders -> runAll(orders, byVoice) }
+            return
+        }
         // «Llama a Luis y dime la hora»: each order in turn.
         val plan = Intents.split(heard, ::knows)
         if (plan.size > 1) return runAll(plan, byVoice)
         val command = brain.commandFor(plan[0]).takeIf { it.action != Action.UNKNOWN } ?: brain.commandFor(heard)
-        if (assistant?.models?.supported == true && assistant.models.selected != null && StoneRequests.matches(heard, command)) {
+        if (mode == AnswerMode.BOTH && assistant != null && StoneRequests.matches(heard, command)) {
             localTurns.stone(assistant, heard, heard, byVoice)
             return
         }
         val turn = brain.handle(heard, byVoice, command)
-        if (turn.reply.say == Say.NOT_UNDERSTOOD && assistant?.models?.selected != null && assistant.models.supported) {
+        if (turn.reply.say == Say.NOT_UNDERSTOOD && mode == AnswerMode.BOTH && assistant != null) {
             // The model says it in Lucía's own orders; only when there are none, it talks.
             localTurns.translate(assistant, heard, byVoice, ::knows) { orders -> runAll(orders, byVoice) }
         } else if (after.isNotEmpty()) {
@@ -139,3 +162,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     companion object { const val MAX = 40 }
 }
+
+/** Who understands what is said. RULES: Lucía's own rules (instant, offline, no model). MODEL: the local model reads
+ * everything and turns it into her orders or talks. BOTH: the rules first, the model for what they miss. */
+enum class AnswerMode { RULES, MODEL, BOTH; companion object { fun from(s: String?) = entries.firstOrNull { it.name == s } ?: BOTH } }
