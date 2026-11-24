@@ -1,3 +1,8 @@
+# Gateway Hub 0.0.22: «Vincular con token» conoce toda la familia
+
+- Pegar el enlace o token de cualquier app ya dice cuál es: Stone Video (`stv_`), Teléfono, SMS, Reloj, Calendario,
+  Clima, Cámara, QR, Redes, Brújula, Nivel, Inicio y **Notas** (que ahora sí se vincula, como `notas_`).
+
 # Gateway Hub 0.0.21: «Conectar todas las apps» y Lucía usa las herramientas de cada app
 
 - **Conectar todas las apps** (Hub › Escáner): un toque activa «Redireccionar a Hub» en cada app tuya instalada y la
