@@ -66,6 +66,13 @@ class IntentsTest {
         assertEquals(Action.PLAY_MUSIC, state.last!!.command.action); assertEquals("dark souls", state.last!!.command["query"])
     }
 
+    @Test fun theSafeChoicesComeFirst() {
+        assertEquals(com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS, com.zirakusa.gatewayhub.assistant.Interpreter.from(null))
+        assertEquals(com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS, com.zirakusa.gatewayhub.assistant.Interpreter.from("raro"))
+        assertEquals(com.zirakusa.gatewayhub.assistant.AnswerMode.BOTH, com.zirakusa.gatewayhub.assistant.AnswerMode.from(null))
+        assertEquals(com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS, AssistantState(Brain(FakeHands())).interpreter)
+    }
+
     @Test fun luciaDoesBothAndAnswersOnce() {
         val hands = object : FakeHands() {
             override fun person(name: String) = People.best(listOf(Person("Luis Mora", "0991112233")), name)

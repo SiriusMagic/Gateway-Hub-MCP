@@ -17,6 +17,8 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var mode by mutableStateOf(AnswerMode.BOTH)
     /** With the screen off or locked, only the rules (fast, light, and nothing personal goes to a long answer). */
     var rulesWhenLocked by mutableStateOf(true)
+    /** How the model acts: through Lucía's orders («sentimientos»), straight through MCP, or the orders first. */
+    var interpreter by mutableStateOf(Interpreter.FEELINGS)
     /** The phone is off or locked right now (the activity knows). */
     internal var locked: () -> Boolean = { false }
 
@@ -75,7 +77,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) return
         // Only the model: it understands everything; the rules only carry out its orders (and still ask «¿…?»).
         if (mode == AnswerMode.MODEL && assistant != null && !brain.asking) {
-            localTurns.translate(assistant, heard, byVoice, ::knows) { orders -> runAll(orders, byVoice) }
+            localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders -> runAll(orders, byVoice) }
             return
         }
         // «Llama a Luis y dime la hora»: each order in turn.
@@ -89,7 +91,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val turn = brain.handle(heard, byVoice, command)
         if (turn.reply.say == Say.NOT_UNDERSTOOD && mode == AnswerMode.BOTH && assistant != null) {
             // The model says it in Lucía's own orders; only when there are none, it talks.
-            localTurns.translate(assistant, heard, byVoice, ::knows) { orders -> runAll(orders, byVoice) }
+            localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders -> runAll(orders, byVoice) }
         } else if (after.isNotEmpty()) {
             runAll(after, byVoice, first = turn)
         } else {
@@ -166,3 +168,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 /** Who understands what is said. RULES: Lucía's own rules (instant, offline, no model). MODEL: the local model reads
  * everything and turns it into her orders or talks. BOTH: the rules first, the model for what they miss. */
 enum class AnswerMode { RULES, MODEL, BOTH; companion object { fun from(s: String?) = entries.firstOrNull { it.name == s } ?: BOTH } }
+
+/** How the model carries out what it understood. FEELINGS: as Lucía's own orders (her rules do them and ask «¿…?»).
+ * MCP: it picks a family app's tool itself (what changes something shows a card first). AUTO: orders first, MCP if none. */
+enum class Interpreter { FEELINGS, MCP, AUTO; companion object { fun from(s: String?) = entries.firstOrNull { it.name == s } ?: FEELINGS } }

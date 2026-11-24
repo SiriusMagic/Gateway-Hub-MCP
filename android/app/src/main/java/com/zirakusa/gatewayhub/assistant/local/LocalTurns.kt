@@ -36,12 +36,28 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         }
     }
 
-    /** Free speech the rules missed: the model turns it into Lucía's orders ([run]); with none, it just talks. */
-    fun translate(assistant: LocalAssistant, heard: String, byVoice: Boolean, understood: (String) -> Boolean, run: (List<String>) -> Unit) {
+    /**
+     * What the model makes of [heard], by the chosen [interpreter]: Lucía's orders ([run]), one family MCP tool (a card
+     * first if it changes something), or, when nothing fits, a conversation.
+     */
+    fun interpret(assistant: LocalAssistant, heard: String, byVoice: Boolean, interpreter: com.zirakusa.gatewayhub.assistant.Interpreter,
+        understood: (String) -> Boolean, run: (List<String>) -> Unit) {
         val start = SystemClock.elapsedRealtime()
+        fun result(text: String, ok: Boolean = true) = generated(heard, byVoice, Action.PHONE_MCP, start, text, ok)
         assistant.work(onFailure = { complete(generated(heard, byVoice, Action.CHAT, start, message(it), false)) }) {
-            val orders = assistant.orders(heard, understood)
-            if (orders.isNotEmpty()) run(orders) else complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(heard)))
+            if (interpreter != com.zirakusa.gatewayhub.assistant.Interpreter.MCP) {
+                val orders = assistant.orders(heard, understood)
+                if (orders.isNotEmpty()) return@work run(orders)
+            }
+            if (interpreter != com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS) {
+                val call = assistant.mcpPlan(heard)
+                if (call != null) {
+                    if (call.readOnly) complete(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }))
+                    else { reviewTurn = result(message(R.string.local_hub_review), false); assistant.review(call) }
+                    return@work
+                }
+            }
+            complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(heard)))
         }
     }
 

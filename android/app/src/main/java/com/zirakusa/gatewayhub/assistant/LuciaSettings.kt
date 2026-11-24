@@ -80,6 +80,18 @@ import com.zirakusa.gatewayhub.ui.HubColors
                             colors = FilterChipDefaults.filterChipColors(selectedContainerColor = HubColors.Gold, selectedLabelColor = HubColors.Background))
                     }
                 }
+                if (state.mode != AnswerMode.RULES) {
+                    Text(stringResource(R.string.interpreter_title), color = HubColors.Text, fontSize = 16.sp)
+                    Text(stringResource(when (state.interpreter) { Interpreter.FEELINGS -> R.string.interpreter_feelings_hint
+                        Interpreter.MCP -> R.string.interpreter_mcp_hint; Interpreter.AUTO -> R.string.interpreter_auto_hint }), color = HubColors.Muted, fontSize = 14.sp)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(Interpreter.FEELINGS to R.string.interpreter_feelings, Interpreter.MCP to R.string.interpreter_mcp,
+                            Interpreter.AUTO to R.string.interpreter_auto).forEach { (i, label) ->
+                            FilterChip(state.interpreter == i, { actions.setInterpreter(i) }, { Text(stringResource(label)) },
+                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = HubColors.Gold, selectedLabelColor = HubColors.Background))
+                        }
+                    }
+                }
                 if (state.mode != AnswerMode.RULES && local.models.selected == null)
                     Text(stringResource(R.string.mode_needs_model), color = HubColors.Bad, fontSize = 14.sp)
                 Line(stringResource(R.string.mode_locked), stringResource(R.string.mode_locked_hint), state.rulesWhenLocked, actions.setRulesWhenLocked)

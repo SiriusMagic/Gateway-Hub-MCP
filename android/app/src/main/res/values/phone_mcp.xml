@@ -11,6 +11,13 @@
     <string name="mode_model_hint">El modelo lee todo y lo convierte en órdenes de Lucía, o conversa. Más natural, más lento. Lo que cambia algo sigue preguntando «¿…?».</string>
     <string name="mode_both_hint">Primero las reglas (rápidas); lo que no entienden pasa al modelo.</string>
     <string name="mode_needs_model">Descarga y elige un modelo en Avanzado; mientras tanto responde el asistente.</string>
+    <string name="interpreter_title">Intérprete del modelo</string>
+    <string name="interpreter_feelings">Sentimientos</string>
+    <string name="interpreter_mcp">MCP</string>
+    <string name="interpreter_auto">Automático</string>
+    <string name="interpreter_feelings_hint">El modelo lo traduce a órdenes de Lucía y sus reglas las hacen (y preguntan «¿…?»). Lo más seguro. Recomendado.</string>
+    <string name="interpreter_mcp_hint">El modelo elige una herramienta MCP de tus apps y sus datos. Más alcance; lo que cambia algo se confirma en una tarjeta.</string>
+    <string name="interpreter_auto_hint">Primero órdenes de Lucía; si ninguna encaja, una herramienta MCP (con tarjeta si cambia algo).</string>
     <string name="mode_locked">Pantalla apagada o bloqueada: solo asistente</string>
     <string name="mode_locked_hint">Al oír «Oye Lucía» con el teléfono bloqueado responden las reglas: rápido, poca batería.</string>
     <string name="phone_mcp_title">MCP</string>

@@ -77,7 +77,7 @@ class AssistantActivity : ComponentActivity() {
             partial = { runOnUiThread { state.partial = it } }, level = { runOnUiThread { state.level = it } },
             failed = { runOnUiThread { countOff(); failed(it) } }, ended = { runOnUiThread { countOff() } })
         state.voiceAnswers = prefs.voiceAnswers; state.wake = prefs.wake; state.name = prefs.name; state.onlyCharging = prefs.onlyCharging
-        state.mode = prefs.mode; state.rulesWhenLocked = prefs.rulesWhenLocked
+        state.mode = prefs.mode; state.rulesWhenLocked = prefs.rulesWhenLocked; state.interpreter = prefs.interpreter
         state.locked = {
             !getSystemService(android.os.PowerManager::class.java).isInteractive ||
                 getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
@@ -92,7 +92,8 @@ class AssistantActivity : ComponentActivity() {
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
                     allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
                     installVoice = ::installVoice, setMode = { prefs.mode = it; state.mode = it },
-                    setRulesWhenLocked = { prefs.rulesWhenLocked = it; state.rulesWhenLocked = it }, manageHub = {
+                    setRulesWhenLocked = { prefs.rulesWhenLocked = it; state.rulesWhenLocked = it },
+                    setInterpreter = { prefs.interpreter = it; state.interpreter = it }, manageHub = {
                         startActivity(Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_MANAGE_HUB))
                     }),
                     CountActions(pause = ::countOff, resume = { countOn(greet = false) }, save = ::saveCount, discard = { countOff(); state.endTally() },

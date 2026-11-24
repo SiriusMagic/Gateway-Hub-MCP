@@ -1,3 +1,12 @@
+# Gateway Hub 0.0.32: intérprete del modelo (sentimientos, MCP o automático)
+
+- **Ajustes de Lucía → «Intérprete del modelo»** (con el modo Modelo o Ambos):
+  - *Sentimientos* (por defecto, recomendado): el modelo traduce a órdenes de Lucía y sus reglas las hacen y preguntan «¿…?».
+  - *MCP*: el modelo elige una herramienta de las apps de la familia en el teléfono (por su enlace con el Hub, sin
+    internet) y sus datos. Lo que solo lee se hace al momento; lo que cambia algo se muestra en una tarjeta para confirmar.
+  - *Automático*: primero órdenes de Lucía; si ninguna encaja, una herramienta MCP.
+- Las herramientas siguen siendo las que cada app permite: ninguna hace fotos, graba, envía SMS ni llama.
+
 # Gateway Hub 0.0.31: elige quién entiende lo que dices
 
 - **Ajustes de Lucía → «Quién entiende lo que dices»**: *Asistente* (solo reglas: al instante, sin modelo), *Modelo* (el

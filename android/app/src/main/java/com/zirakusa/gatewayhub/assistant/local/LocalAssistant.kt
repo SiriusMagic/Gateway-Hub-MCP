@@ -95,7 +95,27 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     internal suspend fun decide(query: String): Pending? {
         val client = HubMcp(hub.link ?: throw McpFailure.Authorization())
         val selection = choose(query, client.discoverOrFail()) ?: return null
-        return Pending(client, selection)
+        return Pending(selection.tool.title, selection.arguments.toString(2), selection.tool.readOnly) {
+            client.call(selection.tool, selection.arguments)
+        }
+    }
+
+    /**
+     * The «MCP» interpreter: the model picks one tool of the family apps on this phone (asked through each app's hub link,
+     * no internet) and its arguments. Null when none fits. What only reads runs at once; the rest waits for the card.
+     */
+    internal suspend fun mcpPlan(query: String): Pending? {
+        val tools = phoneMcp.allTools()
+        if (tools.isEmpty()) return null
+        // One name per app and tool (Stone and Stone Video share tool names): «video.player_state».
+        val named = tools.associateBy { t -> "${t.key}.${t.tool.name}" }
+        val listed = named.map { (name, t) -> t.tool.copy(name = name, title = "${t.app.label}: ${t.tool.title}") }
+        val selection = choose(query, listed) ?: return null
+        val target = named[selection.tool.name] ?: return null
+        return Pending(selection.tool.title, selection.arguments.toString(2), target.tool.readOnly) {
+            val result = phoneMcp.callFamily(target, selection.arguments)
+            com.zirakusa.gatewayhub.assistant.Speech.say(target.tool.name, result, java.time.LocalDate.now(), selection.arguments)
+        }
     }
 
     internal suspend fun askStone(query: String): String? {
@@ -123,7 +143,7 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     internal fun stop() { if (canStop) turnJob?.cancel() }
 
     internal suspend fun execute(call: Pending): String = try {
-        call.client.call(call.selection.tool, call.selection.arguments)
+        call.run()
     } catch (error: McpFailure) {
         throw error
     } catch (error: CancellationException) {
@@ -161,11 +181,8 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         throw McpFailure.Unavailable()
     }
 
-    class Pending internal constructor(internal val client: HubMcp, internal val selection: McpSelection) {
-        val title get() = selection.tool.title
-        val arguments get() = selection.arguments.toString(2)
-        val readOnly get() = selection.tool.readOnly
-    }
+    /** A tool call chosen by the model: shown on a card (title, arguments) before it runs, unless it only reads. */
+    class Pending internal constructor(val title: String, val arguments: String, val readOnly: Boolean, internal val run: suspend () -> String)
 }
 
 /** The model's {"ordenes":[…]}: only short orders the rules understand, at most five. Pure. */

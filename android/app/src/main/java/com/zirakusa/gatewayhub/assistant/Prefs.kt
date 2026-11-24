@@ -11,5 +11,6 @@ class Prefs(context: Context) {
     var onlyCharging: Boolean get() = p.getBoolean("charging", false); set(v) = p.edit { putBoolean("charging", v) }
     var mode: AnswerMode get() = AnswerMode.from(p.getString("mode", null)); set(v) = p.edit { putString("mode", v.name) }
     var rulesWhenLocked: Boolean get() = p.getBoolean("rules_locked", true); set(v) = p.edit { putBoolean("rules_locked", v) }
+    var interpreter: Interpreter get() = Interpreter.from(p.getString("interpreter", null)); set(v) = p.edit { putString("interpreter", v.name) }
     var voiceAnswers: Boolean get() = p.getBoolean("voice", true); set(v) = p.edit { putBoolean("voice", v) }
 }

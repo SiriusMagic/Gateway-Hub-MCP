@@ -26,6 +26,9 @@ internal enum class PhoneMcpStatus(val label: Int) {
 }
 
 internal data class PhoneMcpApp(val app: LocalApp, val status: PhoneMcpStatus, val tools: List<McpTool> = emptyList())
+/** One tool of a family app on this phone; [key] names the app («video», «reloj»…). */
+internal data class PhoneTool(val app: LocalApp, val key: String, val tool: McpTool)
+
 internal class PhoneMcpError(val status: PhoneMcpStatus) : Exception()
 
 /** Discovers Stone over Android IPC. This client has no URL, relay or Hub credential. */
@@ -42,6 +45,34 @@ internal class PhoneMcp(private val context: Context) {
             ?: apps.firstOrNull { it.app.localMcpAuthority != null }
             ?: apps.firstOrNull()
             ?: throw PhoneMcpError(PhoneMcpStatus.MISSING)
+    }
+
+    /** Every tool of the family apps that answer through their hub link (same developer, «Redireccionar a Hub» on). */
+    suspend fun allTools(): List<PhoneTool> = withContext(Dispatchers.IO) {
+        scanner.installed().filter { it.sameDeveloper && it.linkAuthority != null }.flatMap { app ->
+            val key = Catalog.byPackage(app.packageName)?.id ?: app.packageName.substringAfterLast('.')
+            family(app).tools.map { PhoneTool(app, key, it) }
+        }
+    }
+
+    /** Runs one family tool through its app's hub link; its structuredContent. Arguments are checked against its schema. */
+    suspend fun callFamily(target: PhoneTool, arguments: JSONObject): JSONObject = withContext(Dispatchers.IO) {
+        require(McpArguments.valid(target.tool.schema, arguments))
+        val authority = target.app.linkAuthority ?: throw PhoneMcpError(PhoneMcpStatus.DECLARED)
+        val request = JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", "tools/call")
+            .put("params", JSONObject().put("name", target.tool.name).put("arguments", arguments)).toString()
+        val bundle = try {
+            context.contentResolver.call("content://$authority".toUri(), "tool", null, Bundle().apply { putString("request", request) })
+        } catch (_: SecurityException) { throw PhoneMcpError(PhoneMcpStatus.SIGNATURE) } ?: throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)
+        when (bundle.getString("error")) {
+            null -> Unit
+            "REDIRECT_OFF" -> throw PhoneMcpError(PhoneMcpStatus.LINK_OFF)
+            else -> throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)
+        }
+        val result = JSONObject(bundle.getString("response") ?: throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)).optJSONObject("result")
+            ?: throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)
+        if (result.optBoolean("isError")) throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)
+        result.optJSONObject("structuredContent") ?: JSONObject()
     }
 
     suspend fun call(app: PhoneMcpApp, selection: McpSelection): JSONObject = withContext(Dispatchers.IO) {
