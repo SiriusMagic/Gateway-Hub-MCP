@@ -10,6 +10,7 @@ import android.media.ToneGenerator
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.speech.tts.TextToSpeech
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -18,6 +19,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
+import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.ui.HubTheme
 import java.time.LocalDateTime
@@ -29,6 +32,7 @@ import java.time.format.DateTimeFormatter
  */
 class AssistantActivity : ComponentActivity() {
     private lateinit var state: AssistantState
+    private lateinit var local: LocalAssistant
     private lateinit var ears: VoskEars
     private lateinit var voice: Voice
     private lateinit var prefs: Prefs
@@ -47,24 +51,33 @@ class AssistantActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         prefs = Prefs(this)
-        voice = Voice(this)
+        voice = Voice(this) { ready -> if (::state.isInitialized) state.offlineVoiceReady = ready }
+        local = LocalAssistant(this, lifecycleScope)
         hands = AndroidHands(this)
         state = AssistantState(Brain(hands)) { if (it.say != Say.COUNTING) voice.say(Talk.text(it, resources)) }
+        state.local = local
+        state.message = { getString(it) }
+        state.offlineVoiceReady = voice.available
         // Music asked for but silent: Lucía says so instead of «Reproduciendo».
         hands.onSilent = { runOnUiThread { state.late(Reply(Say.NOT_PLAYING, listOf("Stone"))) } }
-        state.onTurn = { t -> if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) } }
+        state.onTurn = { t ->
+            if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) }
+            if (t.byVoice) afterTurn()
+        }
         count = CountEars(this, grammar = { TallyWords.grammar(state.tallyLines) }, heard = { runOnUiThread { counted(it) } },
             partial = { runOnUiThread { state.partial = it } }, level = { runOnUiThread { state.level = it } },
             failed = { runOnUiThread { countOff(); failed(it) } }, ended = { runOnUiThread { countOff() } })
         state.voiceAnswers = prefs.voiceAnswers; state.wake = prefs.wake; state.name = prefs.name; state.onlyCharging = prefs.onlyCharging
-        ears = VoskEars(this, heard = { text, final -> runOnUiThread { state.heard(text, final); if (final) afterTurn() } },
-            level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } })
+        ears = VoskEars(this, heard = { text, final -> runOnUiThread { if (state.listening) state.heard(text, final) } },
+            level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } },
+            conversational = { local.models.supported })
         Vosk.model(this) { m -> runOnUiThread { state.modelReady = m != null } }   // warm up while the screen opens
         setContent {
             HubTheme {
                 AssistantScreen(state, AssistantActions(listen = ::listen, stop = ::stop, makeDefault = ::makeDefault, setWake = ::askWake,
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
-                    allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it }),
+                    allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
+                    installVoice = ::installVoice),
                     CountActions(pause = ::countOff, resume = { countOn(greet = false) }, save = ::saveCount, discard = { countOff(); state.endTally() },
                         openNote = { state.tallySavedId?.let(hands::openNote) }, share = ::shareCount, again = { state.startTally(""); countOn(greet = true) }))
             }
@@ -78,16 +91,17 @@ class AssistantActivity : ComponentActivity() {
         if (resumeCount && state.tally != null) countOn(greet = false)
         resumeCount = false
     }
-    override fun onResume() { super.onResume(); state.isDefault = isDefault(); state.canAppear = Settings.canDrawOverlays(this) }
+    override fun onResume() { super.onResume(); voice.refresh(); state.isDefault = isDefault(); state.canAppear = Settings.canDrawOverlays(this) }
     override fun onStop() {
         resumeCount = state.tallyListening
-        stop(); countOff(); voice.quiet(); WakeService.paused = false; super.onStop()
+        local.leave(); stop(); countOff(); voice.quiet(); WakeService.paused = false; super.onStop()
     }
-    override fun onDestroy() { ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
+    override fun onDestroy() { local.close(); ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
 
     private fun wantsListening(i: Intent?) = i?.action in setOf(LISTEN, Intent.ACTION_ASSIST, Intent.ACTION_VOICE_COMMAND)
 
     private fun listen() {
+        if (local.busy || local.pending != null) return
         if (!Vosk.canListen(this)) return mic.launch(Manifest.permission.RECORD_AUDIO)
         voice.quiet(); state.partial = ""; state.listening = true
         ears.start()
@@ -198,6 +212,11 @@ class AssistantActivity : ComponentActivity() {
         for (action in listOf(Settings.ACTION_VOICE_INPUT_SETTINGS, Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS, Settings.ACTION_SETTINGS)) {
             try { startActivity(Intent(action)); return } catch (_: ActivityNotFoundException) { }
         }
+    }
+
+    private fun installVoice() {
+        try { startActivity(Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA)) }
+        catch (_: ActivityNotFoundException) { startActivity(Intent(Settings.ACTION_SETTINGS)) }
     }
 
     private fun allowAppear() {

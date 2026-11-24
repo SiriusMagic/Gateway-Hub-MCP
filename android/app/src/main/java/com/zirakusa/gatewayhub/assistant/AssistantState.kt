@@ -1,12 +1,17 @@
 package com.zirakusa.gatewayhub.assistant
 
 import androidx.compose.runtime.getValue
+import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
+import com.zirakusa.gatewayhub.assistant.local.LocalTurns
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /** The only owner of the assistant's screen: the conversation, what is being heard, the last order (it lights the graph). */
 class AssistantState(private val brain: Brain, private val speak: (Reply) -> Unit = {}) {
+    internal var local: LocalAssistant? = null
+    internal var message: (Int) -> String = { "" }
+    private val localTurns = LocalTurns({ message(it) }, ::complete)
     var turns by mutableStateOf(emptyList<Turn>()); private set
     var typed by mutableStateOf("")
     var listening by mutableStateOf(false)
@@ -23,6 +28,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var isDefault by mutableStateOf(false)
     var canAppear by mutableStateOf(false)
     var modelReady by mutableStateOf(false)
+    var offlineVoiceReady by mutableStateOf(false)
     /** The count open on screen (null: talking), its lines, what was just heard, and the note it was saved as. */
     var tally by mutableStateOf<Tally?>(null); private set
     var tallyLines by mutableStateOf(emptyList<Tallied>()); private set
@@ -37,11 +43,24 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     val heat get() = Graph.heat(turns)
 
     fun send(text: String, byVoice: Boolean) {
-        if (text.isBlank()) return
-        val turn = brain.handle(text.trim(), byVoice)
+        val heard = text.trim()
+        val assistant = local
+        if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
+        if (assistant?.models?.supported == true && localTurns.route(assistant, heard, byVoice)) return
+        val turn = brain.handle(heard, byVoice)
+        if (turn.reply.say == Say.NOT_UNDERSTOOD && assistant?.models?.selected != null && assistant.models.supported) {
+            localTurns.chat(assistant, heard, heard, byVoice)
+        } else {
+            complete(turn)
+        }
+    }
+
+    fun confirmHub(confirmed: Boolean) { local?.let { localTurns.confirm(it, confirmed) } }
+
+    private fun complete(turn: Turn) {
         turns = (turns + turn).takeLast(MAX)
         pulse++
-        if (byVoice && voiceAnswers) speak(turn.reply)
+        if (turn.byVoice && voiceAnswers) speak(turn.reply)
         if (turn.command.action == Action.COUNT) startTally(turn.command["title"].orEmpty())
         onTurn(turn)
     }
@@ -69,6 +88,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
      */
     fun late(reply: Reply) {
         val t = turns.lastOrNull() ?: return
+        if (t.command.action !in setOf(Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA)) return
         turns = turns.dropLast(1) + t.copy(reply = reply, ok = false)
         pulse++
         if (t.byVoice && voiceAnswers) speak(reply)

@@ -25,14 +25,15 @@ interface SessionStore {
  * The owner token encrypted with AES-GCM; the key lives in the Android Keystore and never leaves it.
  * Backups are disabled, so the token stays on this phone.
  */
-class KeystoreSessionStore(context: Context) : SessionStore {
-    private val prefs = context.getSharedPreferences("hub_session", Context.MODE_PRIVATE)
+class KeystoreSessionStore(context: Context, agent: Boolean = false) : SessionStore {
+    private val prefs = context.getSharedPreferences(if (agent) "lucia_mcp" else "hub_session", Context.MODE_PRIVATE)
+    private val alias = if (agent) "gateway_hub_lucia_agent" else "gateway_hub_owner"
 
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-        (store.getKey(ALIAS, null) as? SecretKey)?.let { return it }
+        (store.getKey(alias, null) as? SecretKey)?.let { return it }
         return KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore").apply {
-            init(KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            init(KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setKeySize(256).build())
         }.generateKey()
@@ -58,7 +59,6 @@ class KeystoreSessionStore(context: Context) : SessionStore {
     override fun setFlag(name: String, value: Boolean) { flags.edit { putBoolean(name, value) } }
 
     private companion object {
-        const val ALIAS = "gateway_hub_owner"
         const val TRANSFORM = "AES/GCM/NoPadding"
     }
 }

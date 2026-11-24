@@ -55,7 +55,7 @@ enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
     NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
-    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED
+    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED
 }
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
@@ -92,7 +92,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
@@ -130,7 +130,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             Action.TOOL -> tool(c, app!!)
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
-            Action.UNKNOWN -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
+            Action.UNKNOWN, Action.CHAT, Action.HUB -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
         }
     }
 

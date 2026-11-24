@@ -6,6 +6,13 @@ plugins {
 android {
     namespace = "com.zirakusa.gatewayhub"
     compileSdk = 36
+    ndkVersion = "29.0.13113456"
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.31.6"
+        }
+    }
     defaultConfig {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26

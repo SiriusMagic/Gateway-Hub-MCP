@@ -22,6 +22,15 @@ web `/admin`, pero en el teléfono:
 
 APK listo para instalar: [`GatewayHub-0.0.17.apk`](GatewayHub-0.0.17.apk) (`com.zirakusa.gatewayhub`).
 
+## Conversación local en Lucía
+
+1. Abre Lucía › Ajustes › **Modelos locales** en un Android ARM64. Descarga **Qwen3 4B** (2,50 GB, recomendado para la primera prueba en un teléfono de 8 GB de RAM o más) o **Qwen2.5 1.5B** (1,12 GB). Las descargas se comprueban con SHA-256 antes de activar el modelo.
+2. Instala una voz de síntesis en español sin conexión si Lucía lo indica. En modo avión, toca el micrófono y prueba «hoy me siento cansado, ¿qué me sugieres?». Puedes elegir un tono en los ajustes. Empieza la frase con «charla» para enviarla directamente al modelo. El historial de la conversación se mantiene en memoria mientras Lucía está abierta.
+3. Prueba «abre Stone», «pausa la música» y «reanuda la música». Las órdenes del teléfono y el MCP local de apps compatibles siguen pasando por el asistente de Android.
+4. Para usar el Hub por internet, crea un enlace dedicado en **Agentes** y pégalo en Lucía › Ajustes › **Gateway Hub MCP**. Prueba «busca mis notas de viaje en el Hub». Los cambios requieren confirmación en pantalla. El enlace se guarda cifrado y solo se envía al Hub configurado.
+
+La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.13113456 y CMake 3.31.6. CMake descarga una revisión fija de [llama.cpp](https://github.com/ggml-org/llama.cpp) para la variante ARM64.
+
 ## Seguridad
 
 - Habla solo con la API del propietario (`/api/admin/*`), **solo por HTTPS** (`network_security_config`

@@ -3,3 +3,6 @@
 -keep class * implements com.sun.jna.** { *; }
 -keep class org.vosk.** { *; }
 -dontwarn java.awt.**
+
+# JNI entry points in lucia_llama.cpp.
+-keep class com.zirakusa.gatewayhub.assistant.local.NativeLlama { native <methods>; }

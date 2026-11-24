@@ -32,6 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.gatewayhub.R
+import com.zirakusa.gatewayhub.assistant.local.HubConnectionSettings
+import com.zirakusa.gatewayhub.assistant.local.LocalModelSettings
 import com.zirakusa.gatewayhub.ui.HubColors
 
 /**
@@ -76,9 +78,17 @@ import com.zirakusa.gatewayhub.ui.HubColors
             Text(stringResource(if (state.canAppear) R.string.appear_yes else R.string.appear_hint), color = HubColors.Muted, fontSize = 14.sp)
             if (!state.canAppear) Button(stringResource(R.string.appear_go), actions.allowAppear)
         }
+        state.local?.let { local ->
+            Card { LocalModelSettings(local) }
+            Card { HubConnectionSettings(local) }
+        }
         Card {
             Text(stringResource(R.string.voice_title), color = HubColors.Text, fontSize = 17.sp)
             Text(stringResource(if (state.modelReady) R.string.voice_ready else R.string.voice_loading), color = HubColors.Muted, fontSize = 14.sp)
+            if (!state.offlineVoiceReady) {
+                Text(stringResource(R.string.local_voice_missing), color = HubColors.Muted, fontSize = 14.sp)
+                Button(stringResource(R.string.local_voice_install), actions.installVoice)
+            }
         }
     }
 

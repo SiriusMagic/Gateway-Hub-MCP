@@ -1,5 +1,6 @@
 package com.zirakusa.gatewayhub.assistant
 
+import com.zirakusa.gatewayhub.assistant.local.LocalTurns
 import org.json.JSONArray
 import kotlin.math.sqrt
 
@@ -95,9 +96,10 @@ object Vocabulary {
  * the list, like what to write in a message). This picks what the brain gets. Pure.
  */
 object Hearing {
-    fun pick(limited: String, free: String): String {
+    fun pick(limited: String, free: String, conversational: Boolean = false): String {
         val l = limited.replace("[unk]", "").replace(Regex("\\s+"), " ").trim()
         val f = free.trim()
+        if (conversational && (LocalTurns.chatQuery(f) != null || LocalTurns.hubQuery(f) != null)) return f
         val byList = Parser.parse(l)
         if (byList.action == Action.UNKNOWN && Parser.parse(f).action != Action.UNKNOWN) return f
         // A family app's tool or a note with free words (a task, a city, a name): the free recognizer has them, when it heard
@@ -111,6 +113,7 @@ object Hearing {
             val said = Regex("(?:^| )(?:que|diciendo|diciendole|diciéndole) (.+)$").find(f)?.groupValues?.get(1)
             if (said != null && byList["text"].isNullOrBlank()) return "$l que $said"
         }
+        if (conversational && byList.action == Action.UNKNOWN && f.isNotBlank()) return f
         return l.ifEmpty { f }
     }
 }

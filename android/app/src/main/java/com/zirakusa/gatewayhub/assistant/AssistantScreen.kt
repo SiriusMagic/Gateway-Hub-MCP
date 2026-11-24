@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,10 +30,12 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -49,7 +53,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
 /** What the screen asks of the phone. */
 class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, val makeDefault: () -> Unit = {},
     val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
-    val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {})
+    val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {}, val installVoice: () -> Unit = {})
 
 /** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {
@@ -57,6 +61,20 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
     if (state.brainOpen) return BrainPage(state)
     if (state.settingsOpen) return LuciaSettings(state, actions)
     Talking(state, actions)
+    state.local?.pending?.let { pending ->
+        AlertDialog(
+            onDismissRequest = { state.confirmHub(false) },
+            title = { Text(stringResource(R.string.local_hub_review)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    Text(pending.title)
+                    Text(pending.arguments)
+                }
+            },
+            confirmButton = { TextButton({ state.confirmHub(true) }) { Text(stringResource(R.string.local_hub_confirm)) } },
+            dismissButton = { TextButton({ state.confirmHub(false) }) { Text(stringResource(R.string.local_cancel)) } }
+        )
+    }
 }
 
 @Composable private fun Talking(state: AssistantState, actions: AssistantActions) =
@@ -74,21 +92,31 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             }
             IconButton({ state.settingsOpen = true }) { Icon(Icons.Default.Settings, stringResource(R.string.lucia_settings), tint = HubColors.Muted) }
         }
+        val local = state.local
+        val busy = local?.busy == true
         val list = rememberLazyListState()
-        LaunchedEffect(state.turns.size) { if (state.turns.isNotEmpty()) list.animateScrollToItem(state.turns.lastIndex) }
+        LaunchedEffect(state.last, busy) {
+            if (busy) list.scrollToItem(state.turns.size.coerceAtLeast(1))
+            else if (state.turns.isNotEmpty()) list.animateScrollToItem(state.turns.lastIndex)
+        }
         LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (state.turns.isEmpty()) item { Examples(state, actions.makeDefault) }
             items(state.turns) { t -> TurnBubbles(t) }
+            if (busy) item {
+                Text(local.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,
+                    modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(14.dp))
+                if (local.canStop) TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
+            }
         }
         if (state.partial.isNotBlank()) Text(state.partial, Modifier.padding(horizontal = 20.dp), color = HubColors.Gold, fontSize = 15.sp)
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(state.typed, { state.typed = it.take(200) }, Modifier.weight(1f), shape = RoundedCornerShape(24.dp), singleLine = true,
+            OutlinedTextField(state.typed, { state.typed = it.take(200) }, Modifier.weight(1f), shape = RoundedCornerShape(24.dp), singleLine = true, enabled = !busy && !state.listening,
                 placeholder = { Text(stringResource(R.string.assistant_write)) },
-                trailingIcon = { if (state.typed.isNotBlank()) IconButton(state::sendTyped) { Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send), tint = HubColors.Gold) } })
+                trailingIcon = { if (state.typed.isNotBlank()) IconButton(state::sendTyped, enabled = !busy && !state.listening) { Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send), tint = HubColors.Gold) } })
             val listening = state.listening
             Box(Modifier.padding(start = 10.dp).size(60.dp).scale(1f + 0.25f * state.level).clip(CircleShape)
                 .background(if (listening) HubColors.Gold else HubColors.Card).border(2.dp, HubColors.Gold, CircleShape)
-                .clickable(onClickLabel = stringResource(if (listening) R.string.stop_listening else R.string.speak)) { if (listening) actions.stop() else actions.listen() },
+                .clickable(enabled = !busy, onClickLabel = stringResource(if (listening) R.string.stop_listening else R.string.speak)) { if (listening) actions.stop() else actions.listen() },
                 contentAlignment = Alignment.Center) {
                 Icon(if (listening) Icons.Default.Stop else Icons.Default.Mic, stringResource(if (listening) R.string.stop_listening else R.string.speak),
                     tint = if (listening) HubColors.Background else HubColors.Gold)

@@ -14,6 +14,7 @@ import org.vosk.Model
 import org.vosk.Recognizer
 import org.vosk.android.StorageService
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Vosk, the offline Spanish recognizer, with its small model shipped inside the app (assets/model-es, Apache-2.0).
@@ -66,20 +67,28 @@ object Vosk {
  * the final one (on the main thread of the caller's choosing).
  */
 class VoskEars(private val context: Context, private val heard: (String, Boolean) -> Unit, private val level: (Float) -> Unit,
-    private val failed: (Int) -> Unit) {
-    private val running = AtomicBoolean(false)
-    private var thread: Thread? = null
+    private val failed: (Int) -> Unit, private val conversational: () -> Boolean = { false }) {
+    // Each recording owns its callbacks, even when a new recording starts as the old one is closing.
+    private val current = AtomicReference<Any?>(null)
 
     fun start() {
-        if (!running.compareAndSet(false, true)) return
+        val recording = Any()
+        if (!current.compareAndSet(null, recording)) return
+        val freeConversation = conversational()
         Vosk.model(context) { model ->
-            if (model == null) { running.set(false); return@model failed(NO_MODEL) }
-            thread = Thread({ listen(model) }, "lucia-ears").apply { start() }
+            if (model == null) {
+                if (current.compareAndSet(recording, null)) failed(NO_MODEL)
+            } else if (current.get() === recording) {
+                Thread({ listen(model, recording, freeConversation) }, "lucia-ears").start()
+            }
         }
     }
 
-    private fun listen(model: Model) {
-        val mic = Vosk.microphone() ?: run { running.set(false); return failed(NO_MIC) }
+    private fun listen(model: Model, recording: Any, freeConversation: Boolean) {
+        val mic = Vosk.microphone() ?: run {
+            if (current.compareAndSet(recording, null)) failed(NO_MIC)
+            return
+        }
         val limited = Recognizer(model, Vosk.RATE.toFloat(), Vocabulary.grammar(Vosk.people(context)))
         val free = Recognizer(model, Vosk.RATE.toFloat())
         val buffer = ShortArray(Vosk.RATE / 10)
@@ -87,32 +96,40 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         val start = System.currentTimeMillis()
         var spoke = false
         var said: String? = null
-        try {
+        val freeSegments = mutableListOf<String>()
+        val answer = try {
             mic.startRecording()
-            while (running.get() && System.currentTimeMillis() - start < 8_000) {
+            while (current.get() === recording && System.currentTimeMillis() - start < 8_000) {
                 val n = mic.read(buffer, 0, buffer.size)
                 if (n <= 0) continue
-                val rms = gate.rms(buffer, n)
-                level((rms / 3000).toFloat().coerceIn(0f, 1f))
-                free.acceptWaveForm(buffer, n)
+                level((gate.rms(buffer, n) / 3000).toFloat().coerceIn(0f, 1f))
+                if (free.acceptWaveForm(buffer, n)) freeSegments += Vosk.text(free.result)
+                val freePartial = if (freeConversation) Vosk.text(free.partialResult, "partial") else ""
                 if (limited.acceptWaveForm(buffer, n)) {
-                    // A pause: this phrase is finished. Keep it (asking again would give nothing).
                     Vosk.text(limited.result).takeIf { it.isNotBlank() }?.let { said = it; spoke = true }
                     if (spoke) break
+                } else {
+                    val partial = freePartial.ifBlank { Vosk.text(limited.partialResult, "partial") }
+                    if (partial.isNotBlank()) { spoke = true; heard(partial, false) }
                 }
-                else Vosk.text(limited.partialResult, "partial").takeIf { it.isNotBlank() }?.let { spoke = true; heard(it, false) }
-                // Nothing said for 4 s: give up quietly.
                 if (!spoke && System.currentTimeMillis() - start > 4_000) break
             }
-            val a = said ?: Vosk.text(limited.finalResult); val b = Vosk.text(free.finalResult)
-            level(0f)
-            heard(Hearing.pick(a, b), true)
+            val a = said ?: Vosk.text(limited.finalResult)
+            val b = (freeSegments + Vosk.text(free.finalResult)).filter(String::isNotBlank).joinToString(" ")
+            Hearing.pick(a, b, freeConversation)
+        } catch (_: RuntimeException) {
+            if (current.compareAndSet(recording, null)) failed(NO_MIC)
+            return
         } finally {
-            runCatching { mic.stop() }; mic.release(); limited.close(); free.close(); running.set(false)
+            runCatching { mic.stop() }; mic.release(); limited.close(); free.close()
+        }
+        if (current.compareAndSet(recording, null)) {
+            level(0f)
+            heard(answer, true)
         }
     }
 
-    fun stop() { running.set(false) }
+    fun stop() { current.set(null) }
 
     companion object { const val NO_MODEL = 1001; const val NO_MIC = 1002 }
 }
