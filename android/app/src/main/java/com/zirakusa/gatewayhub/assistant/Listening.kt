@@ -77,6 +77,9 @@ object Vocabulary {
         perdidas sin leer nuevos cuánto son calcula raíz elevado dividido entre multiplicado espacio libre queda almacenamiento
         recientes últimos conexión estado conectado hacia dónde mirando norte dirección nivelado derecho inclinación feriados
         festivos evento cita reunión pronóstico semana lunes martes miércoles jueves viernes sábado domingo pasado este esta
+        aleatorio mezcla orden repetir bucle siempre lista listas playlist sonando suena canta escuchando gusta favoritos favorita
+        graves agudos ecualizador normal sonido detén conversaciones escribió archivo documento imágenes playa marca agua
+        cuadrícula activa desactiva mes cuándo próxima viene
     """.trim().split(Regex("\\s+")).toSet()
 
     /** The grammar (JSON list): the base words, the app names and the people's names (each word of them). */

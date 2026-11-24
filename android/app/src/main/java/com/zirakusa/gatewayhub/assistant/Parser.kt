@@ -38,7 +38,7 @@ object Parser {
         // A family app's own tool («¿cuál es mi próxima alarma?», «agrega tarea comprar pan», «¿cuánto es 25 por 4?»): before the
         // other rules, which would only open the app. Arguments go as «arg:…» slots (numbers as «num:…»).
         Skills.find(t, today)?.let { (skill, args) ->
-            return Command(Action.TOOL, mapOf("app" to skill.app, "tool" to skill.tool) + args.values.map { e -> (if (e.value is Int) "num:${e.key}" else "arg:${e.key}") to e.value.toString() })
+            return Command(Action.TOOL, mapOf("app" to skill.app, "tool" to skill.tool) + args.values.map { e -> (when (e.value) { is Int -> "num:"; is Boolean -> "bool:"; else -> "arg:" } + e.key) to e.value.toString() })
         }
 
         // The call ringing now: «contesta», «atiende la llamada», «cuelga», «rechaza la llamada». The user's own voice only;

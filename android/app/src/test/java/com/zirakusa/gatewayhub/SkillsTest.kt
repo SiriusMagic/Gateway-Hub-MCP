@@ -27,7 +27,8 @@ class SkillsTest {
     private fun p(text: String) = Parser.parse(text, today)
     private fun tool(text: String) = p(text).let { assertEquals(text, Action.TOOL, it.action); it["tool"] }
     private fun args(text: String) = JSONObject().apply { p(text).slots.forEach { (k, v) ->
-        when { k.startsWith("arg:") -> put(k.removePrefix("arg:"), v); k.startsWith("num:") -> put(k.removePrefix("num:"), v.toInt()) } } }
+        when { k.startsWith("arg:") -> put(k.removePrefix("arg:"), v); k.startsWith("num:") -> put(k.removePrefix("num:"), v.toInt())
+            k.startsWith("bool:") -> put(k.removePrefix("bool:"), v.toBoolean()) } } }
 
     @Test fun phrasesAskTheRightTool() {
         mapOf(
@@ -42,6 +43,32 @@ class SkillsTest {
             "cuánto espacio me queda" to "files_storage", "archivos recientes" to "files_recent", "últimos qr" to "qr_history",
             "cómo está mi conexión" to "network_status", "hacia dónde estoy mirando" to "compass_heading", "está nivelado" to "level_reading",
         ).forEach { (said, want) -> assertEquals(said, want, tool(said)) }
+    }
+
+    @Test fun musicCalendarSmsAndMore() {
+        mapOf(
+            "pon aleatorio" to "player_set_shuffle", "modo aleatorio" to "player_set_shuffle", "quita el aleatorio" to "player_set_shuffle_off",
+            "repite esta canción siempre" to "player_set_repeat", "repite toda la lista" to "player_set_repeat", "no repitas" to "player_set_repeat",
+            "pon la lista rock de los 80" to "playlist_play", "qué listas tengo" to "playlist_list", "qué está sonando" to "player_state",
+            "quién canta esta canción" to "player_state", "me gusta esta canción" to "player_set_favorite", "apaga la música en 30 minutos" to "player_sleep_timer",
+            "más graves" to "equalizer_set_preset", "cuántas canciones tengo" to "library_stats",
+            "apaga la alarma de las 7" to "clock_alarm_enable", "activa la alarma de las 6 y media" to "clock_alarm_enable",
+            "qué tengo esta semana" to "calendar_events", "cuándo es la reunión con Ana" to "calendar_events",
+            "busca mensajes de banco" to "sms_search", "mis conversaciones" to "sms_threads", "mis contactos favoritos" to "contacts_favorites",
+            "busca fotos de la playa" to "gallery_search", "busca el archivo factura" to "files_search", "activa la marca de agua" to "camera_settings_set",
+        ).forEach { (said, want) -> assertEquals(said, want, tool(said)) }
+        assertEquals(true, args("pon aleatorio").getBoolean("enabled")); assertEquals(false, args("quita el aleatorio").getBoolean("enabled"))
+        assertEquals("one", args("repite esta canción siempre").getString("mode")); assertEquals("all", args("repite toda la lista").getString("mode"))
+        assertEquals("off", args("no repitas").getString("mode"))
+        assertEquals("rock de los 80", args("pon la lista rock de los 80").getString("name")); assertEquals(30, args("apaga la música en 30 minutos").getInt("minutes"))
+        assertEquals("bass", args("más graves").getString("preset"))
+        assertEquals("07:00", args("apaga la alarma de las 7").getString("time")); assertEquals(false, args("apaga la alarma de las 7").getBoolean("enabled"))
+        assertEquals("06:30", args("activa la alarma de las 6 y media").getString("time"))
+        assertEquals("2026-11-29", args("qué tengo esta semana").getString("to"))                  // until Sunday
+        assertEquals("reunion con ana", args("cuándo es la reunión con Ana").getString("query"))      // Calendario ignores accents and case
+        assertEquals(true, args("activa la marca de agua").getBoolean("watermark"))
+        // The old orders stay: «repite la canción» is still from the start, «pon música» still plays.
+        assertEquals(Action.MEDIA, p("repite la canción").action); assertEquals(Action.PLAY_MUSIC, p("pon música").action)
     }
 
     @Test fun argumentsComeFromWhatWasSaid() {
@@ -92,6 +119,10 @@ class SkillsTest {
                 "tasks_list" -> JSONObject().put("tasks", JSONArray().put(JSONObject().put("id", 7).put("text", "Comprar pan").put("done", false)))
                 "tasks_complete" -> JSONObject().put("id", 7).put("text", "Comprar pan").put("done", true)
                 "contacts_search" -> throw Hands.ToolError("NO_PERMISSION", "Permite los contactos en Teléfono.")
+                "playlist_list" -> JSONObject().put("playlists", JSONArray().put(JSONObject().put("id", "p9").put("name", "Rock de los 80")))
+                "playlist_play" -> JSONObject().put("ok", true)
+                "clock_alarms" -> JSONObject().put("alarms", JSONArray().put(JSONObject().put("id", 4).put("time", "07:00")))
+                "clock_alarm_enable", "player_set_shuffle" -> JSONObject().put("ok", true)
                 else -> JSONObject().put("alarm", JSONObject().put("time", "06:30")).put("in_text", "21 h 30 min")
             }
         }
@@ -107,6 +138,14 @@ class SkillsTest {
         assertEquals("Hecho: Comprar pan.", done.reply.args[0]); assertEquals("notas tasks_complete {\"id\":7}", apps.asked.last())
         assertEquals(Say.TOOL_ERROR, brain.handle("marca la tarea lavar el auto como hecha").reply.say)
         assertEquals(listOf("Teléfono", "Permite los contactos en Teléfono."), brain.handle("el número de Ana").reply.args)
+        // Two steps: which list or which alarm, then the tool, with only the arguments it knows.
+        assertEquals("Poniendo la lista Rock de los 80.", brain.handle("pon la lista rock de los 80").reply.args[0])
+        assertEquals("stone playlist_play {\"playlistId\":\"p9\"}", apps.asked.last())
+        assertEquals("Alarma de las 07:00 apagada.", brain.handle("apaga la alarma de las 7").reply.args[0])
+        assertEquals("reloj clock_alarm_enable {\"id\":4,\"enabled\":false}", apps.asked.last())
+        assertEquals(Say.TOOL_ERROR, brain.handle("apaga la alarma de las 9").reply.say)
+        assertEquals("Aleatorio desactivado: en orden.", brain.handle("quita el aleatorio").reply.args[0])
+        assertEquals("stone player_set_shuffle {\"enabled\":false}", apps.asked.last())   // the real tool, not the map's name
         apps.redirect = false
         val off = brain.handle("qué alarmas tengo"); assertEquals(Say.TOOL_OFF, off.reply.say); assertFalse(off.ok)
         apps.installed = emptySet()

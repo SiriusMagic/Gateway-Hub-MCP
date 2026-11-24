@@ -16,14 +16,28 @@ object Speech {
     /** The noun of each list the apps return. */
     private val nouns = mapOf("alarms" to "alarmas", "tasks" to "tareas", "notes" to "notas", "events" to "eventos", "holidays" to "feriados",
         "messages" to "mensajes", "calls" to "llamadas", "birthdays" to "cumpleaños", "contacts" to "contactos", "files" to "archivos",
-        "items" to "códigos", "history" to "códigos", "codes" to "códigos", "days" to "días", "results" to "resultados")
+        "items" to "códigos", "history" to "códigos", "codes" to "códigos", "days" to "días", "results" to "resultados",
+        "playlists" to "listas", "threads" to "conversaciones", "photos" to "fotos", "media" to "fotos")
     private val singular = mapOf("alarmas" to "alarma", "tareas" to "tarea", "notas" to "nota", "eventos" to "evento", "feriados" to "feriado",
         "mensajes" to "mensaje", "llamadas" to "llamada", "contactos" to "contacto", "archivos" to "archivo", "códigos" to "código",
-        "días" to "día", "resultados" to "resultado")
+        "días" to "día", "resultados" to "resultado", "listas" to "lista", "conversaciones" to "conversación", "fotos" to "foto")
     private val names = listOf("title", "text", "name", "label", "holiday", "who", "from", "display_name", "city", "number", "path", "preview")
     private val months = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
 
-    fun say(tool: String, r: JSONObject, today: LocalDate): String = when (tool) {
+    private val presets = mapOf("bass" to "más graves", "treble" to "más agudos", "voice" to "la voz resaltada", "normal" to "sonido normal")
+
+    /** [args]: what was asked (the answer of some tools is only «ok»). */
+    fun say(tool: String, r: JSONObject, today: LocalDate, args: JSONObject = JSONObject()): String = when (tool) {
+        "player_set_shuffle", "player_set_shuffle_off" -> if (args.optBoolean("enabled")) "Modo aleatorio activado." else "Aleatorio desactivado: en orden."
+        "player_set_repeat" -> when (args.optString("mode")) { "one" -> "Repetiré esta canción."; "all" -> "Repetiré toda la lista."; else -> "Sin repetir." }
+        "playlist_play" -> "Poniendo la lista ${args.optString("name")}."
+        "player_state" -> if (!r.optBoolean("playing") && r.optString("title").isBlank()) "No está sonando nada." else
+            (if (r.optBoolean("playing")) "Suena " else "En pausa: ") + "«${r.optString("title")}»" + r.optString("artist").takeIf { it.isNotBlank() && it != "null" }?.let { " de $it" }.orEmpty() + "."
+        "player_set_favorite" -> "Añadida a tus favoritos."
+        "player_sleep_timer" -> args.optInt("minutes").let { if (it == 0) "Temporizador de música cancelado." else "La música se detendrá en $it minutos." }
+        "equalizer_set_preset" -> "Ecualizador: ${presets[args.optString("preset")] ?: args.optString("preset")}."
+        "clock_alarm_enable" -> "Alarma de las ${args.optString("time")} ${if (args.optBoolean("enabled")) "encendida" else "apagada"}."
+        "camera_settings_set" -> (if (args.has("watermark")) "Marca de agua" else "Cuadrícula") + if (args.optBoolean(if (args.has("watermark")) "watermark" else "grid")) " activada." else " desactivada."
         "clock_next_alarm" -> r.optJSONObject("alarm")?.let { a ->
             "Tu próxima alarma es a las ${a.optString("time")}" + label(a) + r.optString("in_text").takeIf { it.isNotBlank() }?.let { ", en ${it.replace(" d", " días")}" }.orEmpty() + "."
         } ?: "No tienes ninguna alarma activa."

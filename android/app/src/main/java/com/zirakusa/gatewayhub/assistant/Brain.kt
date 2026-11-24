@@ -132,7 +132,8 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         val name = c["tool"]!!
         return try {
             var args = org.json.JSONObject().apply {
-                c.slots.forEach { (k, v) -> when { k.startsWith("arg:") -> put(k.removePrefix("arg:"), v); k.startsWith("num:") -> put(k.removePrefix("num:"), v.toInt()) } }
+                c.slots.forEach { (k, v) -> when { k.startsWith("arg:") -> put(k.removePrefix("arg:"), v); k.startsWith("num:") -> put(k.removePrefix("num:"), v.toInt())
+                    k.startsWith("bool:") -> put(k.removePrefix("bool:"), v.toBoolean()) } }
             }
             if (name == "tasks_complete") {
                 val wanted = Words.normalize(args.optString("text"))
@@ -142,8 +143,26 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
                     ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No encuentro esa tarea.")) to false
                 args = org.json.JSONObject().put("id", found.getLong("id"))
             }
-            val r = hands.tool(app, name, args) ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
-            Reply(Say.TOOL_RESULT, listOf(Speech.say(name, r, hands.now().toLocalDate()))) to true
+            // «Pon la lista Rock», «apaga la alarma de las 7»: first which one, by its name or its time.
+            if (name == "playlist_play") {
+                val wanted = Words.normalize(args.optString("name"))
+                val lists = hands.tool(app, "playlist_list", org.json.JSONObject())?.optJSONArray("playlists") ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
+                val found = (0 until lists.length()).map { lists.getJSONObject(it) }.let { all ->
+                    all.firstOrNull { Words.normalize(it.optString("name")) == wanted } ?: all.firstOrNull { Words.normalize(it.optString("name")).contains(wanted) }
+                } ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No tengo una lista llamada «${args.optString("name")}».")) to false
+                args = org.json.JSONObject().put("playlistId", found.getString("id")).put("name", found.optString("name"))
+            }
+            if (name == "clock_alarm_enable" && args.has("time")) {
+                val alarms = hands.tool(app, "clock_alarms", org.json.JSONObject())?.optJSONArray("alarms") ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
+                val found = (0 until alarms.length()).map { alarms.getJSONObject(it) }.firstOrNull { it.optString("time") == args.getString("time") }
+                    ?: return Reply(Say.TOOL_ERROR, listOf(app.name, "No hay una alarma a las ${args.getString("time")}.")) to false
+                args = org.json.JSONObject().put("id", found.getLong("id")).put("enabled", args.getBoolean("enabled")).put("time", args.getString("time"))
+            }
+            val call = Skills.byTool(name)?.call ?: name
+            // Only the arguments the app's tool knows go out (the helper ones, like a playlist's name, stay here).
+            val sent = org.json.JSONObject(args.toString()).apply { if (call == "playlist_play") remove("name"); if (call == "clock_alarm_enable") remove("time") }
+            val r = hands.tool(app, call, sent) ?: return Reply(Say.TOOL_OLD, listOf(app.name)) to false
+            Reply(Say.TOOL_RESULT, listOf(Speech.say(name, r, hands.now().toLocalDate(), args))) to true
         } catch (_: Hands.ToolOff) { Reply(Say.TOOL_OFF, listOf(app.name)) to false
         } catch (e: Hands.ToolError) { Reply(Say.TOOL_ERROR, listOf(app.name, e.message.orEmpty())) to false }
     }

@@ -1,3 +1,16 @@
+# Gateway Hub 0.0.24: Música completa en Lucía, y más Calendario, SMS y otras apps
+
+- **Música** (con las herramientas de Stone, sin internet; Stone 1.7.26 o posterior): «pon aleatorio», «quita el
+  aleatorio», «repite esta canción siempre», «repite toda la lista», «no repitas», «pon la lista Rock de los 80», «¿qué
+  listas tengo?», «¿qué está sonando?», «¿quién canta esta canción?», «me gusta esta canción», «apaga la música en 30
+  minutos», «más graves / más agudos / ecualizador normal», «¿cuántas canciones tengo?».
+- **Reloj**: «apaga la alarma de las 7», «activa la alarma de las 6 y media».
+- **Calendario**: «¿qué tengo esta semana / la próxima semana / este mes?», «¿cuándo es la reunión con Ana?».
+- **SMS**: «busca mensajes de banco», «mis conversaciones», «¿quién me escribió?».
+- **Contactos**: «mis contactos favoritos». **Luma**: «busca fotos de la playa». **Filem**: «busca el archivo factura».
+  **Cámara**: «activa / quita la marca de agua», «activa la cuadrícula».
+- Todo aparece en el mapa bajo su app.
+
 # Gateway Hub 0.0.23: «reproduce música» suena de verdad
 
 - Antes, con un Stone anterior a 1.7.24, Lucía/Luna abría Stone y mandaba «play» demasiado pronto: se perdía y no sonaba.
