@@ -48,6 +48,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
             IconButton({ state.settingsOpen = false }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back), tint = HubColors.Text) }
             Text(stringResource(R.string.lucia_settings), color = HubColors.Text, fontSize = 22.sp)
         }
+        Button(stringResource(R.string.lucia_manage_hub), actions.manageHub)
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(HubColors.Card).clickable { state.brainOpen = true }.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {

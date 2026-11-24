@@ -24,6 +24,8 @@ APK listo para instalar: [`GatewayHub-0.0.17.apk`](GatewayHub-0.0.17.apk) (`com.
 
 ## Conversación local en Lucía
 
+Al abrir Gateway Hub sin conexión configurada se abre Lucía. Desde **Lucía › Ajustes › Administrar Gateway Hub** puedes entrar al panel del propietario.
+
 1. Abre Lucía › Ajustes › **Modelos locales** en un Android ARM64. Descarga **Qwen3 4B** (2,50 GB, recomendado para la primera prueba en un teléfono de 8 GB de RAM o más) o **Qwen2.5 1.5B** (1,12 GB). Las descargas se comprueban con SHA-256 antes de activar el modelo.
 2. Instala una voz de síntesis en español sin conexión si Lucía lo indica. En modo avión, toca el micrófono y prueba «hoy me siento cansado, ¿qué me sugieres?». Puedes elegir un tono en los ajustes. Empieza la frase con «charla» para enviarla directamente al modelo. El historial de la conversación se mantiene en memoria mientras Lucía está abierta.
 3. Prueba «abre Stone», «pausa la música» y «reanuda la música». Las órdenes del teléfono y el MCP local de apps compatibles siguen pasando por el asistente de Android.

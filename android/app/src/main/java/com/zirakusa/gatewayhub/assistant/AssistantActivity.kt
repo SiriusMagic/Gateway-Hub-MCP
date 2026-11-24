@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
+import com.zirakusa.gatewayhub.MainActivity
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.ui.HubTheme
 import java.time.LocalDateTime
@@ -77,7 +78,9 @@ class AssistantActivity : ComponentActivity() {
                 AssistantScreen(state, AssistantActions(listen = ::listen, stop = ::stop, makeDefault = ::makeDefault, setWake = ::askWake,
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
                     allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
-                    installVoice = ::installVoice),
+                    installVoice = ::installVoice, manageHub = {
+                        startActivity(Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_MANAGE_HUB))
+                    }),
                     CountActions(pause = ::countOff, resume = { countOn(greet = false) }, save = ::saveCount, discard = { countOff(); state.endTally() },
                         openNote = { state.tallySavedId?.let(hands::openNote) }, share = ::shareCount, again = { state.startTally(""); countOn(greet = true) }))
             }

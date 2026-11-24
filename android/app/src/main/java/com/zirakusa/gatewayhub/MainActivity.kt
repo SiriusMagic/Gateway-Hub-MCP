@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -17,6 +18,7 @@ import com.zirakusa.gatewayhub.ui.HomeScreen
 import com.zirakusa.gatewayhub.ui.HubTheme
 import com.zirakusa.gatewayhub.ui.HubViewModel
 import com.zirakusa.gatewayhub.ui.LoginScreen
+import com.zirakusa.gatewayhub.ui.openLucia
 
 class MainActivity : ComponentActivity() {
     private val vm: HubViewModel by viewModels {
@@ -29,14 +31,32 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val managingHub = intent.action == ACTION_MANAGE_HUB
+        if (!managingHub && !vm.state.value.connected) {
+            goToLucia()
+            return
+        }
         // Links and the owner token are on screen: no screenshots, no previews in Recents.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
         setContent {
             HubTheme {
                 val state by vm.state.collectAsStateWithLifecycle()
-                if (state.connected) HomeScreen(state, vm) else LoginScreen(state, vm::connect)
+                when {
+                    state.connected -> HomeScreen(state, vm)
+                    managingHub -> LoginScreen(state, vm::connect)
+                    else -> LaunchedEffect(Unit) { goToLucia() }
+                }
             }
         }
+    }
+
+    private fun goToLucia() {
+        openLucia(this)
+        finish()
+    }
+
+    companion object {
+        internal const val ACTION_MANAGE_HUB = "com.zirakusa.gatewayhub.action.MANAGE_HUB"
     }
 }
