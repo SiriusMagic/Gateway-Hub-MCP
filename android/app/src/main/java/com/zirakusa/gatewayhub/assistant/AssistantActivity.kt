@@ -62,7 +62,8 @@ class AssistantActivity : ComponentActivity() {
         voice = Voice(this) { ready -> if (::state.isInitialized) state.offlineVoiceReady = ready }
         local = LocalAssistant(this, lifecycleScope)
         hands = AndroidHands(this)
-        state = AssistantState(Brain(hands)) { if (it.say != Say.COUNTING) voice.say(Talk.text(it, resources)) }
+        state = AssistantState(Brain(hands), { if (it.say != Say.COUNTING) voice.say(Talk.text(it, resources)) },
+            { all -> voice.say(all.joinToString(" ") { Talk.text(it, resources) }) })
         state.local = local
         state.message = { getString(it) }
         state.offlineVoiceReady = voice.available

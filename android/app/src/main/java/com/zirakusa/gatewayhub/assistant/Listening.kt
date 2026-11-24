@@ -102,6 +102,8 @@ object Hearing {
         val f = free.trim()
         if (conversational && (LocalTurns.chatQuery(f) != null || LocalTurns.hubQuery(f) != null ||
             StoneRequests.matches(f, Parser.parse(f)))) return f
+        // Several orders in one breath («llama a Luis y dime la hora»): the free recognizer keeps all of them.
+        if (Intents.split(f) { Parser.parse(it).action != Action.UNKNOWN }.size > 1) return f
         val byList = Parser.parse(l)
         if (byList.action == Action.UNKNOWN && Parser.parse(f).action != Action.UNKNOWN) return f
         // A family app's tool or a note with free words (a task, a city, a name): the free recognizer has them, when it heard

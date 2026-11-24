@@ -36,6 +36,15 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         }
     }
 
+    /** Free speech the rules missed: the model turns it into Lucía's orders ([run]); with none, it just talks. */
+    fun translate(assistant: LocalAssistant, heard: String, byVoice: Boolean, understood: (String) -> Boolean, run: (List<String>) -> Unit) {
+        val start = SystemClock.elapsedRealtime()
+        assistant.work(onFailure = { complete(generated(heard, byVoice, Action.CHAT, start, message(it), false)) }) {
+            val orders = assistant.orders(heard, understood)
+            if (orders.isNotEmpty()) run(orders) else complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(heard)))
+        }
+    }
+
     fun stone(assistant: LocalAssistant, heard: String, query: String, byVoice: Boolean) {
         val start = SystemClock.elapsedRealtime()
         fun finish(text: String, ok: Boolean = false) = complete(generated(heard, byVoice, Action.PHONE_MCP, start, text, ok))

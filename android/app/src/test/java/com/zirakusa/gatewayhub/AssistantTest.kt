@@ -169,7 +169,7 @@ class AssistantTest {
     /** Music that never started: the answer is corrected and the order is marked failed. */
     @Test fun silentMusicIsCorrected() {
         val said = mutableListOf<Say>()
-        val state = AssistantState(Brain(FakeHands())) { said += it.say }
+        val state = AssistantState(Brain(FakeHands()), { said += it.say })
         state.send("reproduce música", byVoice = true); assertTrue(state.last!!.ok)
         state.late(com.zirakusa.gatewayhub.assistant.Reply(Say.NOT_PLAYING, listOf("Stone")))
         assertFalse(state.last!!.ok); assertEquals(Say.NOT_PLAYING, state.last!!.reply.say)

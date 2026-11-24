@@ -10,7 +10,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
 /** The only owner of the assistant's screen: the conversation, what is being heard, the last order (it lights the graph). */
-class AssistantState(private val brain: Brain, private val speak: (Reply) -> Unit = {}) {
+class AssistantState(private val brain: Brain, private val speak: (Reply) -> Unit = {},
+    /** Several answers said as one (several orders in one sentence); by default one after another. */
+    private val speakAll: (List<Reply>) -> Unit = { it.lastOrNull()?.let(speak) }) {
+    /** Orders said after one that asks «¿…?»: they run after the «sí». */
+    private var waiting = emptyList<String>()
     internal var local: LocalAssistant? = null
     internal var message: (Int) -> String = { "" }
     private val localTurns = LocalTurns({ message(it) }, ::complete)
@@ -48,26 +52,55 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val heard = text.trim()
         val assistant = local
         if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
+        // The orders left after a question: they go on only after «sí».
+        val after = waiting.also { waiting = emptyList() }.takeIf { Intents.yes(heard) }.orEmpty()
         if (assistant?.models?.supported == true && localTurns.route(assistant, heard, byVoice)) return
-        val command = brain.commandFor(heard)
+        // «Llama a Luis y dime la hora»: each order in turn.
+        val plan = Intents.split(heard, ::knows)
+        if (plan.size > 1) return runAll(plan, byVoice)
+        val command = brain.commandFor(plan[0]).takeIf { it.action != Action.UNKNOWN } ?: brain.commandFor(heard)
         if (assistant?.models?.supported == true && assistant.models.selected != null && StoneRequests.matches(heard, command)) {
             localTurns.stone(assistant, heard, heard, byVoice)
             return
         }
         val turn = brain.handle(heard, byVoice, command)
         if (turn.reply.say == Say.NOT_UNDERSTOOD && assistant?.models?.selected != null && assistant.models.supported) {
-            localTurns.chat(assistant, heard, heard, byVoice)
+            // The model says it in Lucía's own orders; only when there are none, it talks.
+            localTurns.translate(assistant, heard, byVoice, ::knows) { orders -> runAll(orders, byVoice) }
+        } else if (after.isNotEmpty()) {
+            runAll(after, byVoice, first = turn)
         } else {
             complete(turn)
         }
     }
 
+    /** Whether the rules know [text] as an order. */
+    private fun knows(text: String) = brain.commandFor(text).action != Action.UNKNOWN
+
+    /**
+     * Several orders, one after another, answered together. One that asks first («¿Borro la lista?») stops there: the
+     * rest waits for the «sí».
+     */
+    private fun runAll(orders: List<String>, byVoice: Boolean, first: Turn? = null) {
+        val replies = mutableListOf<Reply>()
+        first?.let { complete(it, speakIt = false); replies += it.reply }
+        for ((i, order) in orders.withIndex()) {
+            val turn = brain.handle(order, byVoice)
+            complete(turn, speakIt = false)
+            replies += turn.reply
+            if (turn.reply.say == Say.CONFIRM) { waiting = orders.drop(i + 1); break }
+        }
+        if (byVoice && voiceAnswers) speakAll(replies.filter { it.say != Say.COUNTING })
+    }
+
     fun confirmHub(confirmed: Boolean) { local?.let { localTurns.confirm(it, confirmed) } }
 
-    private fun complete(turn: Turn) {
+    private fun complete(turn: Turn) = complete(turn, speakIt = true)
+
+    private fun complete(turn: Turn, speakIt: Boolean) {
         turns = (turns + turn).takeLast(MAX)
         pulse++
-        if (turn.byVoice && voiceAnswers) speak(turn.reply)
+        if (speakIt && turn.byVoice && voiceAnswers) speak(turn.reply)
         if (turn.command.action == Action.COUNT) startTally(turn.command["title"].orEmpty())
         onTurn(turn)
     }

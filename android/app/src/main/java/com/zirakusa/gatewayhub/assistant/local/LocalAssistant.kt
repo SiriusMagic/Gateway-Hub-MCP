@@ -76,6 +76,22 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         return response
     }
 
+    /**
+     * What was said, as Lucía's own orders («llama a Luis», «qué hora es»): the model only rewrites, with her examples in
+     * front of it; each order then goes through the rules, which still ask before changing anything. Empty: no order.
+     */
+    internal suspend fun orders(query: String, understood: (String) -> Boolean): List<String> {
+        val examples = com.zirakusa.gatewayhub.assistant.Examples.closest(query)
+        val instruction = "Eres el traductor de órdenes de Lucía, una asistente en un teléfono Android. Convierte lo que pide " +
+            "la persona en una o varias órdenes cortas en español, copiando la forma de estos ejemplos y cambiando solo " +
+            "nombres, números, horas, lugares o textos. Una orden por cada cosa que pide, en el mismo orden. " +
+            "Devuelve solo JSON: {\"ordenes\":[\"...\"]}. Si no pide ninguna de estas acciones (por ejemplo, solo conversa), " +
+            "devuelve {\"ordenes\":[]}. No inventes acciones que no estén aquí.\nEjemplos:\n" +
+            examples.joinToString("\n") { "- $it" }
+        val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true)
+        return OrderReply.parse(answer, understood)
+    }
+
     internal suspend fun decide(query: String): Pending? {
         val client = HubMcp(hub.link ?: throw McpFailure.Authorization())
         val selection = choose(query, client.discoverOrFail()) ?: return null
@@ -149,5 +165,17 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         val title get() = selection.tool.title
         val arguments get() = selection.arguments.toString(2)
         val readOnly get() = selection.tool.readOnly
+    }
+}
+
+/** The model's {"ordenes":[…]}: only short orders the rules understand, at most five. Pure. */
+internal object OrderReply {
+    fun parse(answer: String, understood: (String) -> Boolean): List<String> {
+        val json = Regex("\\{[\\s\\S]*\\}").find(answer)?.value ?: return emptyList()
+        val list = runCatching { org.json.JSONObject(json).optJSONArray("ordenes") ?: org.json.JSONObject(json).optJSONArray("orders") }.getOrNull()
+            ?: return emptyList()
+        return (0 until list.length()).mapNotNull { list.opt(it) as? String }
+            .map { com.zirakusa.gatewayhub.assistant.Intents.clean(it).take(200) }
+            .filter { it.isNotBlank() && understood(it) }.distinct().take(5)
     }
 }

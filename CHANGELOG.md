@@ -1,3 +1,15 @@
+# Gateway Hub 0.0.30: varias órdenes en una frase, y el modelo traduce a órdenes de Lucía
+
+- **Habla natural**: «Hey Luna, llama a Luis por favor y ayúdame con la hora» hace las dos cosas (abre el marcador con
+  Luis y dice la hora) y contesta una sola vez. Sirve con «y», «luego», «después», «también» o comas. Se quitan «hey
+  Luna», «por favor», «gracias», «ayúdame con», «dime»; «la hora», «la fecha», «el clima» se entienden como pregunta.
+  Si un trozo no es una orden («a las 7 y media», «que compre pan y leche»), la frase queda entera.
+- **Antes de cambiar algo, sigue preguntando**: si una de las órdenes pide «¿…?», las siguientes esperan a tu «sí».
+- **Con un modelo descargado**: lo que las reglas no entienden, el modelo lo traduce a órdenes de Lucía (copia sus
+  ejemplos: hay uno por cada herramienta, 115, y 25 de Lucía). Cada orden pasa después por las mismas reglas y
+  confirmaciones; el modelo nunca llama a una herramienta por su cuenta. Si no hay ninguna orden, conversa.
+- **Por voz**: si el reconocedor libre oyó varias órdenes, se usa esa frase entera.
+
 # Gateway Hub 0.0.29: Stone Video con herramientas y órdenes, sobre la versión con modelos locales
 
 - Parte de la rama con modelos locales (Lucía Prueba 0.0.28), ya unida a `main`. Dos APK: `GatewayHub-0.0.29.apk`
