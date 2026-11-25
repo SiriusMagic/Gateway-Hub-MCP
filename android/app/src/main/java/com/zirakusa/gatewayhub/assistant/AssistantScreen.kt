@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,7 +28,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,31 +52,12 @@ import com.zirakusa.gatewayhub.ui.HubColors
 class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, val makeDefault: () -> Unit = {},
     val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
     val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {}, val installVoice: () -> Unit = {},
-    val manageHub: () -> Unit = {}, val setMode: (AnswerMode) -> Unit = {}, val setRulesWhenLocked: (Boolean) -> Unit = {},
-    val setInterpreter: (Interpreter) -> Unit = {})
+    val manageHub: () -> Unit = {})
 
 /** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {
     if (state.tally != null) return CountScreen(state, counting)
-    if (state.brainOpen) {
-        androidx.activity.compose.BackHandler { state.brainOpen = false }
-        return BrainPage(state)
-    }
     AssistantWorkspace(state, actions) { showMenu -> Talking(state, actions, showMenu) }
-    state.local?.pending?.let { pending ->
-        AlertDialog(
-            onDismissRequest = { state.confirmHub(false) },
-            title = { Text(stringResource(R.string.local_hub_review)) },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text(pending.title)
-                    Text(pending.arguments)
-                }
-            },
-            confirmButton = { TextButton({ state.confirmHub(true) }) { Text(stringResource(R.string.local_hub_confirm)) } },
-            dismissButton = { TextButton({ state.confirmHub(false) }) { Text(stringResource(R.string.local_cancel)) } }
-        )
-    }
 }
 
 @Composable private fun Talking(state: AssistantState, actions: AssistantActions, showMenu: () -> Unit) =
@@ -99,7 +77,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         }
         val local = state.local
         val busy = local?.busy == true
-        val showModelSetup = local?.models?.supported == true && !local.models.hasModel
+        val showModelSetup = local?.chatEnabled == true && local.models.supported && !local.models.hasModel
         val showIntro = state.turns.isEmpty() || showModelSetup
         val introCount = if (showIntro) 1 else 0
         val list = rememberLazyListState()
@@ -118,7 +96,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             if (busy) item {
                 Text(local.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,
                     modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(14.dp))
-                if (local.canStop) TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
+                TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
             }
         }
         if (state.partial.isNotBlank()) Text(state.partial, Modifier.padding(horizontal = 20.dp), color = HubColors.Gold, fontSize = 15.sp)

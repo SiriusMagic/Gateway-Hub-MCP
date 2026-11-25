@@ -27,3 +27,19 @@ FetchContent_MakeAvailable(llama_cpp)
 add_library(lucia_llama SHARED lucia_llama.cpp)
 target_compile_features(lucia_llama PRIVATE cxx_std_17)
 target_link_libraries(lucia_llama PRIVATE llama)
+
+set(WHISPER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(WHISPER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(WHISPER_BUILD_SERVER OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(whisper_cpp
+    URL https://codeload.github.com/ggml-org/whisper.cpp/tar.gz/9386f239401074690479731c1e41683fbbeac557
+    URL_HASH SHA256=0cc49e22729edd3cd2e7727522b456f459e1860fe65e975b39ce1a194857f9d5
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(whisper_cpp)
+
+add_library(lucia_whisper SHARED lucia_whisper.cpp)
+target_compile_features(lucia_whisper PRIVATE cxx_std_17)
+target_link_libraries(lucia_whisper PRIVATE whisper)
+target_link_options(lucia_whisper PRIVATE "-Wl,--exclude-libs,ALL")
+target_link_options(lucia_llama PRIVATE "-Wl,--exclude-libs,ALL")

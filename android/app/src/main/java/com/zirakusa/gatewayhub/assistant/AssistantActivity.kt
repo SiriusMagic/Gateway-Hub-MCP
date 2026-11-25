@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter
 class AssistantActivity : ComponentActivity() {
     private lateinit var state: AssistantState
     private lateinit var local: LocalAssistant
+    private lateinit var speechModels: SpeechModels
     private lateinit var ears: VoskEars
     private lateinit var voice: Voice
     private lateinit var prefs: Prefs
@@ -65,9 +66,11 @@ class AssistantActivity : ComponentActivity() {
         prefs = Prefs(this)
         voice = Voice(this) { ready -> if (::state.isInitialized) state.offlineVoiceReady = ready }
         local = LocalAssistant(this, lifecycleScope)
+        speechModels = SpeechModels(this, lifecycleScope)
         hands = AndroidHands(this)
         state = AssistantState(Brain(hands), { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
         state.local = local
+        state.speechModels = speechModels
         state.message = { getString(it) }
         state.offlineVoiceReady = voice.available
         // Music asked for but silent: Lucía says so instead of «Reproduciendo».
@@ -85,23 +88,16 @@ class AssistantActivity : ComponentActivity() {
             partial = { runOnUiThread { state.partial = it } }, level = { runOnUiThread { state.level = it } },
             failed = { runOnUiThread { countOff(); failed(it) } }, ended = { runOnUiThread { countOff() } })
         state.voiceAnswers = prefs.voiceAnswers; state.wake = prefs.wake; state.name = prefs.name; state.onlyCharging = prefs.onlyCharging
-        state.mode = prefs.mode; state.rulesWhenLocked = prefs.rulesWhenLocked; state.interpreter = prefs.interpreter
-        state.locked = {
-            !getSystemService(android.os.PowerManager::class.java).isInteractive ||
-                getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
-        }
         ears = VoskEars(this, heard = { text, final -> runOnUiThread { if (state.listening) state.heard(text, final) } },
             level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } },
-            conversational = { state.modeNow() != AnswerMode.RULES })
+            conversational = { local.chatEnabled })
         Vosk.model(this) { m -> runOnUiThread { state.modelReady = m != null } }   // warm up while the screen opens
         setContent {
             HubTheme {
                 AssistantScreen(state, AssistantActions(listen = ::listen, stop = ::stop, makeDefault = ::makeDefault, setWake = ::askWake,
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
                     allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
-                    installVoice = ::installVoice, setMode = { prefs.mode = it; state.mode = it },
-                    setRulesWhenLocked = { prefs.rulesWhenLocked = it; state.rulesWhenLocked = it },
-                    setInterpreter = { prefs.interpreter = it; state.interpreter = it }, manageHub = {
+                    installVoice = ::installVoice, manageHub = {
                         startActivity(Intent(this, MainActivity::class.java).setAction(MainActivity.ACTION_MANAGE_HUB))
                     }),
                     CountActions(pause = ::countOff, resume = { countOn(greet = false) }, save = ::saveCount, discard = { countOff(); state.endTally() },
@@ -122,13 +118,13 @@ class AssistantActivity : ComponentActivity() {
         resumeCount = state.tallyListening
         local.leave(); stop(); countOff(); voice.quiet(); WakeService.paused = false; super.onStop()
     }
-    override fun onDestroy() { local.close(); ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
+    override fun onDestroy() { local.close(); speechModels.cancel(); ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
 
     private fun wantsListening(i: Intent?) = i?.action in setOf(LISTEN, Intent.ACTION_ASSIST, Intent.ACTION_VOICE_COMMAND)
 
     private fun listen() {
         callPrompt = null
-        if (local.busy || local.pending != null || state.listening) return
+        if (local.busy || state.listening) return
         if (!Vosk.canListen(this)) return mic.launch(Manifest.permission.RECORD_AUDIO)
         voice.quiet()
         startRecording(confirmCall = state.askingToCall)
@@ -153,7 +149,7 @@ class AssistantActivity : ComponentActivity() {
     private fun startRecording(confirmCall: Boolean) {
         state.partial = ""
         state.listening = true
-        ears.start(confirmCall, contactName = state.askingCallName)
+        ears.start(confirmCall, contactName = state.askingCallName, whisper = speechModels.current())
     }
 
     private fun stop() {

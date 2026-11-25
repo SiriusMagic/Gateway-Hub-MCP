@@ -128,15 +128,19 @@ class AndroidHands(context: Context) : Hands {
         val allowed = ContextCompat.checkSelfPermission(app, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
         val found = if (allowed) contacts(name).ifEmpty { People.guesses(name).flatMap(::contacts).distinct() }
             else byPhoneApp(name) ?: throw Hands.NoContacts()
-        return People.best(found, name)
+        return when (val match = People.resolve(found, name)) {
+            is People.Match.Unique -> match.person
+            People.Match.Ambiguous -> throw Hands.AmbiguousContact()
+            People.Match.Missing -> null
+        }
     }
 
     private fun contacts(query: String): List<Person> {
         val uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(query))
         val found = ArrayList<Person>()
         runCatching {
-            app.contentResolver.query(uri, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY, ContactsContract.CommonDataKinds.Phone.NUMBER), null, null, null)?.use { c ->
-                while (c.moveToNext() && found.size < 50) found += Person(c.getString(0).orEmpty(), c.getString(1).orEmpty())
+            app.contentResolver.query(uri, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY, ContactsContract.CommonDataKinds.Phone.NUMBER, ContactsContract.CommonDataKinds.Phone.CONTACT_ID), null, null, null)?.use { c ->
+                while (c.moveToNext() && found.size < 50) found += Person(c.getString(0).orEmpty(), c.getString(1).orEmpty(), c.getString(2))
             }
         }
         return found
@@ -147,7 +151,7 @@ class AndroidHands(context: Context) : Hands {
         fun search(q: String): List<Person>? = runCatching {
             tool(Catalog.byId("telefono"), "contacts_search", org.json.JSONObject().put("query", q.take(100)).put("limit", 50))
         }.getOrNull()?.optJSONArray("contacts")?.let { list ->
-            (0 until list.length()).mapNotNull { list.optJSONObject(it) }.map { Person(it.optString("name"), it.optString("phone").takeIf { p -> p != "null" }.orEmpty()) }
+            (0 until list.length()).mapNotNull { list.optJSONObject(it) }.map { Person(it.optString("name"), it.optString("phone").takeIf { p -> p != "null" }.orEmpty(), it.optString("id").takeIf { id -> id.isNotBlank() && id != "null" }) }
         }
         val first = search(name) ?: return null
         return first.ifEmpty { People.guesses(name).flatMap { search(it).orEmpty() }.distinct() }

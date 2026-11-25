@@ -7,11 +7,14 @@ package com.zirakusa.gatewayhub.assistant
  */
 object Intents {
     private val wake = Regex("^(?:(?:hey|oye|ey|hola|ok)\\s+)?(?:luna|lucia|lucía)\\b[,.:!]*\\s*", RegexOption.IGNORE_CASE)
-    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|luego|despues|después|tambien|también|y(?!\s+(?:m[aá]s|menos|media|medio|cuarto|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|\d+)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
+    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|y ademas|y además|y de paso|luego|despues|después|tambien|también|y(?!\s+(?:m[aá]s|menos|media|medio|cuarto|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|\d+)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
     private val nextAction = Regex("""\s+(?=(?:(?:necesito|quiero) que )?(?:calcul(?:a|ar|es)|llama(?:le|r)?|sube|baja|reproduce|pon)\b)""", RegexOption.IGNORE_CASE)
-    private val asksForAction = Regex("""^(?:necesito|quiero) que\s+(calcules|llames|subas|bajes|reproduzcas|pongas)\b""", RegexOption.IGNORE_CASE)
+    private val phoneCourtesy = Regex("""^(?:(?:me )?puedes|(?:me )?podr[ií]as)\s+""", RegexOption.IGNORE_CASE)
+    private val localTools = Regex("""^mcp local[:,]?\s+""", RegexOption.IGNORE_CASE)
+    private val asksForAction = Regex("""^(?:(?:necesito|quiero) que\s+)?(calcules|llames|subas|bajes|reproduzcas|pongas|llamar|subir|bajar|reproducir|poner)\b""", RegexOption.IGNORE_CASE)
     private val imperatives = mapOf("calcules" to "calcula", "llames" to "llama", "subas" to "sube",
-        "bajes" to "baja", "reproduzcas" to "reproduce", "pongas" to "pon")
+        "bajes" to "baja", "reproduzcas" to "reproduce", "pongas" to "pon",
+        "llamar" to "llama", "subir" to "sube", "bajar" to "baja", "reproducir" to "reproduce", "poner" to "pon")
     private val closedActions = setOf(Action.CALCULATE, Action.VOLUME)
     private val asks = Regex("^(?:(?:por favor|porfa|porfavor)\\s+)?(?:ayudame|ayúdame|me ayudas|me puedes ayudar|necesito ayuda|dime|me dices|quisiera saber|quiero saber|podrias decirme|podrías decirme|recuerdame decirte)(?:\\s+(?:con|a|sobre))?\\s+", RegexOption.IGNORE_CASE)
     private val thanks = Regex("[,.!¡¿?\\s]*(?:por favor|porfa|gracias|muchas gracias)[.!]*$", RegexOption.IGNORE_CASE)
@@ -28,6 +31,7 @@ object Intents {
     fun clean(text: String): String {
         var t = text.trim().replace(wake, "").replace(thanks, "").trim().trimEnd('.', '!', ',')
         repeat(2) { t = t.replace(asks, "").replace(thanks, "").trim() }
+        t = t.replace(localTools, "").replace(phoneCourtesy, "")
         t = t.replace(asksForAction) { imperatives.getValue(it.groupValues[1].lowercase()) }
         return subjects[Words.normalize(t)] ?: t
     }

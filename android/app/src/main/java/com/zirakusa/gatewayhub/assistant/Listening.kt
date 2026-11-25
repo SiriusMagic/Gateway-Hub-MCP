@@ -112,6 +112,22 @@ object Hearing {
         }
     }
 
+    internal fun dictated(vosk: String, whisper: String, names: List<String>): String {
+        val fast = Intents.split(vosk, Parser::parse).map { Parser.parse(it) }
+        val natural = Intents.split(whisper, Parser::parse).map { Parser.parse(it) }
+        val callActions = setOf(Action.ANSWER, Action.HANG_UP)
+        if (natural.any { it.action in callActions } && fast != natural) return vosk
+
+        val fastCall = fast.singleOrNull { it.action == Action.CALL }
+        val naturalCall = natural.singleOrNull { it.action == Action.CALL }
+        if (fastCall != null && naturalCall != null) {
+            val chosen = PhoneSpeech.preferredCall(fastCall, vosk, naturalCall, whisper, names)
+            if (chosen != null) return chosen
+        }
+        if (fast.size > natural.size || (natural.all { it.action == Action.UNKNOWN } && fast.any { it.action != Action.UNKNOWN })) return vosk
+        return whisper
+    }
+
     fun pick(limited: String, free: String, conversational: Boolean = false, contacts: List<String> = emptyList()): String {
         val l = limited.replace("[unk]", "").replace(Regex("\\s+"), " ").trim()
         val f = free.trim()

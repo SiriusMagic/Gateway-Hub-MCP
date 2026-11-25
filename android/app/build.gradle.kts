@@ -17,11 +17,15 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 37
-        versionName = "0.0.37"
-        // Where llama.cpp's source already is (same pinned commit), for machines that can't download it: -PllamaSourceDir=…
+        versionCode = 38
+        versionName = "0.0.38"
+        // Where llama.cpp's and whisper.cpp's sources already are (same pinned commits), for machines that can't download
+        // them: -PllamaSourceDir=… -PwhisperSourceDir=…
         (project.findProperty("llamaSourceDir") as String?)?.let { dir ->
             externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=$dir" } }
+        }
+        (project.findProperty("whisperSourceDir") as String?)?.let { dir ->
+            externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_WHISPER_CPP=$dir" } }
         }
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")

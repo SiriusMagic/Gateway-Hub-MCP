@@ -41,16 +41,17 @@ import kotlin.math.sin
     val edges = remember { Graph.edges() }
     val joined = remember(edges) { edges.map { it.from to it.to }.toSet() }
     val text = rememberTextMeasurer()
-    val path = state.last?.path.orEmpty().filter { it in byId }
+    val last = state.ruleTrace.lastOrNull()
+    val path = last?.path.orEmpty().filter { it in byId }
     val lastBranch = (0 until path.size - 1).lastOrNull { (path[it] to path[it + 1]) in joined }
     val run = remember { Animatable(0f) }
     LaunchedEffect(state.pulse) { run.snapTo(0f); if (path.isNotEmpty()) run.animateTo(path.size.toFloat(), tween(320 * path.size, easing = LinearEasing)) }
     val breath by rememberInfiniteTransition(label = "breath").animateFloat(0f, (2 * Math.PI).toFloat(),
         infiniteRepeatable(tween(4000, easing = LinearEasing), RepeatMode.Restart), label = "phase")
-    val heat = state.heat
+    val heat = Graph.heat(state.ruleTrace)
     val hottest = max(1, heat.values.maxOrNull() ?: 1)
-    val ok = state.last?.ok == true
-    val description = state.last?.let { t -> path.joinToString(" → ") { byId.getValue(it).label } + if (t.ok) " ✓" else " ✗" }.orEmpty()
+    val ok = last?.ok == true
+    val description = last?.let { t -> path.joinToString(" → ") { byId.getValue(it).label } + if (t.ok) " ✓" else " ✗" }.orEmpty()
 
     Canvas(modifier.semantics { contentDescription = description }) {
         val w = size.width; val h = size.height

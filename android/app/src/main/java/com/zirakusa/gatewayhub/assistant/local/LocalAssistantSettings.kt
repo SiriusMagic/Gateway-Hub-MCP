@@ -4,21 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.gatewayhub.R
@@ -26,7 +18,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun LocalModelSettings(local: LocalAssistant) {
-    Text(stringResource(R.string.local_models), color = HubColors.Text, fontSize = 17.sp)
+    Text(stringResource(R.string.chat_models_title), color = HubColors.Text, fontSize = 17.sp)
     if (!local.models.supported) {
         Text(stringResource(R.string.local_arm64), color = HubColors.Muted)
         return
@@ -35,7 +27,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
     val models = local.models
     for (model in LocalModel.entries) {
         Text(stringResource(R.string.local_model_size, model.title, model.sizeLabel), color = HubColors.Text)
-        val canChange = !local.busy && local.pending == null
+        val canChange = !local.busy
         when {
             models.downloads.builtIn == model -> {
                 LinearProgressIndicator(progress = { models.downloads.progress }, modifier = Modifier.fillMaxWidth())
@@ -54,7 +46,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
     models.downloads.message?.let { Text(stringResource(it), color = HubColors.Bad) }
 
     // A .gguf already on the phone (downloaded with the browser, or by another app into Descargas): used in place.
-    val canChange = !local.busy && local.pending == null
+    val canChange = !local.busy
     for (model in models.linked) {
         Text(stringResource(R.string.local_model_size, model.name, model.sizeLabel), color = HubColors.Text)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -65,15 +57,8 @@ import com.zirakusa.gatewayhub.ui.HubColors
             }
         }
     }
-    val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let(models::link)
-    }
-    Text(stringResource(R.string.local_link_hint), color = HubColors.Muted)
-    TextButton({ runCatching { pick.launch(arrayOf("application/octet-stream", "*/*")) } }, enabled = canChange) {
-        Text(stringResource(R.string.local_link))
-    }
     models.linkMessage?.let { Text(stringResource(it), color = HubColors.Bad) }
-    ModelSourceSettings(models, canChange)
+    LinkedFolderSettings(models, canChange)
 
     Text(stringResource(R.string.local_tone), color = HubColors.Text)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -86,29 +71,4 @@ import com.zirakusa.gatewayhub.ui.HubColors
             FilterChip(local.tone == tone, { local.updateTone(tone) }, label = { Text(stringResource(label)) })
         }
     }
-}
-
-@Composable internal fun HubConnectionSettings(local: LocalAssistant) {
-    if (!local.models.supported) return
-    Text(stringResource(R.string.local_hub), color = HubColors.Text, fontSize = 17.sp)
-    val hub = local.hub
-    val host = hub.hubAddress
-    if (host != null) {
-        Text(stringResource(R.string.local_hub_connected, host), color = HubColors.Text)
-        Text(stringResource(R.string.local_hub_example), color = HubColors.Muted)
-        TextButton(hub::disconnect, enabled = !local.busy && local.pending == null) {
-            Text(stringResource(R.string.local_hub_disconnect))
-        }
-    } else {
-        var link by remember { mutableStateOf("") }
-        Text(stringResource(R.string.local_hub_hint), color = HubColors.Muted)
-        OutlinedTextField(link, { link = it.take(2_048) }, modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.local_hub_agent_link)) }, singleLine = true,
-            visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            enabled = !hub.linkBusy)
-        TextButton({ hub.connect(link) { link = "" } }, enabled = link.isNotBlank() && !hub.linkBusy) {
-            Text(stringResource(if (hub.linkBusy) R.string.local_working else R.string.local_hub_connect))
-        }
-    }
-    hub.linkMessage?.let { Text(stringResource(it), color = HubColors.Bad) }
 }

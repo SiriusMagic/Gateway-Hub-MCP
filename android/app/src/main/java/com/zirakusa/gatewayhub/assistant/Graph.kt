@@ -18,7 +18,7 @@ object Graph {
     fun tool(name: String) = "tool:$name"
 
     /** The actions shown: opening an app is the app itself, and what was not understood stays at the input. */
-    val actions = Action.entries.filter { it != Action.UNKNOWN && it != Action.OPEN && it != Action.TOOL }
+    val actions = Action.entries.filter { it !in setOf(Action.UNKNOWN, Action.OPEN, Action.TOOL, Action.HUB, Action.PHONE_MCP) }
     /** Where an action hangs on the map when Lucía answers it herself: the hour is Reloj's, the date Calendario's. */
     private val home = mapOf(Action.TIME to "reloj", Action.DATE to "calendario")
     private fun owner(a: Action) = Catalog.appFor(a)?.id ?: home[a]

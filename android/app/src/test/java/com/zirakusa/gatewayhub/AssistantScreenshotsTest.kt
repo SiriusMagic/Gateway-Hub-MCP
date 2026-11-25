@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.zirakusa.gatewayhub.assistant.AssistantActions
-import com.zirakusa.gatewayhub.assistant.AssistantPage
 import com.zirakusa.gatewayhub.assistant.AssistantScreen
 import com.zirakusa.gatewayhub.assistant.AssistantState
 import com.zirakusa.gatewayhub.assistant.Brain
@@ -47,13 +46,19 @@ class AssistantScreenshotsTest {
         compose.waitForIdle()
         compose.onNodeWithText("Alarma a las 7:30.").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-turns.png")
-        // The whole brain lives in her settings: Voz → Notas → Conteo, with «Hecho» marked apart.
+        val context = ApplicationProvider.getApplicationContext<Context>()
         state.send("vamos a contar", byVoice = true); state.endTally()
-        state.page = AssistantPage.SETTINGS
-        compose.onNodeWithText("Mapa de Lucía").performClick()
-        compose.waitForIdle()
+        compose.onNodeWithContentDescription(context.getString(R.string.assistant_menu)).performClick()
+        compose.onNodeWithText(context.getString(R.string.rules_title)).performClick()
+        compose.onNodeWithText(context.getString(R.string.rules_last)).assertExists()
         compose.onNodeWithText("Hecho").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-map.png")
+
+        compose.onNodeWithContentDescription(context.getString(R.string.assistant_menu)).performClick()
+        compose.onNodeWithText(context.getString(R.string.models_page_title)).performClick()
+        compose.onNodeWithContentDescription(context.getString(R.string.models_add)).performClick()
+        compose.onNodeWithText(context.getString(R.string.voice_add_model)).assertExists()
+        compose.onNodeWithText(context.getString(R.string.local_hf_add_gguf)).assertExists()
     }
 
     @Test fun mcpOpensFromTheDrawerWithoutConnectingAndKeepsTheConversation() {

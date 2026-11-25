@@ -6,3 +6,4 @@
 
 # JNI entry points in lucia_llama.cpp.
 -keep class com.zirakusa.gatewayhub.assistant.local.NativeLlama { native <methods>; }
+-keep class com.zirakusa.gatewayhub.assistant.NativeWhisper { native <methods>; }

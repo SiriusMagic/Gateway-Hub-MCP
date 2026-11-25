@@ -13,11 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -39,15 +36,6 @@ import com.zirakusa.gatewayhub.ui.HubColors
 @Composable fun LuciaSettings(state: AssistantState, actions: AssistantActions) =
     Column(Modifier.fillMaxSize().background(HubColors.Background).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(HubColors.Card).clickable { state.brainOpen = true }.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.brain_title), color = HubColors.Text, fontSize = 17.sp)
-                Text(stringResource(R.string.brain_hint), color = HubColors.Muted, fontSize = 14.sp)
-            }
-            ResultMark(state.last)
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = HubColors.Muted)
-        }
         Card {
             Line(stringResource(R.string.wake_title, state.name.shown), stringResource(R.string.wake_hint), state.wake, actions.setWake)
             Text(stringResource(R.string.wake_name), color = HubColors.Muted, fontSize = 14.sp)
@@ -71,31 +59,8 @@ import com.zirakusa.gatewayhub.ui.HubColors
         }
         state.local?.takeIf { it.models.supported }?.let { local ->
             Card {
-                Text(stringResource(R.string.mode_title), color = HubColors.Text, fontSize = 17.sp)
-                Text(stringResource(when (state.mode) { AnswerMode.RULES -> R.string.mode_rules_hint; AnswerMode.MODEL -> R.string.mode_model_hint
-                    AnswerMode.BOTH -> R.string.mode_both_hint }), color = HubColors.Muted, fontSize = 14.sp)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(AnswerMode.RULES to R.string.mode_rules, AnswerMode.MODEL to R.string.mode_model, AnswerMode.BOTH to R.string.mode_both).forEach { (m, label) ->
-                        FilterChip(state.mode == m, { actions.setMode(m) }, { Text(stringResource(label)) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = HubColors.Gold, selectedLabelColor = HubColors.Background))
-                    }
-                }
-                if (state.mode != AnswerMode.RULES) {
-                    Text(stringResource(R.string.interpreter_title), color = HubColors.Text, fontSize = 16.sp)
-                    Text(stringResource(when (state.interpreter) { Interpreter.FEELINGS -> R.string.interpreter_feelings_hint
-                        Interpreter.MCP -> R.string.interpreter_mcp_hint; Interpreter.AUTO -> R.string.interpreter_auto_hint }), color = HubColors.Muted, fontSize = 14.sp)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(Interpreter.FEELINGS to R.string.interpreter_feelings, Interpreter.MCP to R.string.interpreter_mcp,
-                            Interpreter.AUTO to R.string.interpreter_auto).forEach { (i, label) ->
-                            FilterChip(state.interpreter == i, { actions.setInterpreter(i) }, { Text(stringResource(label)) },
-                                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = HubColors.Gold, selectedLabelColor = HubColors.Background))
-                        }
-                    }
-                }
-                if (state.mode != AnswerMode.RULES && !local.models.hasModel)
-                    Text(stringResource(R.string.mode_needs_model), color = HubColors.Bad, fontSize = 14.sp)
-                Line(stringResource(R.string.mode_locked), stringResource(R.string.mode_locked_hint), state.rulesWhenLocked, actions.setRulesWhenLocked)
-                Button(stringResource(R.string.assistant_advanced)) { state.page = AssistantPage.ADVANCED }
+                Line(stringResource(R.string.local_chat_enable), stringResource(R.string.local_chat_enable_hint),
+                    local.chatEnabled, local::updateChatEnabled)
             }
         }
         Card {
