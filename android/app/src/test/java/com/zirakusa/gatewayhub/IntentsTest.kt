@@ -106,4 +106,36 @@ class IntentsTest {
         Brain(hands).handle("coloca música en segundo plano"); assertEquals(1, back)
         Brain(hands).handle("pon música"); assertEquals(1, back)
     }
+
+    @Test fun segmentsMathAndOtherOrders() {
+        fun calc(t: String) = Parser.parse(t).let { assertEquals(t, Action.CALCULATE, it.action); it["calculation"] }
+        assertEquals("4", calc("suma dos más dos")); assertEquals("8", calc("suma 5 y 3")); assertEquals("3.5", calc("suma 1,5 y 2"))
+        assertEquals("7", calc("resta 3 a 10")); assertEquals("7", calc("resta diez menos tres")); assertEquals("12", calc("multiplica 3 y 4"))
+        assertEquals("5", calc("divide 10 entre 2")); assertEquals("4", calc("dos más dos")); assertEquals("33", calc("suma treinta y uno más dos"))
+        assertEquals(Action.UNKNOWN, Parser.parse("suma dos").action)                                   // nothing to add
+        assertEquals("division_by_zero", Parser.parse("divide 10 entre 0")["math_error"])
+        // One sentence, several orders, in the order said.
+        assertEquals(listOf("suma dos más dos", "reproduce música"), split("suma dos más dos y reproduce música"))
+        assertEquals(listOf("reproduce música", "suma dos más dos"), split("reproduce música y suma dos más dos"))
+        assertEquals(listOf("suma dos más dos", "reproduce música"), split("suma dos más dos reproduce música"))   // without «y»
+        assertEquals(listOf("suma dos más dos", "reproduce música", "enciende la linterna"), split("suma dos más dos, reproduce música y enciende la linterna"))
+        assertEquals(listOf("suma cinco y tres", "pon música"), split("necesito que sumes cinco y tres y pongas música"))
+        assertEquals(listOf("pon música", "enciende la linterna"), split("pon música y además enciende la linterna"))
+        // A note keeps its text unless a clear order follows; a message's text always stays whole.
+        assertEquals(listOf("manda un mensaje a Ana que llego tarde y pon música"), split("manda un mensaje a Ana que llego tarde y pon música"))
+        assertEquals(listOf("anota comprar pan", "pon música"), split("anota comprar pan y pon música"))
+        assertEquals(listOf("anota pan y leche", "qué hora es"), split("anota pan y leche y qué hora es"))
+        assertEquals(listOf("anota que hay que comprar leche y pon la ropa a lavar"), split("anota que hay que comprar leche y pon la ropa a lavar"))
+        assertEquals(listOf("pon música de Simon y Garfunkel"), split("pon música de Simon y Garfunkel"))
+    }
+
+    @Test fun sumAndMusicBothRun() {
+        val hands = FakeHands()
+        val state = AssistantState(Brain(hands))
+        state.send("Suma dos más dos y reproduce música", byVoice = false)
+        assertEquals(listOf(Action.CALCULATE, Action.PLAY_MUSIC), state.turns.map { it.command.action })
+        assertEquals(Reply(Say.CALCULATED, listOf("4")), state.turns.first().reply)
+        assertEquals(Say.PLAYING, state.last!!.reply.say)
+        assertEquals(listOf("music *"), hands.done)
+    }
 }

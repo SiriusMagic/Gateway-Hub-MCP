@@ -12,6 +12,7 @@ object Examples {
         "llama a Luis", "manda un mensaje a Ana que llego en 10 minutos", "qué hora es", "qué día es", "qué tiempo hace",
         "qué tengo hoy", "buenos días", "anota comprar pan", "vamos a contar", "enciende la linterna", "apaga la linterna",
         "contesta la llamada", "cuelga", "toma una foto", "lee un código qr", "mide la velocidad de internet",
+        "suma dos más dos", "resta 3 a 10",
     )
 
     /** One phrase per family tool. */

@@ -7,10 +7,14 @@ package com.zirakusa.gatewayhub.assistant
  */
 object Intents {
     private val wake = Regex("^(?:(?:hey|oye|ey|hola|ok)\\s+)?(?:luna|lucia|lucía)\\b[,.:!]*\\s*", RegexOption.IGNORE_CASE)
-    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|luego|despues|después|tambien|también|y(?!\s+(?:m[aá]s|menos|media|medio|cuarto|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|\d+)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
-    private val nextAction = Regex("""\s+(?=(?:(?:necesito|quiero) que )?(?:calcul(?:a|ar|es)|llama(?:le|r)?|sube|baja|reproduce|pon)\b)""", RegexOption.IGNORE_CASE)
-    private val asksForAction = Regex("""^(?:necesito|quiero) que\s+(calcules|llames|subas|bajes|reproduzcas|pongas)\b""", RegexOption.IGNORE_CASE)
-    private val imperatives = mapOf("calcules" to "calcula", "llames" to "llama", "subas" to "sube",
+    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|y ademas|y además|y entonces|luego|despues|después|tambien|también|ademas|además|y(?!\s+(?:m[aá]s|menos|media|medio|cuarto|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|\d+)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
+    private val nextAction = Regex("""\s+(?=(?:(?:necesito|quiero) que )?(?:calcul(?:a|ar|es)|suma|resta|multiplica|divide|llama(?:le|r)?|sube|baja|reproduce|pon|ponme|coloca|enciende|apaga|abre|anota|dime)\b)""", RegexOption.IGNORE_CASE)
+    private val asksForAction = Regex("""^(?:necesito|quiero) que\s+(calcules|sumes|restes|multipliques|dividas|llames|subas|bajes|reproduzcas|pongas)\b""", RegexOption.IGNORE_CASE)
+    private val laterAsk = Regex("""^(calcules|sumes|restes|multipliques|dividas|llames|subas|bajes|reproduzcas|pongas)\b""", RegexOption.IGNORE_CASE)
+    /** After a note, only a clear order starts a new one («anota pan y pon música»; never «y leche»). */
+    private val clearOrder = Regex("""^(?:calcul(?:a|ar)|suma|resta|multiplica|divide|llama(?:le)?|sube|baja|reproduce|enciende|apaga|abre|dime|que hora|qué hora|(?:pon|ponme|coloca) (?:musica|música|una alarma|un temporizador|la linterna))\b""", RegexOption.IGNORE_CASE)
+    private val imperatives = mapOf("calcules" to "calcula", "sumes" to "suma", "restes" to "resta", "multipliques" to "multiplica", "dividas" to "divide",
+        "llames" to "llama", "subas" to "sube",
         "bajes" to "baja", "reproduzcas" to "reproduce", "pongas" to "pon")
     private val closedActions = setOf(Action.CALCULATE, Action.VOLUME)
     private val asks = Regex("^(?:(?:por favor|porfa|porfavor)\\s+)?(?:ayudame|ayúdame|me ayudas|me puedes ayudar|necesito ayuda|dime|me dices|quisiera saber|quiero saber|podrias decirme|podrías decirme|recuerdame decirte)(?:\\s+(?:con|a|sobre))?\\s+", RegexOption.IGNORE_CASE)
@@ -29,6 +33,8 @@ object Intents {
         var t = text.trim().replace(wake, "").replace(thanks, "").trim().trimEnd('.', '!', ',')
         repeat(2) { t = t.replace(asks, "").replace(thanks, "").trim() }
         t = t.replace(asksForAction) { imperatives.getValue(it.groupValues[1].lowercase()) }
+        // «… y pongas música» after «necesito que …»: each later order in its imperative too.
+        t = t.replace(laterAsk) { imperatives.getValue(it.groupValues[1].lowercase()) }
         return subjects[Words.normalize(t)] ?: t
     }
 
@@ -37,9 +43,26 @@ object Intents {
         val whole = clean(text)
         if (whole.length > 400 || QuickOrders.webQuery(whole) != null) return listOf(whole)
         val first = parse(whole)
-        if (first.action == Action.NOTE || (first.action == Action.MESSAGE && first["text"] != null)) return listOf(whole)
+        // A message's text goes to someone else: always whole. A note may end where a clear order begins.
+        if (first.action == Action.MESSAGE && first["text"] != null) return listOf(whole)
+        if (first.action == Action.NOTE) return freeText(whole, parse)
         val parts = whole.split(joints).map(::clean).filter(String::isNotBlank).flatMap { closedSequence(it, parse) }
         return if (parts.size > 1 && parts.all { complete(parse(it)) }) parts else listOf(whole)
+    }
+
+    /**
+     * A note keeps its text whole («pan y leche»), unless a clear order follows a joint and
+     * everything after it is understood: «anota comprar pan y pon música» is the note and the music.
+     */
+    private fun freeText(whole: String, parse: (String) -> Command): List<String> {
+        for (j in joints.findAll(whole)) {
+            val rest = clean(whole.substring(j.range.last + 1))
+            if (!clearOrder.containsMatchIn(rest)) continue
+            val head = clean(whole.substring(0, j.range.first))
+            val tail = split(rest, parse)
+            if (head.isNotBlank() && complete(parse(head)) && tail.all { complete(parse(it)) }) return listOf(head) + tail
+        }
+        return listOf(whole)
     }
 
     private fun complete(command: Command): Boolean = when (command.action) {

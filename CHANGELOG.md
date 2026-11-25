@@ -1,3 +1,17 @@
+# Arka 0.1.5: varias órdenes en una frase (segmentación de sentimientos)
+
+- **«Suma dos más dos y reproduce música»** ya funciona: Lucía lo parte en dos órdenes y las hace en el orden dicho
+  (responde «El resultado es 4» y pone música). También sin «y» («suma dos más dos reproduce música»), con comas, con
+  «además» o «y entonces», y en cualquier orden («reproduce música y suma dos más dos»).
+- **Cuentas con su verbo**: «suma 5 y 3», «suma 1,5 y 2», «resta 3 a 10», «resta diez menos tres», «multiplica 3 y 4»,
+  «divide 10 entre 2», y solo los números: «dos más dos», «8 por 3». «Necesito que sumes… y pongas música» también.
+- **Una nota y otra orden**: «anota comprar pan y pon música» guarda la nota y pone música. Solo corta ante una orden
+  clara; «anota que hay que comprar leche y pon la ropa a lavar» sigue siendo una sola nota. El texto de un mensaje
+  nunca se corta.
+- Nunca se corta lo que es una sola orden: «pon música de Simon y Garfunkel», «alarma a las 7 y media».
+- RS suma «suma dos más dos» y «resta 3 a 10»: 142 reglas, 27 que Lucía hace sola.
+- 111 pruebas Android y 31 del hub.
+
 # Arka 0.1.4: las reglas de sentimientos, solo en RS
 
 - **MCP › Apps de este teléfono sin reglas de sentimientos**: se quitan la tarjeta «Reglas de sentimientos» de arriba
