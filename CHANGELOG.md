@@ -1,3 +1,10 @@
+# Arka 0.1.2: dos iconos a elegir
+
+- **Iconos de Arka**: «Anillos» (el de fábrica) y «Órbitas», en Ajustes de Lucía › Icono de Arka. Tras actualizar quizá
+  tengas que volver a poner el icono de Arka en tu pantalla de inicio (una sola vez); al mantenerlo pulsado siguen los
+  accesos «Lucía» y «Hub».
+- 105 pruebas Android y 31 del hub.
+
 # Arka 0.1.1: reglas de sentimientos en MCP
 
 - **Lucía › MCP › «Reglas de sentimientos»**: junto a «Abrir» y «Herramientas», cada app tiene ahora un botón con

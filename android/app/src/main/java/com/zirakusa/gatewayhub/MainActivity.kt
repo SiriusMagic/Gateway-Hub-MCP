@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ArkaIcon.load(this)
         if (intent.action != ACTION_MANAGE_HUB) {
             goToLucia()
             return

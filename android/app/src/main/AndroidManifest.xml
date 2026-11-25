@@ -69,17 +69,30 @@
         android:networkSecurityConfig="@xml/network_security_config" android:supportsRtl="true">
         <!-- Arka: one app and one icon (Gateway Hub and Lucía together since 0.1.0). Long-press: Lucía or the hub. -->
         <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <!-- The «hub» shortcut opens the administration even when Lucía would open first. -->
             <intent-filter>
                 <action android:name="com.zirakusa.gatewayhub.action.MANAGE_HUB" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
+        <!-- Arka's icon, the one picked in Ajustes de Lucía › Icono de Arka (one alias enabled at a time; never rename an
+             alias: Android keeps the enabled state by name). -->
+        <activity-alias android:name=".Home" android:targetActivity=".MainActivity" android:exported="true"
+            android:enabled="true" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+        </activity-alias>
+        <activity-alias android:name=".HomeOrbitas" android:targetActivity=".MainActivity" android:exported="true"
+            android:enabled="false" android:icon="@mipmap/ic_launcher_orbits" android:roundIcon="@mipmap/ic_launcher_orbits">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+        </activity-alias>
         <!-- Lucía, the assistant inside Arka: no icon of her own; opened by Arka, its shortcut, «Oye Lucía» or the
              phone's assist gesture when Arka is the assistant. -->
         <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/lucia"

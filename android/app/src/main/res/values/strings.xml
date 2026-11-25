@@ -265,5 +265,11 @@
     <!-- Long-press on Arka's icon. -->
     <string name="shortcut_hub">Hub</string>
     <string name="shortcut_hub_long">Administrar el hub</string>
-    <color name="arka_icon_background">#142E2F</color>
+    <color name="arka_icon_rings">#103131</color>
+    <color name="arka_icon_orbits">#142E2F</color>
+    <!-- Ajustes de Lucía › Icono de Arka. -->
+    <string name="arka_icon_title">Icono de Arka</string>
+    <string name="arka_icon_rings">Anillos</string>
+    <string name="arka_icon_orbits">Órbitas</string>
+    <string name="arka_icon_hint">Cambia el icono de la pantalla de inicio. Algunos lanzadores tardan unos segundos en mostrarlo.</string>
 </resources>

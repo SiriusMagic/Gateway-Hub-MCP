@@ -37,7 +37,7 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 ## App Android
 
 La app del teléfono se llama **Arka** (antes Gateway Hub): el hub y Lucía, la asistente, en **una sola app** con un solo
-icono. [Descarga Arka 0.1.1](android/Arka-0.1.1.apk): se instala encima de Gateway Hub (mismo paquete
+icono. [Descarga Arka 0.1.2](android/Arka-0.1.2.apk): se instala encima de Gateway Hub (mismo paquete
 `com.zirakusa.gatewayhub` y misma firma que el resto de la familia). Ya no hay «Lucía Prueba» aparte. Consulta las
 instrucciones en [Arka para Android](android/README.md).
 
