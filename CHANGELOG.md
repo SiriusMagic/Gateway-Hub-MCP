@@ -4,7 +4,7 @@
   todas las frases que Lucía entiende para ella, qué hace cada una y si **pregunta antes** (las que borran o cambian).
   Arriba, una tarjeta con el total de reglas (140) y las que Lucía hace sola, sin ninguna app (25: música, volumen,
   alarmas, llamar, linterna…).
-- 106 pruebas Android y 31 del hub.
+- 105 pruebas Android y 31 del hub.
 
 # Arka 0.1.0: Gateway Hub y Lucía, una sola app
 
