@@ -116,8 +116,6 @@
     <string name="say_next">Siguiente canción.</string>
     <string name="say_previous">Canción anterior.</string>
     <string name="say_restart">Desde el principio.</string>
-    <string name="brain_title">Mapa de Lucía</string>
-    <string name="brain_hint">Cada app con lo que sabe hacer. La última orden se enciende.</string>
     <string name="brain_done">Hecho</string>
     <string name="brain_failed">Falló</string>
     <string name="brain_waiting">Sin órdenes todavía</string>

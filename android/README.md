@@ -56,3 +56,6 @@ GATEWAY_HUB_URL=https://… GATEWAY_HUB_TOKEN=… ./gradlew :app:testDebugUnitTe
 - Las capturas de cada pantalla quedan en `app/build/screenshots/`.
 - El APK de compilación sale en `app/build/outputs/apk/release/app-release-unsigned.apk`. Para publicarlo, fírmalo con la clave familiar y comprueba con `apksigner verify --print-certs` que la huella sea `34b88716ba31a8ca170624c1c009c11dd23e182148731f0889c98404b34182d4`. Verifica también `com.zirakusa.gatewayhub` y el incremento de versión antes de copiar el APK firmado a `android/GatewayHub-<versión>.apk`. [Guía de firma de la familia](https://github.com/SiriusMagic/Laucher-mcp/blob/main/GUIA-AGENTES.md).
 - En un teléfono, compara Vosk y Whisper con los mismos audios de «Kusa», «Adonis Sarango», cifras y órdenes encadenadas, en silencio y con ruido. Anota contactos identificados, acciones correctas, latencia y memoria. Verifica la confirmación, el respaldo a Vosk y la actualización desde la 0.0.37.
+
+Sin acceso a `codeload.github.com`, clona los commits fijados de `ggml-org/llama.cpp` y `ggml-org/whisper.cpp` (los de
+`app/src/main/cpp/CMakeLists.txt`) y pásalos: `./gradlew -PllamaSourceDir=… -PwhisperSourceDir=… :app:assembleRelease`.

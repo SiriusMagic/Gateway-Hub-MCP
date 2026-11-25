@@ -19,7 +19,6 @@
     <string name="rules_example_call">«Llama a Adonis Sarango»</string>
     <string name="rules_last">Última orden</string>
     <string name="rules_waiting">Pendiente</string>
-    <string name="local_models">Modelos locales</string>
     <string name="local_model_size">%1$s · %2$s</string>
     <string name="local_chat">Conversación local</string>
     <string name="local_chat_model_first">Descarga y selecciona un modelo en los ajustes de Lucía.</string>
@@ -33,7 +32,6 @@
     <string name="local_folder_refresh">Actualizar carpeta</string>
     <string name="local_folder_empty">No hay archivos GGUF compatibles en esta carpeta.</string>
     <string name="local_folder_error">No pude leer la carpeta. Vuelve a seleccionarla en Archivos.</string>
-    <string name="local_hf_add">Añadir desde Hugging Face</string>
     <string name="local_hf_repo">Enlace del repositorio o autor/modelo</string>
     <string name="local_hf_find">Ver archivos GGUF</string>
     <string name="local_hf_invalid">Escribe un repositorio de Hugging Face con el formato autor/modelo.</string>
@@ -58,22 +56,9 @@
     <string name="local_model_error">El modelo no pudo responder. Prueba de nuevo o elige el modelo más ligero.</string>
     <string name="local_voice_missing">Instala una voz en español sin conexión para oír las respuestas.</string>
     <string name="local_voice_install">Instalar voz</string>
-    <string name="local_hub_hint">Crea en Agentes un enlace para Lucía con acceso a las apps que quieras usar.</string>
-    <string name="local_hub_agent_link">Enlace de agente</string>
-    <string name="local_hub_connect">Conectar</string>
-    <string name="local_hub_disconnect">Desconectar</string>
-    <string name="local_hub_connected">Conectado a %1$s</string>
-    <string name="local_hub_example">Prueba «busca mis notas de viaje en el Hub».</string>
-    <string name="local_hub_connect_first">Conecta un enlace de agente en los ajustes de Lucía.</string>
-    <string name="local_hub_model_first">Descarga y selecciona un modelo para elegir herramientas del Hub.</string>
     <string name="local_hub_link_invalid">Pega un enlace HTTPS de agente generado por Gateway Hub.</string>
     <string name="local_hub_unauthorized">El Hub rechazó el enlace. Comprueba si el agente está activo o genera un enlace nuevo.</string>
     <string name="local_hub_unavailable">No se pudo completar la solicitud al Hub. Comprueba la conexión. Si pediste un cambio, revisa su estado antes de volver a intentarlo.</string>
     <string name="local_hub_rate_limit">El Hub alcanzó su límite de solicitudes. Inténtalo en un minuto.</string>
-    <string name="local_hub_no_tool">No encontré una herramienta autorizada para esa solicitud. Prueba con una petición más concreta.</string>
     <string name="local_hub_tool_error">La herramienta del Hub no pudo completar la acción.</string>
-    <string name="local_hub_review">Confirmar acción del Hub</string>
-    <string name="local_hub_confirm">Confirmar</string>
-    <string name="local_hub_cancelled">Acción cancelada.</string>
-    <string name="local_hub_done">Acción completada en el Hub.</string>
 </resources>

@@ -1,9 +1,11 @@
-# Gateway Hub 0.0.38 · En preparación
+# Gateway Hub 0.0.38: reglas primero y dictado Whisper opcional
 
 - Sentimientos aparece en el menú con ejemplos y el recorrido de cada acción de la última orden.
 - La conversación local empieza pausada. Los GGUF y su selección se guardan para reactivarla. Las reglas atienden las órdenes del teléfono.
 - Modelos incorpora un menú flotante y la descarga opcional de Whisper Base Q5 en español para ARM64. Vosk mantiene la activación y la confirmación de llamadas.
 - Lucía pide aclarar contactos ambiguos. El APK oficial conserva el paquete y la firma familiar.
+- Se quitan 36 textos que ya no usaba nadie (lint sin avisos). Para compilar sin descargar fuentes:
+  `-PllamaSourceDir=… -PwhisperSourceDir=…` (los mismos commits fijados en `CMakeLists.txt`).
 
 # Gateway Hub 0.0.37: la versión mejorada de Lucía (0.0.34–0.0.36), con la firma de la familia
 
