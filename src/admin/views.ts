@@ -30,13 +30,13 @@ function appsCard(d: PanelData): string {
     : remote.has(m.prefix) ? state(remote.get(m.prefix)!) : ' <span class="good">listo</span>'}</li>`).join("");
   const stone = form(d.token, "link_stone", `<label for="l">Enlace de Stone</label>
 <input id="l" name="link" type="url" placeholder="https://…/d/…/mcp?token=stn_…" required>
-<small>Stone › Ajustes › Modo MCP: «Redireccionar a Hub» › Ir al Hub (el hub administra todo), o un token tipo Hub › Copiar (Stone pone los permisos).</small><br><button>Vincular Stone</button>`);
+<small>En la app Arka: Escáner › «Conectar todas las apps» activa el Modo MCP de Stone y la vincula sola.</small><br><button>Vincular Stone</button>`);
   const unlink = d.stoneLinked ? form(d.token, "unlink_stone", `<button class="ghost">Desvincular Stone</button>`) : "";
   const others = (d.remote ?? []).map(({ app, linked, detail }) => `<h2>${esc(app.title)}</h2>` +
     (linked ? `<p><span class="good">vinculada</span>${detail ? `<br><small>${esc(detail)}</small>` : ""}</p>` : "") +
     form(d.token, "link_app", `<input type="hidden" name="prefix" value="${esc(app.prefix)}"><label for="l-${esc(app.prefix)}">Enlace de ${esc(app.label)}</label>
 <input id="l-${esc(app.prefix)}" name="link" type="url" placeholder="https://…/d/…/mcp?token=…" required>
-<small>${esc(app.label)} › Ajustes › Modo MCP: «Redireccionar a Hub» › Ir al Hub, o un token tipo Hub › Copiar enlace.</small><br><button>Vincular ${esc(app.label)}</button>`) +
+<small>En la app Arka: Escáner › «Conectar todas las apps» activa el Modo MCP de ${esc(app.label)} y la vincula sola.</small><br><button>Vincular ${esc(app.label)}</button>`) +
     (linked ? form(d.token, "unlink_app", `<input type="hidden" name="prefix" value="${esc(app.prefix)}"><button class="ghost">Desvincular ${esc(app.label)}</button>`) : "")).join("");
   return `<div class="card"><h2>Apps</h2><ul>${rows}</ul>${stone}${unlink}${others}</div>`;
 }

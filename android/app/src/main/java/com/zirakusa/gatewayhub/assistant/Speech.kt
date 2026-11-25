@@ -52,7 +52,11 @@ object Speech {
                 list.take(READ + 2).joinToString(", ") { it.optString("time") + if (it.optBoolean("enabled", true)) "" else " (apagada)" } + "."
         }
         "clock_world_time" -> "En ${r.optString("city")} son las ${r.optString("time")}."
-        "calc_evaluate" -> listOf("result", "value", "text", "display").firstNotNullOfOrNull { k -> r.opt(k)?.takeIf { it != JSONObject.NULL }?.toString() }
+        "level_calibration" -> if (!r.optBoolean("calibrated")) "El nivel no está calibrado: usa el cero de fábrica." else
+            "El nivel está calibrado: ${r.optDouble("offset_x_degrees")}° de lado y ${r.optDouble("offset_y_degrees")}° de frente."
+        "camera_settings" -> "Cámara: modo ${r.optString("mode")}, flash ${r.optString("flash")}, temporizador ${r.optString("timer")}, formato ${r.optString("ratio")}" +
+            (if (r.optBoolean("hdr")) ", HDR" else "") + (if (r.optBoolean("grid")) ", cuadrícula" else "") + "."
+        "calc_evaluate", "calc_percent", "calc_power", "calc_sqrt" -> listOf("result", "value", "text", "display").firstNotNullOfOrNull { k -> r.opt(k)?.takeIf { it != JSONObject.NULL }?.toString() }
             ?.let { "Son $it." } ?: list(r, today)
         "files_storage" -> if (r.has("freeBytes")) "Te quedan ${gb(r.optLong("freeBytes"))} libres de ${gb(r.optLong("totalBytes"))}." else list(r, today)
         "gallery_stats" -> "Tienes ${r.optInt("photos")} ${plural(r.optInt("photos"), "foto", "fotos")} y ${r.optInt("videos")} ${plural(r.optInt("videos"), "video", "videos")}."

@@ -7,8 +7,11 @@ web `/admin`, pero en el teléfono:
   vez, y pausar, reanudar o revocar.
 - **Acceso en un solo pegado:** `https://<hub>#hub_…` o solo el token. Si pegas algo de Stone o de un
   agente, la app explica qué es.
-- **Vincular con token:** pega el enlace que copia la app (Modo MCP › token tipo Hub › Copiar). El token ya dice
-  de qué app es (Stone, Luma, Calculadora, Filem) y responde «Stone: token vinculado».
+- **Modo MCP de toda la familia (Lucía › MCP):** ninguna app tiene ya su propia pantalla de Modo MCP. Aquí se
+  **activa** (el enlace público de cada app, todas o una a una), se **permite en local** (Lucía y sus reglas de
+  sentimiento usan las herramientas de las apps en el teléfono, sin internet) y se **crean los tokens** de cada IA
+  (Agentes del hub). Arka habla con cada app por su canal con firma (`content://<app>.hublink`: `link`, `connect`,
+  `disconnect`, `status`, `tool`).
 - **Escáner (primera pestaña):** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
   muestra su estado en el hub (sin vincular, apagada, en línea). Solo lee, no activa nada.
 - **Lucía (asistente dentro de Arka; mantén pulsado el icono › «Lucía»):** voz o texto en español, entendido en el teléfono, para abrir apps de la familia,
@@ -20,12 +23,6 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK de esta rama: [Lucía Prueba 0.0.28](GatewayHub-0.0.28-lucia-preview.apk).
-Se instala junto a Gateway Hub como `com.zirakusa.gatewayhub.lucia.preview` y aparece como **Lucía Prueba**.
-Actualiza las versiones de prueba 0.0.26 y 0.0.27 y mantiene sus modelos y ajustes. Para consultas MCP locales, usa
-[Stone Prueba 1.7.27](Stone-1.7.27-lucia-preview.apk),
-firmado con la misma clave de prueba y con su propia biblioteca.
-
 ## Conversación local en Lucía
 
 Al abrir Gateway Hub aparece el **Chat**. Desde el menú lateral abre **Modelos**, **MCP** o **Ajustes**.
@@ -33,15 +30,13 @@ Al abrir Gateway Hub aparece el **Chat**. Desde el menú lateral abre **Modelos*
 1. En **Modelos**, descarga **Qwen3 4B** (2,50 GB) o **Qwen2.5 1.5B** (1,12 GB). En un teléfono ARM64,
    Lucía comprueba el SHA-256 antes de activar el modelo. Instala una voz en español sin conexión desde
    **Ajustes** si quieres oír las respuestas.
-2. En **MCP** puedes revisar las apps instaladas sin una sesión del Hub. En Stone 1.7.27 abre
-   **Ajustes › Modo MCP › Permitir MCP local**. Con Stone abierto previamente y el modelo seleccionado,
-   prueba «¿qué canciones de Daft Punk hay en Stone?» o «¿qué está sonando?». Puedes hacerlo en modo avión.
-3. En **MCP › Conectar un LLM externo**, usa el acceso de propietario para entrar a **Agentes**, elegir
+2. En **MCP** puedes revisar las apps instaladas sin una sesión del Hub. Activa **Permitir MCP local**. Con Stone
+   abierto previamente y el modelo seleccionado, prueba «¿qué canciones de Daft Punk hay en Stone?» o «¿qué está
+   sonando?». Puedes hacerlo en modo avión.
+3. En **MCP › Crear token**, usa el acceso de propietario para entrar a **Agentes**, elegir
    permisos y copiar el enlace del agente. Para que Lucía consulte un Hub remoto, pega un enlace de agente
    en **Ajustes › Avanzado** y usa una petición como «busca mis notas de viaje en el Hub». Los cambios en
    el Hub requieren confirmación en pantalla.
-
-Los APK de prueba usan la misma firma para el permiso de MCP local.
 
 
 La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.13113456 y CMake 3.31.6. CMake descarga una revisión fija de [llama.cpp](https://github.com/ggml-org/llama.cpp) para la variante ARM64.

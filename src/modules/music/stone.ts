@@ -16,7 +16,7 @@ export function parseStoneLink(link: string, relayHost: string): StoneLink {
   if (url.protocol !== scheme || url.host !== relayHost)
     throw new ToolError("INVALID_LINK", `Only links of ${relayHost} (copied from the app's Modo MCP) are accepted.`);
   if (!/^\/d\/[a-z0-9]{12,40}\/mcp$/.test(url.pathname))
-    throw new ToolError("INVALID_LINK", "The link must end in /d/<phone>/mcp?token=… (Stone › Ajustes › Modo MCP › Copiar).");
+    throw new ToolError("INVALID_LINK", "The link must end in /d/<phone>/mcp?token=… (Arka › Escáner › «Conectar todas las apps» lo vincula solo).");
   const token = url.searchParams.get("token") ?? "";
   if (!TOKEN.test(token)) throw new ToolError("INVALID_LINK", "The link has no valid Stone token (?token=stn_…).");
   return { endpoint: url.origin + url.pathname, token };

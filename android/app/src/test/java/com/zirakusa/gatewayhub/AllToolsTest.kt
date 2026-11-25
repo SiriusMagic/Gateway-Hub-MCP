@@ -83,6 +83,37 @@ class AllToolsTest {
         assertEquals(Action.TORCH, p("enciende la linterna").action); assertEquals(Action.OPEN, p("abre la cámara").action)
     }
 
+    /** Arka 0.2.0: more of each app's tools as feelings rules, with their arguments. */
+    @Test fun moreFamilyPhrases() {
+        mapOf(
+            "el 15 por ciento de 200" to "calc_percent", "2 elevado a 10" to "calc_power", "raíz cuadrada de 144" to "calc_sqrt",
+            "mueve la nota compras a la carpeta casa" to "notes_move", "qué hay en descargas" to "files_list",
+            "crea una carpeta facturas en documentos" to "files_create_folder", "cómo está calibrado el nivel" to "level_calibration",
+            "pon Clima en el dock" to "launcher_dock_add", "quita Clima del dock" to "launcher_dock_remove", "busca Cuenca en el clima" to "weather_search",
+            "mide la latencia" to "network_latency_test", "cómo está configurada la cámara" to "camera_settings",
+            "crea un contacto Ana López con el número 0991234567" to "contacts_create", "marca a Ana como favorita" to "contacts_favorite",
+            "quita a Ana de mis favoritos" to "contacts_favorite", "detalles de la grabación reunión" to "rec_get",
+            "renombra la grabación reunión a junta" to "rec_rename",
+        ).forEach { (said, want) -> assertEquals(said, want, tool(said)) }
+        assertEquals(15.0, args("el 15 por ciento de 200").getDouble("percent"), 0.0); assertEquals(200.0, args("el 15 por ciento de 200").getDouble("of"), 0.0)
+        assertEquals(144.0, args("raíz cuadrada de 144").getDouble("x"), 0.0)
+        assertEquals("Download", args("qué hay en descargas").getString("path"))
+        assertEquals("Documents", args("crea una carpeta facturas en documentos").getString("path"))
+        assertEquals("0991234567", args("crea un contacto Ana López con el número 0991234567").getString("phone"))
+        assertFalse(args("quita a Ana de mis favoritos").getBoolean("favorite"))
+    }
+
+    @Test fun moreRulesLookUpAndAskFirst() {
+        val apps = Apps(); val brain = Brain(apps)
+        // A note into a folder: two lookups (the note, the folder), then the question.
+        assertEquals("¿Muevo la nota Compras a la carpeta Casa?", brain.handle("mueve la nota compras a la carpeta casa").reply.args[0])
+        brain.handle("sí")
+        assertEquals("notas notes_move {\"id\":5,\"folder_id\":2}", apps.asked.last())
+        // Read-only: at once, with its words.
+        assertEquals("Son 30.", brain.handle("el 15 por ciento de 200").reply.args[0])
+        assertEquals(Say.CONFIRM, brain.handle("quita Clima del dock").reply.say)
+    }
+
     /** Apps answering on the phone, as their link channels do; [asked] keeps every call. */
     private class Apps : FakeHands() {
         val asked = mutableListOf<String>(); var captured = mutableListOf<Boolean>()
@@ -96,6 +127,9 @@ class AllToolsTest {
                 "library_search" -> JSONObject().put("results", JSONArray().put(JSONObject().put("id", "s9").put("title", "Despacito")))
                 "calendar_events" -> JSONObject().put("events", JSONArray().put(JSONObject().put("id", 3).put("title", "Reunión con Ana")))
                 "notes_search" -> JSONObject().put("notes", JSONArray().put(JSONObject().put("id", 5).put("title", "Compras")))
+                "notes_folders" -> JSONObject().put("folders", JSONArray().put(JSONObject().put("id", 2).put("name", "Casa")))
+                "calc_percent" -> JSONObject().put("result", "30")
+                "launcher_apps" -> JSONObject().put("apps", JSONArray().put(JSONObject().put("name", "Clima").put("package", "com.zirakusa.clima")))
                 else -> JSONObject().put("ok", true)
             }
         }

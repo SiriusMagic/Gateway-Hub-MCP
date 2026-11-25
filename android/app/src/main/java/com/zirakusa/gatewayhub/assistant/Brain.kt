@@ -37,8 +37,8 @@ interface Hands {
     fun torch(on: Boolean): Boolean
     /**
      * Runs one MCP tool of a family app on the phone (no internet), through its own Modo MCP: its answer
-     * (structuredContent), or null when the app is too old to be asked. Throws [ToolOff] when the app's «Redireccionar a
-     * Hub» is off, [ToolError] when the tool refused.
+     * (structuredContent), or null when the app is too old to be asked. Throws [ToolOff] when Arka's «Permitir MCP local»
+     * is off (or the app is too old), [ToolError] when the tool refused.
      */
     fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? = null
     /** Cámara opens with a 3 s countdown (after the user's «sí»); false when Cámara is missing or too old. */

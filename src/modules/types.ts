@@ -92,7 +92,7 @@ export interface LinkedToken {
 export interface ModuleStatus {
   linked: boolean; online: boolean; tools: number; detail: string;
   token?: LinkedToken;
-  /** Who decides permissions for this app: the app itself ("app") or the hub ("hub", «Redireccionar a Hub»). */
+  /** Who decides permissions for this app: the app itself ("app") or the hub ("hub", the Modo MCP that Arka turns on). */
   managedBy?: "app" | "hub";
 }
 

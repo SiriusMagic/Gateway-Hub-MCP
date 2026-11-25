@@ -47,7 +47,7 @@ export { MODES };
 /** One line for the panel and the app: who manages Stone, with which token and what for. */
 export function describe(token: LinkedToken | undefined): string {
   if (!token) return "Vinculado y en línea.";
-  if (token.kind === "redirect") return "En línea · Administrado por el hub (Redireccionar a Hub): los permisos los pones aquí.";
+  if (token.kind === "redirect") return "En línea · Administrado por el hub (Modo MCP de Arka): los permisos los pones aquí.";
   const use = token.usage ? ` · Uso: ${token.usage}` : "";
   return `En línea · Puente: los permisos los pone la app (token «${token.name}», ${MODES[token.mode] ?? token.mode})${use}`;
 }
@@ -63,7 +63,7 @@ export const musicModule: HubModule = {
   androidPackage: "com.zirakusa.stone.kotlin.preview",
   async status(ctx) {
     const link = await savedLink(ctx);
-    if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Stone, Modo MCP › Copiar, o «Redireccionar a Hub»." };
+    if (!link) return { linked: false, online: false, tools: 0, detail: "Sin vincular: en Arka › Escáner › «Conectar todas las apps»." };
     try {
       const token = tokenInfo(await stoneRpc(ctx, link, "initialize", { protocolVersion: "2025-06-18" }, 6_000));
       const tools = (await stoneRpc(ctx, link, "tools/list", {}, 6_000) as { tools?: unknown[] }).tools?.length ?? 0;

@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,6 +39,7 @@ import com.zirakusa.gatewayhub.assistant.local.PhoneMcpStatus
 import com.zirakusa.gatewayhub.data.PackageScanner
 import com.zirakusa.gatewayhub.ui.HubCard
 import com.zirakusa.gatewayhub.ui.HubColors
+import kotlinx.coroutines.launch
 
 @Composable internal fun PhoneMcpScreen(local: LocalAssistant?, connectExternal: () -> Unit, openRs: () -> Unit = {}) {
     var apps by remember(local) { mutableStateOf<List<PhoneMcpApp>?>(null) }
@@ -45,7 +47,18 @@ import com.zirakusa.gatewayhub.ui.HubColors
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
     LaunchedEffect(local, refresh) { apps = local?.phoneMcp?.inventory().orEmpty() }
     val inventory = apps
+    val context = LocalContext.current
+    val prefs = remember { Prefs(context) }
+    var localOn by remember { mutableStateOf(prefs.localMcp) }
+    var switched by remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
+    val phone = local?.phoneMcp
     LazyColumn(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        item {
+            PhoneMcpControls(inventory.orEmpty().any { it.remote == true }, { on ->
+                scope.launch { switched = phone?.setRemoteAll(on); refresh++ }
+            }, localOn, { prefs.localMcp = it; localOn = it; refresh++ }, connectExternal, switched)
+        }
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.phone_mcp_apps), Modifier.weight(1f), color = HubColors.Text, fontSize = 18.sp)
@@ -55,19 +68,16 @@ import com.zirakusa.gatewayhub.ui.HubColors
         when {
             inventory == null -> item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
             inventory.isEmpty() -> item { Text(stringResource(R.string.scanner_none), color = HubColors.Muted) }
-            else -> items(inventory, key = { it.app.packageName }) { PhoneMcpCard(it) }
+            else -> items(inventory, key = { it.app.packageName }) { row ->
+                PhoneMcpCard(row) { on -> scope.launch { phone?.setRemote(row.app, on); refresh++ } }
+            }
         }
         // «Sentimientos», one more app in the list (Lucía's rules), with the same card as the others.
         item { SentimientosCard(openRs) }
-        item {
-            Button(connectExternal, Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-                Text(stringResource(R.string.phone_mcp_connect_external))
-            }
-        }
     }
 }
 
-@Composable private fun PhoneMcpCard(row: PhoneMcpApp) {
+@Composable private fun PhoneMcpCard(row: PhoneMcpApp, onRemote: (Boolean) -> Unit) {
     val context = LocalContext.current
     var expanded by rememberSaveable { mutableStateOf(false) }
     var openFailed by remember { mutableStateOf(false) }
@@ -76,6 +86,13 @@ import com.zirakusa.gatewayhub.ui.HubColors
     HubCard {
         Text(row.app.label, color = HubColors.Text, fontSize = 18.sp)
         row.app.version.takeIf { it.isNotBlank() }?.let { Text(it, color = HubColors.Muted) }
+        // «Activar MCP» for this app alone (apps from before Arka ran it cannot say, so no switch).
+        row.remote?.let { on ->
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.phone_mcp_app_remote), Modifier.weight(1f), color = HubColors.Text)
+                Switch(on, onRemote)
+            }
+        }
         Text(if (row.status == PhoneMcpStatus.LISTED) pluralStringResource(R.plurals.phone_mcp_listed, row.tools.size, row.tools.size) else stringResource(row.status.label),
             color = if (row.status == PhoneMcpStatus.READY || row.status == PhoneMcpStatus.LISTED) HubColors.Good else HubColors.Muted)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

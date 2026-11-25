@@ -210,6 +210,7 @@ class AndroidHands(context: Context) : Hands {
      */
     override fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? {
         val p = pkg(app) ?: return null
+        if (!Prefs(this.app).localMcp) throw Hands.ToolOff()
         val request = org.json.JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", "tools/call")
             .put("params", org.json.JSONObject().put("name", name).put("arguments", args)).toString()
         val answer = try { this.app.contentResolver.call("content://$p.hublink".toUri(), "tool", null, Bundle().apply { putString("request", request) }) }

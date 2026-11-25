@@ -25,8 +25,8 @@ android {
         }
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
-        // Lucía's voice recognition (Vosk) only ships for phones' processors: 64 and 32-bit ARM.
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        // 64-bit ARM only, like Luma and Notas: the local model (llama.cpp) only exists there, and 32-bit Vosk added ~4 MB.
+        ndk { abiFilters += "arm64-v8a" }
     }
     buildFeatures { compose = true; buildConfig = true }
     testOptions {

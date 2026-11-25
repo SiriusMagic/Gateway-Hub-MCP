@@ -23,13 +23,26 @@
     <string name="phone_mcp_title">MCP</string>
     <string name="phone_mcp_apps">Apps de este teléfono</string>
     <string name="phone_mcp_ready">MCP local disponible</string>
-    <string name="phone_mcp_off">Activa «Permitir MCP local» en Stone → Ajustes → Modo MCP.</string>
+    <string name="phone_mcp_off">Activa «Permitir MCP local» arriba, en Arka › MCP.</string>
     <string name="phone_mcp_signature">Firma incompatible para MCP local.</string>
     <string name="phone_mcp_declared">App compatible detectada. Disponibilidad local sin verificar.</string>
-    <string name="phone_mcp_unavailable">El MCP local no pudo responder. Abre Stone y vuelve a intentarlo.</string>
-    <string name="phone_mcp_link_off">Activa «Redireccionar a Hub» en la app (Ajustes → Modo MCP) para ver sus herramientas.</string>
+    <string name="phone_mcp_unavailable">La app no pudo responder. Ábrela y vuelve a intentarlo.</string>
+    <string name="phone_mcp_link_off">Esta versión de la app aún pide «Redireccionar a Hub»: actualízala para que Arka la controle.</string>
     <string name="phone_mcp_stone_missing">Stone no está disponible en este teléfono.</string>
-    <string name="phone_mcp_connect_external">Conectar un LLM externo</string>
+    <string name="phone_mcp_connect_external">Crear token</string>
+    <string name="phone_mcp_control">Modo MCP de la familia</string>
+    <string name="phone_mcp_control_hint">Arka lo controla en todas tus apps: ninguna tiene ya su propia pantalla de Modo MCP.</string>
+    <string name="phone_mcp_enable">Activar MCP</string>
+    <string name="phone_mcp_enable_hint">Enciende el enlace público de cada app (relay) para que tu hub y sus agentes lleguen a ella. Vincúlalas en Hub › Escáner › «Conectar todas».</string>
+    <string name="phone_mcp_local">Permitir MCP local</string>
+    <string name="phone_mcp_local_hint">Lucía y las reglas de sentimiento usan las herramientas de tus apps en este teléfono, sin internet. Lo que borra o cambia pregunta antes.</string>
+    <string name="phone_mcp_token_hint">Un token por IA (Claude, ChatGPT…), con sus apps, permisos y caducidad, en el hub.</string>
+    <string name="phone_mcp_app_remote">Enlace público</string>
+    <plurals name="phone_mcp_switched">
+        <item quantity="one">%1$d app cambiada.</item>
+        <item quantity="many">%1$d apps cambiadas.</item>
+        <item quantity="other">%1$d apps cambiadas.</item>
+    </plurals>
     <!-- Reglas de sentimientos (Examples.kt): shown only in RS, not in MCP. -->
     <string name="phone_mcp_rules_total">%1$d reglas en total · %2$d las hace Lucía sin ninguna app</string>
     <string name="phone_mcp_rules_hide">Ocultar</string>
@@ -47,7 +60,7 @@
     <!-- «Sentimientos» as an app in MCP › Apps de este teléfono. -->
     <string name="sentimientos_by">Reglas de Lucía · dentro de Arka</string>
     <string name="sentimientos_status">%1$d reglas de sentimiento</string>
-    <string name="sentimientos_no_tools">Sentimientos todavía no tiene herramientas MCP propias: hoy traduce lo que dices a reglas de Lucía, que usan las herramientas de cada app.</string>
+    <string name="sentimientos_no_tools">Sentimientos no tiene herramientas MCP propias: traduce lo que dices a reglas de Lucía, que usan las herramientas de cada app (con «Permitir MCP local»).</string>
     <string name="sentimientos_missing">Integración pendiente: publicar las reglas como herramientas MCP (por ejemplo, listar reglas y entender una frase) para que otro modelo pueda usarlas.</string>
     <string name="phone_mcp_tools">Herramientas</string>
     <string name="phone_mcp_known">Herramientas que conoce Lucía</string>
