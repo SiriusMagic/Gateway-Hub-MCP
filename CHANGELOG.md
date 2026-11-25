@@ -1,3 +1,13 @@
+# Arka 0.2.1: la música por MCP
+
+- **«Reproduce música alone», «pon música de Soda Stereo», «quiero escuchar …»**: Lucía busca en tu biblioteca con las
+  herramientas de Stone y pone lo que pediste: primero la canción con ese nombre, luego lo demás que coincide (mismo
+  artista o álbum), y dice qué suena («Suena «Alone», de Marshmello.»). Si no está, lo dice en vez de abrir Stone en vano.
+- **Si Stone estaba cerrada**, Lucía la abre y, en cuanto está lista, busca y reproduce lo pedido (antes solo pulsaba
+  «play» y a veces no sonaba nada).
+- Necesita «Permitir MCP local» encendido en Lucía › MCP; si está apagado, todo sigue como antes.
+- 113 pruebas Android (y 1 que necesita un hub real) y 31 del hub.
+
 # Arka 0.2.0: Arka controla el Modo MCP de toda la familia
 
 - **Lucía › MCP es el centro de control**: ninguna app tiene ya su propia pantalla de Modo MCP. Arriba, «Modo MCP de la

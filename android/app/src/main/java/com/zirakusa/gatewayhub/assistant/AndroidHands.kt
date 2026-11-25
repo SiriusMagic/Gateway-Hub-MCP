@@ -51,10 +51,24 @@ class AndroidHands(context: Context) : Hands {
     /** Called when music was asked for but nothing sounds a few seconds later (see [PlayCheck]). */
     var onSilent: () -> Unit = {}
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
-    private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { button(KeyEvent.KEYCODE_MEDIA_PLAY) },
+    /** What was asked last («alone»), so the second try can look for it with Stone's own tools. */
+    private var asked: String? = null
+    private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { if (!playAsked()) button(KeyEvent.KEYCODE_MEDIA_PLAY) },
         later = { ms, run -> main.postDelayed(run, ms) }, silent = { onSilent() })
 
+    /**
+     * Stone was closed, so its tools could not answer: now that it is up, look for what was asked and play it (MCP on the
+     * phone, only with «Permitir MCP local»). False when there is nothing to look for or Stone still can't answer.
+     */
+    private fun playAsked(): Boolean {
+        val query = asked ?: return false
+        val found = runCatching { tool(stone, "library_search", org.json.JSONObject().put("query", query).put("kind", "audio").put("limit", MusicPick.MAX)) }.getOrNull()
+        val pick = MusicPick.pick(query, found?.optJSONArray("results")) ?: return false
+        return runCatching { tool(stone, "player_play_songs", org.json.JSONObject().put("songIds", pick.ids.joinToString(","))) }.getOrNull() != null
+    }
+
     override fun playMusic(query: String?): Boolean {
+        asked = query
         val play = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).putExtra(SearchManager.QUERY, query.orEmpty())
             .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, if (query == null) "vnd.android.cursor.item/*" else MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
         // An older Stone does not know the order: it is opened, and PlayCheck presses «play» once it is up.
@@ -64,6 +78,7 @@ class AndroidHands(context: Context) : Hands {
     }
 
     override fun playRecommended(): Boolean {
+        asked = null
         if (!start(Intent(PLAY_RECOMMENDED), stone, fallback = false)) return playMusic(null)
         check.start(); return true
     }

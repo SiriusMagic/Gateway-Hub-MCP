@@ -107,6 +107,21 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         return Volume.apply(v, hands.volume())
     }
 
+    /**
+     * «Reproduce música alone» through Stone's own tools (MCP on the phone): it finds the song in the library and plays it,
+     * the rest of what matched after it. Null when Lucía can't ask Stone (local MCP off, an old Stone): then the standard
+     * «play from search» order, as before.
+     */
+    private fun playByTools(app: FamilyApp, query: String): Pair<Reply, Boolean>? {
+        val found = try { hands.tool(app, "library_search", org.json.JSONObject().put("query", query).put("kind", "audio").put("limit", MusicPick.MAX)) }
+            catch (_: Exception) { return null } ?: return null
+        val pick = MusicPick.pick(query, found.optJSONArray("results"))
+            ?: return Reply(Say.TOOL_RESULT, listOf("No encontré «$query» en tu biblioteca de Stone.")) to false
+        val played = try { hands.tool(app, "player_play_songs", org.json.JSONObject().put("songIds", pick.ids.joinToString(","))) }
+            catch (_: Exception) { return null } ?: return null
+        return if (played.optJSONObject("error") != null) null else Reply(Say.TOOL_RESULT, listOf(MusicPick.say(pick, query))) to true
+    }
+
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
@@ -114,7 +129,8 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
-            Action.PLAY_MUSIC -> c["query"].let { q -> done(hands.playMusic(q), if (q == null) Reply(Say.PLAYING) else Reply(Say.PLAYING_QUERY, listOf(q))) }
+            Action.PLAY_MUSIC -> c["query"].let { q -> q?.let { playByTools(app!!, it) }
+                ?: done(hands.playMusic(q), if (q == null) Reply(Say.PLAYING) else Reply(Say.PLAYING_QUERY, listOf(q))) }
             Action.PLAY_RECOMMENDED -> done(hands.playRecommended(), Reply(Say.RECOMMENDED))
             Action.MEDIA -> done(hands.media(MediaKey.valueOf(c["key"]!!)), Reply(Say.MEDIA_DONE, listOf(c["key"]!!)))
             Action.ALARM -> done(hands.alarm(c.int("hour")!!, c.int("minute")!!), Reply(Say.ALARM_SET, listOf(c["hour"]!!, c["minute"]!!)))

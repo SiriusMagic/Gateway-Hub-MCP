@@ -114,6 +114,26 @@ class AllToolsTest {
         assertEquals(Say.CONFIRM, brain.handle("quita Clima del dock").reply.say)
     }
 
+    /** «Reproduce música alone»: Stone's tools find the song and play it, the rest of the matches after it. */
+    @Test fun musicByStonesTools() {
+        val results = JSONArray().put(JSONObject().put("id", "a1").put("title", "Alone Again").put("artist", "Gilbert"))
+            .put(JSONObject().put("id", "a2").put("title", "Alone").put("artist", "Marshmello"))
+            .put(JSONObject().put("id", "v1").put("title", "Alone").put("isVideo", true))
+        val pick = com.zirakusa.gatewayhub.assistant.MusicPick.pick("alone", results)!!
+        assertEquals(listOf("a2", "a1"), pick.ids); assertTrue(pick.exact)
+        assertEquals("Suena «Alone», de Marshmello.", com.zirakusa.gatewayhub.assistant.MusicPick.say(pick, "alone"))
+        val artist = com.zirakusa.gatewayhub.assistant.MusicPick.pick("soda stereo", JSONArray()
+            .put(JSONObject().put("id", "s1").put("title", "De música ligera").put("artist", "Soda Stereo"))
+            .put(JSONObject().put("id", "s2").put("title", "Persiana americana").put("artist", "Soda Stereo")))!!
+        assertEquals("Pongo 2 canciones de «soda stereo», empezando por «De música ligera».", com.zirakusa.gatewayhub.assistant.MusicPick.say(artist, "soda stereo"))
+        assertEquals(null, com.zirakusa.gatewayhub.assistant.MusicPick.pick("x", JSONArray()))
+        // Through Lucía: search, then play; with no tools (an old Stone) the standard order, as before.
+        val apps = Apps(); val turn = Brain(apps).handle("reproducir música despacito")
+        assertEquals("Suena «Despacito».", turn.reply.args[0]); assertTrue(turn.ok)
+        assertEquals("stone player_play_songs {\"songIds\":\"s9\"}", apps.asked.last())
+        assertTrue(apps.asked.any { it.startsWith("stone library_search") })
+    }
+
     /** Apps answering on the phone, as their link channels do; [asked] keeps every call. */
     private class Apps : FakeHands() {
         val asked = mutableListOf<String>(); var captured = mutableListOf<Boolean>()
