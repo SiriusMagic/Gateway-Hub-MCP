@@ -1,6 +1,7 @@
 package com.zirakusa.gatewayhub.assistant
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -43,6 +44,16 @@ class RsScreenTest {
         compose.onNodeWithText("Regla de Sentimiento").assertExists()
         compose.onNodeWithText("Intérprete del modelo ahora: Sentimientos").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/rs.png")
+    }
+
+    @Test fun rsOpensEachApp() {
+        val opened = mutableListOf<String>()
+        compose.setContent { HubTheme { RsScreen(Interpreter.FEELINGS) { opened += it.id; it.id == "stone" } } }
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Stone"))
+        compose.onAllNodesWithText("Abrir")[0].performClick()                                   // Lucía's own card has none: the first is Stone
+        assertEquals(listOf("stone"), opened)
+        compose.onNodeWithText("No se pudo abrir esta app.").assertDoesNotExist()
+        compose.onRoot().captureRoboImage("build/screenshots/rs-abrir.png")
     }
 
     @Test fun sentimientosIsOneMoreAppInMcp() {

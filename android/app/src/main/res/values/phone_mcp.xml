@@ -30,10 +30,8 @@
     <string name="phone_mcp_link_off">Activa «Redireccionar a Hub» en la app (Ajustes → Modo MCP) para ver sus herramientas.</string>
     <string name="phone_mcp_stone_missing">Stone no está disponible en este teléfono.</string>
     <string name="phone_mcp_connect_external">Conectar un LLM externo</string>
-    <!-- «Reglas de sentimientos»: what Lucía understands (Examples.kt), per app and her own. -->
-    <string name="phone_mcp_rules">Reglas de sentimientos</string>
+    <!-- Reglas de sentimientos (Examples.kt): shown only in RS, not in MCP. -->
     <string name="phone_mcp_rules_total">%1$d reglas en total · %2$d las hace Lucía sin ninguna app</string>
-    <string name="phone_mcp_rules_own">Ver las reglas de Lucía</string>
     <string name="phone_mcp_rules_hide">Ocultar</string>
     <string name="phone_mcp_rule_asks">pregunta antes</string>
     <!-- «RS» (Regla de Sentimiento): its own page in the side menu. -->

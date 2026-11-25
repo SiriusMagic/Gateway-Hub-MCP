@@ -52,8 +52,6 @@ import com.zirakusa.gatewayhub.ui.HubColors
                 TextButton({ refresh++ }) { Text(stringResource(R.string.refresh)) }
             }
         }
-        // Lucía's own «reglas de sentimientos» (no app needed) and how many she has in all.
-        item { OwnRulesCard() }
         when {
             inventory == null -> item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
             inventory.isEmpty() -> item { Text(stringResource(R.string.scanner_none), color = HubColors.Muted) }
@@ -72,7 +70,6 @@ import com.zirakusa.gatewayhub.ui.HubColors
 @Composable private fun PhoneMcpCard(row: PhoneMcpApp) {
     val context = LocalContext.current
     var expanded by rememberSaveable { mutableStateOf(false) }
-    var rulesShown by rememberSaveable { mutableStateOf(false) }
     var openFailed by remember { mutableStateOf(false) }
     val family = Catalog.byPackage(row.app.packageName)
     val known = Skills.every.filter { it.app == family?.id }.map { it.label }.distinct()
@@ -90,12 +87,9 @@ import com.zirakusa.gatewayhub.ui.HubColors
                 } catch (_: ActivityNotFoundException) { true } catch (_: SecurityException) { true }
             }) { Text(stringResource(R.string.scan_open)) }
             if (known.isNotEmpty() || row.tools.isNotEmpty()) {
-                TextButton({ expanded = !expanded; if (expanded) rulesShown = false }) { Text(stringResource(R.string.phone_mcp_tools)) }
+                TextButton({ expanded = !expanded }) { Text(stringResource(R.string.phone_mcp_tools)) }
             }
-            val rules = Examples.rulesFor(family?.id ?: "-")
-            if (rules.isNotEmpty()) TextButton({ rulesShown = !rulesShown; if (rulesShown) expanded = false }) { Text(stringResource(R.string.phone_mcp_rules)) }
         }
-        if (rulesShown) RulesList(Examples.rulesFor(family?.id ?: "-"))
         if (openFailed) Text(stringResource(R.string.phone_mcp_open_failed), color = HubColors.Bad)
         if (expanded) {
             if (row.tools.isNotEmpty()) {
@@ -119,32 +113,6 @@ import com.zirakusa.gatewayhub.ui.HubColors
     Column(Modifier.padding(vertical = 2.dp)) {
         Text(tool.title.ifBlank { tool.name }, color = HubColors.Text)
         tool.description.lineSequence().firstOrNull()?.take(120)?.takeIf { it.isNotBlank() }?.let { Text(it, color = HubColors.Muted, fontSize = 13.sp) }
-    }
-}
-
-/** Lucía's own rules (she does them herself, no app tool), folded, with the total of rules she has. */
-@Composable private fun OwnRulesCard() {
-    var open by rememberSaveable { mutableStateOf(false) }
-    val own = Examples.rulesFor(null)
-    HubCard {
-        Text(stringResource(R.string.phone_mcp_rules), color = HubColors.Text, fontSize = 18.sp)
-        Text(stringResource(R.string.phone_mcp_rules_total, Examples.rules.size, own.size), color = HubColors.Muted, fontSize = 13.sp)
-        TextButton({ open = !open }) { Text(stringResource(if (open) R.string.phone_mcp_rules_hide else R.string.phone_mcp_rules_own)) }
-        if (open) RulesList(own)
-    }
-}
-
-/** Each rule: the phrase Lucía understands, then what it does and whether she asks first. */
-@Composable internal fun RulesList(rules: List<Examples.Rule>) {
-    Column(Modifier.padding(vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        rules.forEach { r ->
-            Column {
-                Text("«${r.phrase}»", color = HubColors.Text)
-                val what = r.label ?: r.tool?.replace('_', ' ')
-                val asks = if (r.asks) stringResource(R.string.phone_mcp_rule_asks) else null
-                listOfNotNull(what, asks).joinToString(" · ").takeIf { it.isNotBlank() }?.let { Text(it, color = HubColors.Muted, fontSize = 13.sp) }
-            }
-        }
     }
 }
 

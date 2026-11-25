@@ -1,3 +1,12 @@
+# Arka 0.1.4: las reglas de sentimientos, solo en RS
+
+- **MCP › Apps de este teléfono sin reglas de sentimientos**: se quitan la tarjeta «Reglas de sentimientos» de arriba
+  (total y «Ver las reglas de Lucía») y el botón «Reglas de sentimientos» de cada app. Quedan «Abrir» y «Herramientas»,
+  y la tarjeta «Sentimientos», cuyo «Abrir» lleva a RS.
+- **«Abrir» en RS**: cada app de RS tiene ahora su botón «Abrir», que abre la app (como en MCP), junto a «Ver reglas».
+  Las reglas propias de Lucía no tienen app que abrir.
+- 109 pruebas Android y 31 del hub.
+
 # Arka 0.1.3: RS (Regla de Sentimiento)
 
 - **RS en el menú lateral**, justo después de MCP: su propia sección con todas las reglas de sentimiento (140), primero
