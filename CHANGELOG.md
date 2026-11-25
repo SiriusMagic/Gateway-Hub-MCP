@@ -1,3 +1,13 @@
+# Arka 0.1.3: RS (Regla de Sentimiento)
+
+- **RS en el menú lateral**, justo después de MCP: su propia sección con todas las reglas de sentimiento (140), primero
+  las que Lucía hace sola y luego por app, con buscador, lo que hace cada una, si pregunta antes y qué intérprete está
+  activo. MCP no cambia.
+- **«Sentimientos» en MCP › Apps de este teléfono**, como una app más y con la misma tarjeta: «Abrir» lleva a RS;
+  «Herramientas» explica que aún no tiene herramientas MCP propias y qué integración falta (publicar las reglas como
+  herramientas MCP). No se inventa ninguna herramienta.
+- 108 pruebas Android y 31 del hub.
+
 # Arka 0.1.2: dos iconos a elegir
 
 - **Iconos de Arka**: «Anillos» (el de fábrica) y «Órbitas», en Ajustes de Lucía › Icono de Arka. Tras actualizar quizá

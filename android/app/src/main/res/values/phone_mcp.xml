@@ -36,6 +36,21 @@
     <string name="phone_mcp_rules_own">Ver las reglas de Lucía</string>
     <string name="phone_mcp_rules_hide">Ocultar</string>
     <string name="phone_mcp_rule_asks">pregunta antes</string>
+    <!-- «RS» (Regla de Sentimiento): its own page in the side menu. -->
+    <string name="rs_menu">RS</string>
+    <string name="rs_title">Regla de Sentimiento</string>
+    <string name="rs_intro">Todo lo que las reglas de Lucía entienden: la frase, lo que hace y si pregunta antes. Con el intérprete «Sentimientos», el modelo convierte lo que dices en una de estas reglas.</string>
+    <string name="rs_interpreter">Intérprete del modelo ahora: %1$s</string>
+    <string name="rs_search">Buscar una frase o lo que hace</string>
+    <string name="rs_none">Ninguna regla coincide.</string>
+    <string name="rs_own">%1$d reglas que Lucía hace sin ninguna app</string>
+    <string name="rs_count">%1$d reglas</string>
+    <string name="rs_show">Ver reglas</string>
+    <!-- «Sentimientos» as an app in MCP › Apps de este teléfono. -->
+    <string name="sentimientos_by">Reglas de Lucía · dentro de Arka</string>
+    <string name="sentimientos_status">%1$d reglas de sentimiento</string>
+    <string name="sentimientos_no_tools">Sentimientos todavía no tiene herramientas MCP propias: hoy traduce lo que dices a reglas de Lucía, que usan las herramientas de cada app.</string>
+    <string name="sentimientos_missing">Integración pendiente: publicar las reglas como herramientas MCP (por ejemplo, listar reglas y entender una frase) para que otro modelo pueda usarlas.</string>
     <string name="phone_mcp_tools">Herramientas</string>
     <string name="phone_mcp_known">Herramientas que conoce Lucía</string>
     <string name="phone_mcp_search">Buscar en la biblioteca</string>

@@ -39,7 +39,7 @@ import com.zirakusa.gatewayhub.data.PackageScanner
 import com.zirakusa.gatewayhub.ui.HubCard
 import com.zirakusa.gatewayhub.ui.HubColors
 
-@Composable internal fun PhoneMcpScreen(local: LocalAssistant?, connectExternal: () -> Unit) {
+@Composable internal fun PhoneMcpScreen(local: LocalAssistant?, connectExternal: () -> Unit, openRs: () -> Unit = {}) {
     var apps by remember(local) { mutableStateOf<List<PhoneMcpApp>?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }
@@ -59,6 +59,8 @@ import com.zirakusa.gatewayhub.ui.HubColors
             inventory.isEmpty() -> item { Text(stringResource(R.string.scanner_none), color = HubColors.Muted) }
             else -> items(inventory, key = { it.app.packageName }) { PhoneMcpCard(it) }
         }
+        // «Sentimientos», one more app in the list (Lucía's rules), with the same card as the others.
+        item { SentimientosCard(openRs) }
         item {
             Button(connectExternal, Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
                 Text(stringResource(R.string.phone_mcp_connect_external))
@@ -133,7 +135,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
 }
 
 /** Each rule: the phrase Lucía understands, then what it does and whether she asks first. */
-@Composable private fun RulesList(rules: List<Examples.Rule>) {
+@Composable internal fun RulesList(rules: List<Examples.Rule>) {
     Column(Modifier.padding(vertical = 2.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         rules.forEach { r ->
             Column {
@@ -142,6 +144,27 @@ import com.zirakusa.gatewayhub.ui.HubColors
                 val asks = if (r.asks) stringResource(R.string.phone_mcp_rule_asks) else null
                 listOfNotNull(what, asks).joinToString(" · ").takeIf { it.isNotBlank() }?.let { Text(it, color = HubColors.Muted, fontSize = 13.sp) }
             }
+        }
+    }
+}
+
+/**
+ * «Sentimientos» as one more app of «Apps de este teléfono», with the same card: «Abrir» opens RS (its rules). It has no
+ * MCP tools of its own yet, so «Herramientas» says so and what integration is missing; no tool is made up here.
+ */
+@Composable private fun SentimientosCard(openRs: () -> Unit) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    HubCard {
+        Text(stringResource(R.string.interpreter_feelings), color = HubColors.Text, fontSize = 18.sp)
+        Text(stringResource(R.string.sentimientos_by), color = HubColors.Muted)
+        Text(stringResource(R.string.sentimientos_status, Examples.rules.size), color = HubColors.Good)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(openRs) { Text(stringResource(R.string.scan_open)) }
+            TextButton({ expanded = !expanded }) { Text(stringResource(R.string.phone_mcp_tools)) }
+        }
+        if (expanded) {
+            Text(stringResource(R.string.sentimientos_no_tools), color = HubColors.Muted, fontSize = 13.sp)
+            Text(stringResource(R.string.sentimientos_missing), color = HubColors.Muted, fontSize = 13.sp)
         }
     }
 }

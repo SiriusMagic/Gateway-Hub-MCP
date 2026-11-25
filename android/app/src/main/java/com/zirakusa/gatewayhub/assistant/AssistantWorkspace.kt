@@ -1,5 +1,6 @@
 package com.zirakusa.gatewayhub.assistant
 
+import androidx.compose.material.icons.filled.Psychology
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,8 @@ internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
     CHAT(R.string.assistant_chat_tab, Icons.AutoMirrored.Filled.Chat),
     MODELS(R.string.local_models, Icons.Default.Apps),
     MCP(R.string.phone_mcp_title, Icons.Default.Hub),
+    /** «RS», Regla de Sentimiento: its own page, apart from MCP. */
+    RS(R.string.rs_menu, Icons.Default.Psychology),
     SETTINGS(R.string.lucia_settings, Icons.Default.Settings),
     ADVANCED(R.string.assistant_advanced, Icons.Default.Settings)
 }
@@ -88,7 +91,8 @@ internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
             }
             when (state.page) {
                 AssistantPage.MODELS -> ModelPage(state)
-                AssistantPage.MCP -> PhoneMcpScreen(state.local, actions.manageHub)
+                AssistantPage.MCP -> PhoneMcpScreen(state.local, actions.manageHub) { state.page = AssistantPage.RS }
+                AssistantPage.RS -> RsScreen(state.interpreter)
                 AssistantPage.SETTINGS -> LuciaSettings(state, actions)
                 AssistantPage.ADVANCED -> Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
                     state.local?.let { HubCard { HubConnectionSettings(it) } }

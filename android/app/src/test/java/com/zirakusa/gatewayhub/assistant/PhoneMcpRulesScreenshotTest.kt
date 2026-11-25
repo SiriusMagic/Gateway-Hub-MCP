@@ -21,7 +21,7 @@ class PhoneMcpRulesScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
     @Test fun ownRules() {
-        compose.setContent { HubTheme { PhoneMcpScreen(null) {} } }
+        compose.setContent { HubTheme { PhoneMcpScreen(null, {}) } }
         compose.onNodeWithText("${Examples.rules.size} reglas en total · ${Examples.actions.size} las hace Lucía sin ninguna app").assertExists()
         compose.onNodeWithText("Ver las reglas de Lucía").performClick()
         compose.onNodeWithText("«pon música de Soda Stereo»").assertExists()
