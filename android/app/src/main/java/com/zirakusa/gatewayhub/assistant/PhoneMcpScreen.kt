@@ -142,7 +142,7 @@ import kotlinx.coroutines.launch
     HubCard {
         Text(stringResource(R.string.interpreter_feelings), color = HubColors.Text, fontSize = 18.sp)
         Text(stringResource(R.string.sentimientos_by), color = HubColors.Muted)
-        Text(stringResource(R.string.sentimientos_status, Examples.rules.size), color = HubColors.Good)
+        Text(pluralStringResource(R.plurals.sentimientos_status, Examples.rules.size, Examples.rules.size), color = HubColors.Good)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(openRs) { Text(stringResource(R.string.scan_open)) }
             TextButton({ expanded = !expanded }) { Text(stringResource(R.string.phone_mcp_tools)) }

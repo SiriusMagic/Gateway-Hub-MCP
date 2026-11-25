@@ -7,13 +7,14 @@
   agentes del hub: cada IA con sus apps, permisos y caducidad).
 - **Stone por el mismo canal que las demás**: el modelo local pregunta a Stone por su canal con firma (`hublink`), ya no
   por el «MCP local» aparte de Stone.
-- **Más herramientas en RS**: 17 reglas nuevas, entre ellas «el 15 por ciento de 200», «2 elevado a 10», «raíz cuadrada
+- **Más herramientas en RS**: 16 reglas nuevas (158 en total): «el 15 por ciento de 200», «2 elevado a 10», «raíz cuadrada
   de 144», «mueve la nota compras a la carpeta casa», «qué hay en descargas», «crea una carpeta facturas en documentos»,
   «cómo está calibrado el nivel», «pon Clima en el dock» / «quita Clima del dock», «busca Cuenca en el clima», «mide la
   latencia», «cómo está configurada la cámara», «crea un contacto Ana con el número…», «marca a Ana como favorita»,
   «detalles de la grabación reunión» y «renombra la grabación reunión a junta». Lo que cambia algo pregunta antes.
 - **Más ligera**: solo para procesadores de 64 bits (ARM64), como Luma y Notas; el modelo local ya solo existía ahí.
 - El hub (`/admin`) explica la vinculación con Arka en vez de «Redireccionar a Hub».
+- 113 pruebas Android y 31 del hub. Arka pasa de 67,7 MB a 58,5 MB.
 
 # Arka 0.1.5: varias órdenes en una frase (segmentación de sentimientos)
 

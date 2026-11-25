@@ -221,7 +221,8 @@ object Skills {
     )
 
     /** Every skill: the ones above, then Stone's and the rest of the family's (in their own files). */
-    val every by lazy { all + StoneSkills.all + FamilySkills.all + MoreSkills.all }
+    // MoreSkills before FamilySkills: its phrases are narrower («crea una carpeta … en documentos» is Filem, not Notas).
+    val every by lazy { all + StoneSkills.all + MoreSkills.all + FamilySkills.all }
 
     /** The skill a phrase asks for, with its arguments. */
     fun find(text: String, today: LocalDate): Pair<Skill, Args>? = Said(text).let { said -> every.firstNotNullOfOrNull { s -> s.args(said, today)?.let { s to it } } }

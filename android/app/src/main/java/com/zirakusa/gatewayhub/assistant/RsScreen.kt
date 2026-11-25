@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,7 +54,7 @@ internal fun rsGroups(query: String): List<RsGroup> {
             HubCard {
                 Text(stringResource(R.string.rs_title), color = HubColors.Text, fontSize = 18.sp)
                 Text(stringResource(R.string.rs_intro), color = HubColors.Muted, fontSize = 14.sp)
-                Text(stringResource(R.string.phone_mcp_rules_total, Examples.rules.size, Examples.rulesFor(null).size), color = HubColors.Muted, fontSize = 13.sp)
+                Text(pluralStringResource(R.plurals.phone_mcp_rules_total, Examples.rules.size, Examples.rules.size, Examples.rulesFor(null).size), color = HubColors.Muted, fontSize = 13.sp)
                 Text(stringResource(R.string.rs_interpreter, stringResource(when (interpreter) {
                     Interpreter.FEELINGS -> R.string.interpreter_feelings; Interpreter.MCP -> R.string.interpreter_mcp; Interpreter.AUTO -> R.string.interpreter_auto
                 })), color = if (interpreter == Interpreter.MCP) HubColors.Muted else HubColors.Good, fontSize = 13.sp)
@@ -73,7 +74,7 @@ internal fun rsGroups(query: String): List<RsGroup> {
     var openFailed by remember(group.app?.id) { mutableStateOf(false) }
     HubCard {
         Text(group.app?.name ?: stringResource(R.string.lucia), color = HubColors.Text, fontSize = 17.sp)
-        Text(stringResource(if (group.app == null) R.string.rs_own else R.string.rs_count, group.rules.size), color = HubColors.Muted, fontSize = 13.sp)
+        Text(pluralStringResource(if (group.app == null) R.plurals.rs_own else R.plurals.rs_count, group.rules.size, group.rules.size), color = HubColors.Muted, fontSize = 13.sp)
         // While searching, every group with a match is shown open.
         // «Abrir» opens the app itself (as in MCP); Lucía's own rules have no app to open.
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

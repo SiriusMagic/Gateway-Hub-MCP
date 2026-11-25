@@ -25,6 +25,8 @@ object Parser {
         if (t.isEmpty()) return Command(Action.UNKNOWN)
         // «Brillo al 40 por ciento» is the screen's, not the volume.
         if (Regex("(^| )brillo( |$)").containsMatchIn(t)) return one(t)
+        // «El 15 por ciento de 200» is a calculation (calc_percent), not the volume.
+        if (Regex("\\d (?:por ciento|porciento|%) de \\d").containsMatchIn(t)) return one(t)
         val (volume, rest) = Volume.take(t)
         if (volume == null) return one(t)
         val slot = when (volume) { is Volume.Change.To -> "volume" to "${volume.percent}"; is Volume.Change.Step -> "volume_step" to if (volume.up) "up" else "down" }
