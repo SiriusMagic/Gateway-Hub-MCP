@@ -43,6 +43,8 @@ interface Hands {
     fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? = null
     /** Cámara opens with a 3 s countdown (after the user's «sí»); false when Cámara is missing or too old. */
     fun capture(selfie: Boolean): Boolean = false
+    /** «… en segundo plano»: once the other app has started its work, Lucía comes back to the front. */
+    fun comeBack() {}
     /** The phone's media volume, 0–100. */
     fun volume(): Int
     fun setVolume(percent: Int): Boolean
@@ -96,6 +98,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         // The volume first, so music never starts too loud; then the order.
         val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null
         val (reply, ok) = act(c, app)
+        if (ok && c["background"] == "1") hands.comeBack()
         return Turn(heard, byVoice, c, app, if (volume != null) reply.copy(volume = volume) else reply, ok, clock() - start)
     }
 

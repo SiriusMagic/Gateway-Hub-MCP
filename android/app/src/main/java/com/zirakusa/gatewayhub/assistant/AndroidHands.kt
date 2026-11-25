@@ -170,6 +170,19 @@ class AndroidHands(context: Context) : Hands {
             .getOrNull()?.takeIf { it > 0 }
     }
 
+    /**
+     * Back to Lucía once the other app has started (music keeps playing behind). Android lets the Hub come to the front
+     * while it may draw over other apps or is the phone's assistant; otherwise the other app simply stays.
+     */
+    override fun comeBack() {
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            runCatching {
+                app.startActivity(Intent(app, AssistantActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            }
+        }, 1_800)
+    }
+
     override fun inCall(): Boolean =
         audio?.mode in setOf(AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION)
 

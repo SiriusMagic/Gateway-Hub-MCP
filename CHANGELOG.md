@@ -1,3 +1,14 @@
+# Gateway Hub 0.0.37: la versión mejorada de Lucía (0.0.34–0.0.36), con la firma de la familia
+
+- Incluye todo lo de Lucía Prueba 0.0.34–0.0.36 (rama `fix/lucia-multiple-intents`): órdenes encadenadas («calcula,
+  sube el volumen y llama a Luis»), llamada manos libres después de tu «sí» (con altavoz si lo pides), y modelos GGUF
+  desde una carpeta vinculada o desde repositorios públicos de Hugging Face.
+- **«… en segundo plano» / «… de fondo»**: «coloca música en segundo plano» pone la música y Lucía vuelve al frente; la
+  música sigue sonando. «Coloca» ya vale como «pon».
+- «Cuánto es 4*4 y coloca música…» ya se separa en dos órdenes (antes la Calculadora se tragaba toda la frase).
+- `GatewayHub-0.0.37.apk` se instala encima de Gateway Hub (misma firma que Stone y el resto de la familia). Las «Lucía
+  Prueba» van firmadas con otra clave y no se actualizan con esta.
+
 # Gateway Hub 0.0.33: usar un modelo .gguf que ya tienes, sin descargarlo otra vez
 
 - **Lucía → Avanzado → «Usar un modelo que ya tengo (.gguf)»**: eliges el archivo (Descargas, tarjeta de memoria…) y se

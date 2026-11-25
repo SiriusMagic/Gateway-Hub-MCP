@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="local_models">Modelos locales</string>
     <string name="local_model_size">%1$s · %2$s</string>
     <string name="local_chat">Conversación local</string>

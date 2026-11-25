@@ -93,4 +93,17 @@ class IntentsTest {
         state.send("sí", byVoice = false)
         assertEquals(Action.TIME, state.last!!.command.action)
     }
+
+    @Test fun musicBehindAndAQuestionInOneSentence() {
+        assertEquals(listOf("cuánto es 4*4", "coloca música en segundo plano"), split("cuánto es 4*4 y coloca música en segundo plano"))
+        val music = Parser.parse("coloca música en segundo plano")
+        assertEquals(Action.PLAY_MUSIC, music.action); assertEquals("1", music["background"])
+        assertEquals("1", Parser.parse("pon música de Soda Stereo de fondo")["background"])
+        assertEquals("soda stereo", Parser.parse("pon música de Soda Stereo de fondo")["query"])
+        assertEquals(null, Parser.parse("pon música")["background"])
+        var back = 0
+        val hands = object : FakeHands() { override fun comeBack() { back++ } }
+        Brain(hands).handle("coloca música en segundo plano"); assertEquals(1, back)
+        Brain(hands).handle("pon música"); assertEquals(1, back)
+    }
 }

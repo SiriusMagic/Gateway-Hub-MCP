@@ -11,7 +11,14 @@ object Parser {
      * An order and what comes with it: «pon música al 30 por ciento» is music plus a volume. The volume is taken out first
      * ([Volume]); what is left is the order. Only the volume alone is the VOLUME action.
      */
+    /** «… en segundo plano», «… de fondo», «… sin abrir la app»: do it, and Lucía stays in front. */
+    private val behind = Regex("[,\\s]+(?:en segundo plano|de fondo|en el fondo|sin abrir(?: la app| la aplicacion| la aplicación| stone)?|sin salir de aqui|sin salir de aquí)[.!]*$", RegexOption.IGNORE_CASE)
+
     fun parse(raw: String, today: java.time.LocalDate = java.time.LocalDate.now()): Command {
+        behind.find(raw)?.let { m ->
+            val c = parse(raw.removeRange(m.range), today)
+            return if (c.action == Action.UNKNOWN) c else c.copy(slots = c.slots + ("background" to "1"))
+        }
         QuickOrders.parse(raw)?.let { return it }
         this.today = today
         val t = Words.normalize(raw)
@@ -106,10 +113,10 @@ object Parser {
 
         // Music: recommendations first, then «reproduce música (de X)», «pon a X».
         if (has(t, "recomendaciones", "recomendado", "recomendada", "recomiendame", "mix del dia", "mezcla del dia", "descubrimiento")) return Command(Action.PLAY_RECOMMENDED)
-        Regex("^(reproduce|reproducir|pon|ponme|toca|escuchar|quiero escuchar|play)( algo de| un poco de)?( la)? (musica|canciones|una cancion|algo)(?:( de)? (.+))?$").find(t)?.let { m ->
+        Regex("^(reproduce|reproducir|pon|ponme|coloca|colocame|toca|escuchar|quiero escuchar|play)( algo de| un poco de)?( la)? (musica|canciones|una cancion|algo)(?:( de)? (.+))?$").find(t)?.let { m ->
             return Command(Action.PLAY_MUSIC, m.groupValues[6].takeIf { it.isNotBlank() }?.let { mapOf("query" to it) } ?: emptyMap())
         }
-        Regex("^(reproduce|pon|ponme|toca) (.+)$").find(t)?.let { m ->
+        Regex("^(reproduce|pon|ponme|coloca|colocame|toca) (.+)$").find(t)?.let { m ->
             if (Catalog.find(m.groupValues[2]) == null) return Command(Action.PLAY_MUSIC, mapOf("query" to m.groupValues[2]))
         }
 
