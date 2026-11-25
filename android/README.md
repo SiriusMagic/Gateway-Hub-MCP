@@ -1,4 +1,4 @@
-# Gateway Hub para Android
+# Arka (Gateway Hub) para Android
 
 App nativa (Kotlin, Jetpack Compose) del **propietario** del Gateway Hub. Hace lo mismo que el panel
 web `/admin`, pero en el teléfono:
@@ -11,7 +11,7 @@ web `/admin`, pero en el teléfono:
   de qué app es (Stone, Luma, Calculadora, Filem) y responde «Stone: token vinculado».
 - **Escáner (primera pestaña):** encuentra las apps compatibles instaladas, verifica que sean del mismo desarrollador y
   muestra su estado en el hub (sin vincular, apagada, en línea). Solo lee, no activa nada.
-- **Lucía (asistente, icono propio):** voz o texto en español, entendido en el teléfono, para abrir apps de la familia,
+- **Lucía (asistente dentro de Arka; mantén pulsado el icono › «Lucía»):** voz o texto en español, entendido en el teléfono, para abrir apps de la familia,
   reproducir música y recomendaciones en Stone, alarmas y temporizadores, llamar y escribir (con confirmación), clima,
   agenda y «buenos días». Muestra su «cerebro» en nodos que se encienden con cada orden. Ver `assistant/`.
   La voz se reconoce **sin internet** con Vosk (`vosk-model-small-es-0.42`, licencia Apache 2.0, dentro del APK). Se
@@ -65,7 +65,9 @@ La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.131134
 
 ```sh
 cd android
-./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleLuciaPreview
+./gradlew :app:testDebugUnitTest :app:lintDebug :app:assemblePreview
+# Sin acceso a GitHub (llama.cpp no se puede descargar): usa una copia del mismo commit
+./gradlew -PllamaSourceDir=/ruta/a/llama.cpp :app:assemblePreview
 # Prueba real opcional contra un hub: crea un agente de prueba y lo revoca al terminar
 GATEWAY_HUB_URL=https://… GATEWAY_HUB_TOKEN=… ./gradlew :app:testDebugUnitTest --tests '*LiveHubTest'
 ```
@@ -73,5 +75,5 @@ GATEWAY_HUB_URL=https://… GATEWAY_HUB_TOKEN=… ./gradlew :app:testDebugUnitTe
 - Las capturas de cada pantalla quedan en `app/build/screenshots/`.
 - El APK instalable sale en `app/build/outputs/apk/preview/app-preview.apk`. Usa la misma
   configuración que Stone (AGP 8.13.2, Kotlin 2.3.21, para que R8 entienda los metadatos), está
-  firmado con la clave de depuración de la máquina. La variante para instalar en paralelo sale en
-  `app/build/outputs/apk/luciaPreview/app-luciaPreview.apk`.
+  firmado con la clave de depuración de la máquina.
+  Ya no hay variante «Lucía Prueba» para instalar en paralelo: todo va en Arka.

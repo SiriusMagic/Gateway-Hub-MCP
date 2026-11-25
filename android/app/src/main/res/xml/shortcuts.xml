@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press on Arka's icon: Lucía (the assistant) or the hub's administration. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="lucia" android:enabled="true" android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/lucia" android:shortcutLongLabel="@string/lucia_open">
+        <intent android:action="android.intent.action.MAIN" android:targetPackage="com.zirakusa.gatewayhub"
+            android:targetClass="com.zirakusa.gatewayhub.assistant.AssistantActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="hub" android:enabled="true" android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_hub" android:shortcutLongLabel="@string/shortcut_hub_long">
+        <intent android:action="com.zirakusa.gatewayhub.action.MANAGE_HUB" android:targetPackage="com.zirakusa.gatewayhub"
+            android:targetClass="com.zirakusa.gatewayhub.MainActivity" />
+    </shortcut>
+</shortcuts>

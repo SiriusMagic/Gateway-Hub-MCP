@@ -32,7 +32,7 @@ class ProviderLinker(private val context: Context) : AppLinker {
                 ?: return LinkAnswer(null, "NO_ANSWER", "La app no respondió.")
             LinkAnswer(answer.getString("link"), answer.getString("error"), answer.getString("message"))
         } catch (e: SecurityException) {
-            LinkAnswer(null, "NO_PERMISSION", "Android no dio permiso: reinstala Gateway Hub después de la app.")
+            LinkAnswer(null, "NO_PERMISSION", "Android no dio permiso: reinstala Arka después de la app.")
         } catch (e: Exception) {
             LinkAnswer(null, "FAILED", "No se pudo hablar con la app.")
         }

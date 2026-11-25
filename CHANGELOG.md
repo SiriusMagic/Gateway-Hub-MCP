@@ -1,3 +1,16 @@
+# Arka 0.1.0: Gateway Hub y Lucía, una sola app
+
+- **Nuevo nombre: Arka**, con su icono nuevo (anillos entrelazados). Es la misma app de siempre: se instala **encima** de
+  Gateway Hub 0.0.37 (mismo paquete y misma firma que el resto de la familia), sin perder tus agentes, enlaces, modelos
+  ni ajustes de Lucía.
+- **Un solo icono**: Lucía ya no tiene uno aparte. Tocar Arka abre Lucía (o el hub, si lo administras); **mantener
+  pulsado** el icono da los accesos «Lucía» y «Hub». «Oye Lucía» y el gesto de asistente del teléfono siguen igual. Tras
+  actualizar, el icono «Lucía» desaparece de tu pantalla de inicio: queda solo Arka.
+- **Se acabó «Lucía Prueba»**: la versión de prueba ya forma parte de Arka. Se quita su variante de compilación
+  (`luciaPreview`, paquete `…gatewayhub.lucia.preview`) y sus APK viejos (`GatewayHub-0.0.36-lucia-preview.apk`,
+  `Stone-1.7.27-lucia-preview.apk`). Si aún tienes «Lucía Prueba» o «Stone Prueba» instaladas, puedes desinstalarlas.
+- 103 pruebas Android y 31 del hub.
+
 # Gateway Hub 0.0.37: la versión mejorada de Lucía (0.0.34–0.0.36), con la firma de la familia
 
 - Incluye todo lo de Lucía Prueba 0.0.34–0.0.36 (rama `fix/lucia-multiple-intents`): órdenes encadenadas («calcula,

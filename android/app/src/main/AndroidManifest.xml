@@ -67,20 +67,24 @@
         android:allowBackup="false" android:fullBackupContent="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:networkSecurityConfig="@xml/network_security_config" android:supportsRtl="true">
+        <!-- Arka: one app and one icon (Gateway Hub and Lucía together since 0.1.0). Long-press: Lucía or the hub. -->
         <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-        <!-- Asistente: its own icon, and the phone's assist gesture when chosen as the assistant. -->
-        <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/lucia"
-            android:icon="@mipmap/ic_lucia" android:roundIcon="@mipmap/ic_lucia" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
-            android:taskAffinity="${applicationId}.assistant">
+            <!-- The «hub» shortcut opens the administration even when Lucía would open first. -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="com.zirakusa.gatewayhub.action.MANAGE_HUB" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+        </activity>
+        <!-- Lucía, the assistant inside Arka: no icon of her own; opened by Arka, its shortcut, «Oye Lucía» or the
+             phone's assist gesture when Arka is the assistant. -->
+        <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/lucia"
+            android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
+            android:taskAffinity="${applicationId}.assistant">
             <intent-filter>
                 <action android:name="android.intent.action.ASSIST" />
                 <action android:name="android.intent.action.VOICE_COMMAND" />

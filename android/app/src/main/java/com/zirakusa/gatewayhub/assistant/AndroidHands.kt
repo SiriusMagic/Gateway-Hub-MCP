@@ -213,7 +213,7 @@ class AndroidHands(context: Context) : Hands {
         val request = org.json.JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", "tools/call")
             .put("params", org.json.JSONObject().put("name", name).put("arguments", args)).toString()
         val answer = try { this.app.contentResolver.call("content://$p.hublink".toUri(), "tool", null, Bundle().apply { putString("request", request) }) }
-            catch (_: SecurityException) { throw Hands.ToolError("NO_PERMISSION", "Reinstala Gateway Hub después de la app.") }
+            catch (_: SecurityException) { throw Hands.ToolError("NO_PERMISSION", "Reinstala Arka después de la app.") }
             catch (_: IllegalArgumentException) { return null } ?: return null
         when (answer.getString("error")) {
             null -> Unit

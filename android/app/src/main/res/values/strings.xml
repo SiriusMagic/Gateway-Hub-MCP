@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Gateway Hub</string>
-    <string name="login_title">Gateway Hub</string>
+    <string name="app_name">Arka</string>
+    <string name="login_title">Arka</string>
     <string name="login_subtitle">Un solo enlace MCP para que tu IA use Stone y otras apps.</string>
     <string name="login_access">Acceso al hub (dirección + token)</string>
     <string name="login_access_hint">Pega el acceso completo o solo el token del propietario (hub_…). Sin dirección se usa %1$s.</string>
@@ -28,7 +28,7 @@
     <string name="scan_auto_link">Vincular automáticamente</string>
     <string name="scanner_sync">Sincronización automática</string>
     <string name="scanner_sync_hint">Al escanear, vincula solas las apps del mismo desarrollador que tengan «Redireccionar a Hub» activada.</string>
-    <string name="link_permission">vincular apps con Gateway Hub</string>
+    <string name="link_permission">vincular apps con Arka</string>
     <string name="tab_metrics">Métricas</string>
     <string name="refresh">Actualizar</string>
     <string name="logout">Cerrar sesión</string>
@@ -262,4 +262,8 @@
         <item quantity="one">Guardado en Notas: %d en total.</item>
         <item quantity="other">Guardado en Notas: %d en total.</item>
     </plurals>
+    <!-- Long-press on Arka's icon. -->
+    <string name="shortcut_hub">Hub</string>
+    <string name="shortcut_hub_long">Administrar el hub</string>
+    <color name="arka_icon_background">#142E2F</color>
 </resources>

@@ -17,8 +17,8 @@ android {
         applicationId = "com.zirakusa.gatewayhub"
         minSdk = 26
         targetSdk = 35
-        versionCode = 37
-        versionName = "0.0.37"
+        versionCode = 38
+        versionName = "0.1.0"
         // Where llama.cpp's source already is (same pinned commit), for machines that can't download it: -PllamaSourceDir=…
         (project.findProperty("llamaSourceDir") as String?)?.let { dir ->
             externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=$dir" } }
@@ -51,12 +51,6 @@ android {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
-        }
-        // Side-by-side build for phones whose installed Gateway Hub uses a different signing key.
-        create("luciaPreview") {
-            initWith(getByName("preview"))
-            applicationIdSuffix = ".lucia.preview"
-            matchingFallbacks += listOf("preview", "release")
         }
     }
 }

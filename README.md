@@ -36,10 +36,10 @@ comprobando su propio token y pidiendo confirmación en el teléfono.
 
 ## App Android
 
-[Descarga Lucía Prueba 0.0.28](android/GatewayHub-0.0.28-lucia-preview.apk).
-Para probar las consultas MCP locales, instala también [Stone Prueba 1.7.27](android/Stone-1.7.27-lucia-preview.apk).
-Los dos APK de prueba se instalan junto a las apps habituales. Consulta las instrucciones en
-[Gateway Hub para Android](android/README.md).
+La app del teléfono se llama **Arka** (antes Gateway Hub): el hub y Lucía, la asistente, en **una sola app** con un solo
+icono. [Descarga Arka 0.1.0](android/Arka-0.1.0.apk): se instala encima de Gateway Hub (mismo paquete
+`com.zirakusa.gatewayhub` y misma firma que el resto de la familia). Ya no hay «Lucía Prueba» aparte. Consulta las
+instrucciones en [Arka para Android](android/README.md).
 
 ## Uso (desde el teléfono, sin pegar tokens en ningún chat)
 

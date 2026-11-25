@@ -64,11 +64,11 @@ private val DURATIONS = listOf(7 to R.string.days_7, 30 to R.string.days_30, 90 
             Surface(Modifier.fillMaxWidth().padding(top = 10.dp), color = HubColors.Background, shape = MaterialTheme.shapes.medium) {
                 Text(created.url, Modifier.padding(10.dp), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
             }
-            TextButton({ copySecret(context, "Gateway Hub", created.token); copied = true }) {
+            TextButton({ copySecret(context, "Arka", created.token); copied = true }) {
                 Text(stringResource(R.string.copy_token), fontSize = 13.sp)
             }
             if (copied) Text(stringResource(R.string.copied), color = HubColors.Good, fontSize = 13.sp)
         } },
-        confirmButton = { Button({ copySecret(context, "Gateway Hub", created.url); copied = true }) { Text(stringResource(R.string.copy_link)) } },
+        confirmButton = { Button({ copySecret(context, "Arka", created.url); copied = true }) { Text(stringResource(R.string.copy_link)) } },
         dismissButton = { TextButton(dismiss) { Text(stringResource(R.string.done)) } })
 }

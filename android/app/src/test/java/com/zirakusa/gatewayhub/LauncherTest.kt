@@ -31,4 +31,15 @@ class LauncherTest {
             assertFalse(activity.isFinishing)
         }
     }
+
+    /** One app, one icon: «Arka» (Gateway Hub and Lucía together); Lucía is still the phone's assistant and a shortcut. */
+    @Test fun oneIconNamedArka() {
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
+        val pm = context.packageManager
+        val icons = pm.queryIntentActivities(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(context.packageName), 0)
+        assertEquals(listOf(MainActivity::class.java.name), icons.map { it.activityInfo.name })
+        assertEquals("Arka", context.getString(R.string.app_name))
+        val assist = pm.queryIntentActivities(Intent(Intent.ACTION_ASSIST).setPackage(context.packageName), 0)
+        assertEquals(listOf(AssistantActivity::class.java.name), assist.map { it.activityInfo.name })
+    }
 }
