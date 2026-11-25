@@ -3,7 +3,7 @@ package com.zirakusa.gatewayhub.assistant
 import java.time.LocalDateTime
 
 /** A person found in the phone's contacts. */
-data class Person(val name: String, val number: String)
+data class Person(val name: String, val number: String, val contactId: String? = null)
 
 /** A family app's «Hoy» summary (see Inicio's FAMILIA.md §7). */
 data class Summary(val title: String, val lines: List<String>, val empty: String)
@@ -51,6 +51,7 @@ interface Hands {
     fun now(): LocalDateTime = LocalDateTime.now()
     class NoCallPermission : Exception()
     class NoContacts : Exception()
+    class AmbiguousContact : Exception()
     class NoPhone : Exception()
     class ToolOff : Exception()
     class ToolError(val code: String, message: String) : Exception(message)
@@ -59,7 +60,7 @@ interface Hands {
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
-    NO_CONTACT, ASK_CALL_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
+    NO_CONTACT, ASK_CALL_CONTACT, AMBIGUOUS_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
     TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
     WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CONFIRM_SPEAKER_CALL, CALL_SPEAKER_MANUAL, CALL_STARTED, NEED_CALL_PERMISSION
@@ -67,7 +68,7 @@ enum class Say {
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
 data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList(), val volume: Int? = null) {
-    val asksCallName get() = say == Say.ASK_CALL_CONTACT
+    val asksCallName get() = say == Say.ASK_CALL_CONTACT || say == Say.AMBIGUOUS_CONTACT
     val asksToCall get() = say == Say.CONFIRM_CALL || say == Say.CONFIRM_SPEAKER_CALL
 }
 
@@ -242,7 +243,14 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         val who = c["who"].orEmpty()
         val digits = who.filter { it.isDigit() || it == '+' }
         val person = if (who.matches(Regex("[+0-9 .-]+")) && digits.count(Char::isDigit) >= 3) Person(who, digits)
-            else try { hands.person(who) } catch (_: Hands.NoContacts) { return Reply(Say.NEED_CONTACTS) to false } ?: return Reply(Say.NO_CONTACT, listOf(who)) to false
+            else try {
+                hands.person(who)
+            } catch (_: Hands.NoContacts) {
+                return Reply(Say.NEED_CONTACTS) to false
+            } catch (_: Hands.AmbiguousContact) {
+                val say = if (c.action == Action.CALL) Say.AMBIGUOUS_CONTACT else Say.NO_CONTACT
+                return Reply(say, listOf(who)) to false
+            } ?: return Reply(Say.NO_CONTACT, listOf(who)) to false
         if (c.action == Action.CALL) {
             return if (c["dial_only"] == "1") outgoingCalls.dial(person) else outgoingCalls.request(person, speaker = c["speaker"] == "1")
         }

@@ -20,31 +20,14 @@ web `/admin`, pero en el teléfono:
 - **Métricas:** llamadas, errores y tiempo de respuesta en 24 h y 7 días, por agente, por app y por
   herramienta.
 
-APK de esta rama: [Lucía Prueba 0.0.28](GatewayHub-0.0.28-lucia-preview.apk).
-Se instala junto a Gateway Hub como `com.zirakusa.gatewayhub.lucia.preview` y aparece como **Lucía Prueba**.
-Actualiza las versiones de prueba 0.0.26 y 0.0.27 y mantiene sus modelos y ajustes. Para consultas MCP locales, usa
-[Stone Prueba 1.7.27](Stone-1.7.27-lucia-preview.apk),
-firmado con la misma clave de prueba y con su propia biblioteca.
+## Lucía
 
-## Conversación local en Lucía
+- **Sentimientos** muestra las reglas y el recorrido de la última orden. Las órdenes encadenadas conservan su orden y esperan el «sí» antes de llamar.
+- **Modelos → +** permite vincular GGUF y carpetas, buscar GGUF públicos en Hugging Face y descargar Whisper Base Q5 para dictado. El audio se procesa en el teléfono. Vosk atiende «Oye Lucía» y las confirmaciones de llamadas.
+- En **Ajustes de Lucía**, activa **Permitir conversación local** y escribe o di «charla» seguido del tema. Al pausar la conversación, Lucía cancela la generación y libera la memoria del modelo. Los GGUF quedan disponibles en Modelos.
+- Para clientes externos, abre **MCP → Conectar un LLM externo**, crea un agente con los permisos requeridos y copia su enlace. Las órdenes locales pueden comunicarse con las apps de la familia mediante sus enlaces firmados.
 
-Al abrir Gateway Hub aparece el **Chat**. Desde el menú lateral abre **Modelos**, **MCP** o **Ajustes**.
-
-1. En **Modelos**, descarga **Qwen3 4B** (2,50 GB) o **Qwen2.5 1.5B** (1,12 GB). En un teléfono ARM64,
-   Lucía comprueba el SHA-256 antes de activar el modelo. Instala una voz en español sin conexión desde
-   **Ajustes** si quieres oír las respuestas.
-2. En **MCP** puedes revisar las apps instaladas sin una sesión del Hub. En Stone 1.7.27 abre
-   **Ajustes › Modo MCP › Permitir MCP local**. Con Stone abierto previamente y el modelo seleccionado,
-   prueba «¿qué canciones de Daft Punk hay en Stone?» o «¿qué está sonando?». Puedes hacerlo en modo avión.
-3. En **MCP › Conectar un LLM externo**, usa el acceso de propietario para entrar a **Agentes**, elegir
-   permisos y copiar el enlace del agente. Para que Lucía consulte un Hub remoto, pega un enlace de agente
-   en **Ajustes › Avanzado** y usa una petición como «busca mis notas de viaje en el Hub». Los cambios en
-   el Hub requieren confirmación en pantalla.
-
-Los APK de prueba usan la misma firma para el permiso de MCP local.
-
-
-La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.13113456 y CMake 3.31.6. CMake descarga una revisión fija de [llama.cpp](https://github.com/ggml-org/llama.cpp) para la variante ARM64.
+La compilación requiere Android SDK 36, NDK 29.0.13113456 y CMake 3.31.6. En ARM64 CMake usa revisiones fijas de [llama.cpp](https://github.com/ggml-org/llama.cpp) y [whisper.cpp](https://github.com/ggml-org/whisper.cpp).
 
 ## Seguridad
 
@@ -58,20 +41,18 @@ La compilación de la rama experimental requiere Android SDK 36, NDK 29.0.131134
 - `FLAG_SECURE`: no se pueden hacer capturas y no aparece la vista previa en Recientes.
 - Los enlaces nuevos se muestran **una vez** y no se guardan. Al copiarlos se marcan como sensibles,
   así que Android 13+ no los muestra en la vista previa del portapapeles.
-- Único permiso: `INTERNET`. Para el escáner, la visibilidad de paquetes se limita a las apps que
+- Los permisos de micrófono, contactos y llamadas se solicitan cuando la función los usa. Para el escáner, la visibilidad de paquetes se limita a las apps que
   declaran `com.zirakusa.gatewayhub.action.APP` (`<queries>`), sin `QUERY_ALL_PACKAGES`.
 
 ## Compilar y probar
 
 ```sh
 cd android
-./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleLuciaPreview
+./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease
 # Prueba real opcional contra un hub: crea un agente de prueba y lo revoca al terminar
 GATEWAY_HUB_URL=https://… GATEWAY_HUB_TOKEN=… ./gradlew :app:testDebugUnitTest --tests '*LiveHubTest'
 ```
 
 - Las capturas de cada pantalla quedan en `app/build/screenshots/`.
-- El APK instalable sale en `app/build/outputs/apk/preview/app-preview.apk`. Usa la misma
-  configuración que Stone (AGP 8.13.2, Kotlin 2.3.21, para que R8 entienda los metadatos), está
-  firmado con la clave de depuración de la máquina. La variante para instalar en paralelo sale en
-  `app/build/outputs/apk/luciaPreview/app-luciaPreview.apk`.
+- El APK de compilación sale en `app/build/outputs/apk/release/app-release-unsigned.apk`. Para publicarlo, fírmalo con la clave familiar y comprueba con `apksigner verify --print-certs` que la huella sea `34b88716ba31a8ca170624c1c009c11dd23e182148731f0889c98404b34182d4`. Verifica también `com.zirakusa.gatewayhub` y el incremento de versión antes de copiar el APK firmado a `android/GatewayHub-<versión>.apk`. [Guía de firma de la familia](https://github.com/SiriusMagic/Laucher-mcp/blob/main/GUIA-AGENTES.md).
+- En un teléfono, compara Vosk y Whisper con los mismos audios de «Kusa», «Adonis Sarango», cifras y órdenes encadenadas, en silencio y con ruido. Anota contactos identificados, acciones correctas, latencia y memoria. Verifica la confirmación, el respaldo a Vosk y la actualización desde la 0.0.37.

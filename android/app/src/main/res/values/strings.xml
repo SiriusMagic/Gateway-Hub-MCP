@@ -142,6 +142,7 @@
     <string name="do_calculate">Calcular</string>
     <string name="do_web_search">Buscar en internet</string>
     <string name="say_messaging">Mensaje para %1$s: revísalo y toca Enviar.</string>
+    <string name="say_ambiguous_contact">Hay varias coincidencias para «%1$s». Di el nombre completo o el número.</string>
     <string name="say_ask_call_contact">¿A quién quieres llamar? Di solo el nombre o escríbelo.</string>
     <string name="say_no_contact">No encontré a «%1$s» en tus contactos. Prueba con el nombre que aparece en Contactos.</string>
     <string name="say_answered">Contestando.</string>

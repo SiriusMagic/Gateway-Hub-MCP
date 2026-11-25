@@ -9,16 +9,26 @@ import kotlin.math.max
  * people. Pure.
  */
 object People {
-    fun best(found: List<Person>, said: String): Person? {
+    sealed interface Match {
+        data class Unique(val person: Person) : Match
+        data object Ambiguous : Match
+        data object Missing : Match
+    }
+
+    fun best(found: List<Person>, said: String): Person? = (resolve(found, said) as? Match.Unique)?.person
+
+    fun resolve(found: List<Person>, said: String): Match {
         val s = Words.normalize(said).removePrefix("mi ")
-        if (s.isBlank()) return null
-        // One entry per person: a contact with two numbers is still one person (its first number).
-        val withNumber = found.filter { it.number.any(Char::isDigit) }.distinctBy { Words.normalize(it.name) }
+        if (s.isBlank()) return Match.Missing
+        val withNumber = found.filter { it.number.any(Char::isDigit) }
+            .distinctBy { it.contactId ?: "${Words.normalize(it.name)}:${it.number.filter(Char::isDigit)}" }
         fun name(p: Person) = Words.normalize(p.name)
-        withNumber.firstOrNull { name(it) == s }?.let { return it }
-        withNumber.filter { name(it).startsWith("$s ") }.let { if (it.isNotEmpty()) return it.singleOrNull() }
+        fun result(matches: List<Person>) = matches.singleOrNull()?.let { Match.Unique(it) } ?: Match.Ambiguous
+        withNumber.filter { name(it) == s }.takeIf { it.isNotEmpty() }?.let { return result(it) }
+        withNumber.filter { name(it).startsWith("$s ") }.takeIf { it.isNotEmpty() }?.let { return result(it) }
         val words = s.split(' ')
-        withNumber.filter { p -> words.all { w -> name(p).split(' ').any { it.startsWith(w) } } }.let { if (it.size == 1) return it[0] }
+        withNumber.filter { p -> words.all { w -> name(p).split(' ').any { it.startsWith(w) } } }
+            .takeIf { it.isNotEmpty() }?.let { return result(it) }
         return alike(withNumber, s)
     }
 
@@ -36,7 +46,7 @@ object People {
     }
 
     /** The one contact that sounds closest to [s], if it is close enough and no other is as close. */
-    private fun alike(people: List<Person>, s: String): Person? {
+    private fun alike(people: List<Person>, s: String): Match {
         val said = sound(s)
         val scored = people.map { p ->
             val name = Words.normalize(p.name)
@@ -45,9 +55,9 @@ object People {
             val short = parts.take(s.split(' ').size).joinToString(" ")
             p to minOf(close(said, sound(name)), close(said, sound(short)))
         }.filter { it.second <= 0.34 }.sortedBy { it.second }
-        if (scored.isEmpty()) return null
-        if (scored.size > 1 && scored[1].second - scored[0].second < 0.1) return null
-        return scored[0].first
+        if (scored.isEmpty()) return Match.Missing
+        if (scored.size > 1 && scored[1].second - scored[0].second < 0.1) return Match.Ambiguous
+        return Match.Unique(scored[0].first)
     }
 
     /** How a Spanish name sounds, so «Vox», «Box» and «Bos», or «Yesica» and «Jessica», come out the same. */

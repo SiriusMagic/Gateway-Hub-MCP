@@ -58,19 +58,28 @@ class IntentsTest {
         assertEquals(5, OrderReply.parse("{\"ordenes\": [" + (1..9).joinToString(",") { "\"pon una alarma a las $it\"" } + "]}", ::knows).size)
     }
 
-    @Test fun withoutAModelTheRulesAnswer() {
+    @Test fun rulesAlwaysHandleThePhoneEvenWhenChatIsEnabled() {
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
+        context.getSharedPreferences("assistant", android.content.Context.MODE_PRIVATE).edit()
+            .clear().putString("mode", "MODEL").apply()
+        val work = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob())
+        val local = com.zirakusa.gatewayhub.assistant.local.LocalAssistant(context, work)
         val state = AssistantState(Brain(FakeHands()))
-        state.mode = com.zirakusa.gatewayhub.assistant.AnswerMode.MODEL
-        assertEquals(com.zirakusa.gatewayhub.assistant.AnswerMode.RULES, state.modeNow())   // no model chosen
+        state.local = local
+        state.message = { context.getString(it) }
+        assertTrue(!local.chatEnabled)
+        state.send("charla sobre música", byVoice = false)
+        assertEquals(listOf(context.getString(R.string.local_chat_paused)), state.last?.reply?.args)
+        local.updateChatEnabled(true)
         state.send("reproduce dark souls", byVoice = false)
-        assertEquals(Action.PLAY_MUSIC, state.last!!.command.action); assertEquals("dark souls", state.last!!.command["query"])
-    }
-
-    @Test fun theSafeChoicesComeFirst() {
-        assertEquals(com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS, com.zirakusa.gatewayhub.assistant.Interpreter.from(null))
-        assertEquals(com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS, com.zirakusa.gatewayhub.assistant.Interpreter.from("raro"))
-        assertEquals(com.zirakusa.gatewayhub.assistant.AnswerMode.BOTH, com.zirakusa.gatewayhub.assistant.AnswerMode.from(null))
-        assertEquals(com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS, AssistantState(Brain(FakeHands())).interpreter)
+        assertEquals(Action.PLAY_MUSIC, state.last?.command?.action)
+        assertEquals("dark souls", state.last?.command?.get("query"))
+        state.send("hoy tengo ganas de contar una historia", byVoice = false)
+        assertEquals(Say.NOT_UNDERSTOOD, state.last?.reply?.say)
+        assertTrue(!local.busy)
+        local.updateChatEnabled(false)
+        assertTrue(!context.getSharedPreferences("assistant", android.content.Context.MODE_PRIVATE).getBoolean("chat_enabled", true))
+        work.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
     @Test fun luciaDoesBothAndAnswersOnce() {

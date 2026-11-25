@@ -1,4 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
+    <string name="models_page_title">Modelos</string>
+    <string name="models_add">Añadir modelo</string>
+    <string name="models_close">Cerrar</string>
+    <string name="chat_models_title">Conversación local</string>
+    <string name="local_chat_enable">Permitir conversación local</string>
+    <string name="local_chat_enable_hint">Usa el modelo solo cuando digas «charla» y el tema.</string>
+    <string name="local_chat_paused">La conversación local está pausada. Puedes activarla en Ajustes de Lucía.</string>
+    <string name="local_hf_add_gguf">Añadir GGUF desde Hugging Face</string>
+    <string name="voice_add_model">Añadir modelo de voz</string>
+    <string name="voice_models_title">Reconocimiento de voz</string>
+    <string name="voice_vosk">Vosk · comandos rápidos</string>
+    <string name="voice_whisper">Whisper · dictado</string>
+    <string name="voice_whisper_spec">Whisper Base multilingüe Q5 · 57 MiB · Hugging Face</string>
+    <string name="voice_whisper_arm64">Whisper necesita Android ARM64. Puedes usar Vosk en este dispositivo.</string>
+    <string name="rules_title">Sentimientos</string>
+    <string name="rules_examples">Ejemplos de reglas</string>
+    <string name="rules_example_math">«Calcula ocho por ochenta y ocho y baja el volumen al 5 %»</string>
+    <string name="rules_example_call">«Llama a Adonis Sarango»</string>
+    <string name="rules_last">Última orden</string>
+    <string name="rules_waiting">Pendiente</string>
     <string name="local_models">Modelos locales</string>
     <string name="local_model_size">%1$s · %2$s</string>
     <string name="local_chat">Conversación local</string>
@@ -8,7 +28,6 @@
     <string name="local_download">Descargar</string>
     <string name="local_cancel">Cancelar</string>
     <string name="local_use">Usar</string>
-    <string name="local_folder_hint">Crea una carpeta model en Archivos o elige una existente. Lucía lee los GGUF directamente de esa carpeta.</string>
     <string name="local_folder_choose">Vincular carpeta de modelos</string>
     <string name="local_folder_name">Carpeta %1$s</string>
     <string name="local_folder_refresh">Actualizar carpeta</string>
@@ -21,7 +40,6 @@
     <string name="local_hf_empty">No encontré archivos GGUF compatibles de una sola parte.</string>
     <string name="local_hf_error">No pude consultar el repositorio. Comprueba la conexión y que el repositorio sea público y de acceso libre.</string>
     <string name="local_link">Usar un modelo que ya tengo (.gguf)</string>
-    <string name="local_link_hint">Si ya descargaste un modelo .gguf (con el navegador, en Descargas…), elígelo: se usa donde está, sin copiarlo, así no ocupa dos veces. Los modelos dentro de otra app (PocketPal…) son privados de esa app y Android no deja leerlos.</string>
     <string name="local_unlink">Quitar</string>
     <string name="local_link_not_gguf">Elige un archivo .gguf (un modelo de lenguaje).</string>
     <string name="local_link_failed">Android no dejó guardar el permiso para leer ese archivo. Prueba con uno de Descargas.</string>

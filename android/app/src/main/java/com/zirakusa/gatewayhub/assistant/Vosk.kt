@@ -93,10 +93,13 @@ object Vosk {
 class VoskEars(private val context: Context, private val heard: (String, Boolean) -> Unit, private val level: (Float) -> Unit,
     private val failed: (Int) -> Unit, private val conversational: () -> Boolean = { false }) {
     // Each recording owns its callbacks, even when a new recording starts as the old one is closing.
-    private val current = AtomicReference<Any?>(null)
+    private class Recording(val whisper: java.io.File?) {
+        val cancelled = AtomicBoolean(false)
+    }
+    private val current = AtomicReference<Recording?>(null)
 
-    fun start(confirmCall: Boolean = false, contactName: Boolean = false) {
-        val recording = Any()
+    fun start(confirmCall: Boolean = false, contactName: Boolean = false, whisper: java.io.File? = null) {
+        val recording = Recording(whisper.takeUnless { confirmCall })
         if (!current.compareAndSet(null, recording)) return
         val freeConversation = conversational()
         Vosk.model(context) { model ->
@@ -108,7 +111,7 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         }
     }
 
-    private fun listen(model: Model, recording: Any, freeConversation: Boolean, confirmCall: Boolean, contactName: Boolean) {
+    private fun listen(model: Model, recording: Recording, freeConversation: Boolean, confirmCall: Boolean, contactName: Boolean) {
         val mic = Vosk.microphone() ?: run {
             if (current.compareAndSet(recording, null)) failed(NO_MIC)
             return
@@ -118,16 +121,23 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         val limited = Recognizer(model, Vosk.RATE.toFloat(), grammar)
         val free = Recognizer(model, Vosk.RATE.toFloat())
         val buffer = ShortArray(Vosk.RATE / 10)
+        val pcm = recording.whisper?.let { ShortArray(Vosk.RATE * 8) }
+        var sampleCount = 0
         val gate = EnergyGate()
         val start = System.currentTimeMillis()
         var spoke = false
         var said: String? = null
         val freeSegments = mutableListOf<String>()
-        val answer = try {
+        val fallback = try {
             mic.startRecording()
             while (current.get() === recording && System.currentTimeMillis() - start < 8_000) {
                 val n = mic.read(buffer, 0, buffer.size)
                 if (n <= 0) continue
+                if (pcm != null) {
+                    val copied = n.coerceAtMost(pcm.size - sampleCount)
+                    buffer.copyInto(pcm, sampleCount, endIndex = copied)
+                    sampleCount += copied
+                }
                 level((gate.rms(buffer, n) / 3000).toFloat().coerceIn(0f, 1f))
                 if (free.acceptWaveForm(buffer, n)) freeSegments += Vosk.text(free.result)
                 val freePartial = if (freeConversation) Vosk.text(free.partialResult, "partial") else ""
@@ -153,13 +163,21 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         } finally {
             runCatching { mic.stop() }; mic.release(); limited.close(); free.close()
         }
+        val alternative = if (spoke && current.get() === recording && pcm != null) {
+            WhisperDictation.transcribe(recording.whisper, pcm, sampleCount, recording.cancelled)
+        } else null
+        val answer = when {
+            alternative == null -> fallback
+            contactName -> PhoneSpeech.contactName(fallback, alternative, names)
+            else -> Hearing.dictated(fallback, alternative, names)
+        }
         if (current.compareAndSet(recording, null)) {
             level(0f)
             heard(answer, true)
         }
     }
 
-    fun stop() { current.set(null) }
+    fun stop() { current.getAndSet(null)?.cancelled?.set(true) }
 
     companion object { const val NO_MODEL = 1001; const val NO_MIC = 1002 }
 }

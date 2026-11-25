@@ -9,12 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
@@ -34,18 +33,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.gatewayhub.R
-import com.zirakusa.gatewayhub.assistant.local.HubConnectionSettings
-import com.zirakusa.gatewayhub.assistant.local.LocalModelSettings
-import com.zirakusa.gatewayhub.ui.HubCard
+import com.zirakusa.gatewayhub.assistant.local.ModelPage
 import com.zirakusa.gatewayhub.ui.HubColors
 import kotlinx.coroutines.launch
 
 internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
     CHAT(R.string.assistant_chat_tab, Icons.AutoMirrored.Filled.Chat),
-    MODELS(R.string.local_models, Icons.Default.Apps),
+    RULES(R.string.rules_title, Icons.Default.AccountTree),
+    MODELS(R.string.models_page_title, Icons.Default.Apps),
     MCP(R.string.phone_mcp_title, Icons.Default.Hub),
-    SETTINGS(R.string.lucia_settings, Icons.Default.Settings),
-    ADVANCED(R.string.assistant_advanced, Icons.Default.Settings)
+    SETTINGS(R.string.lucia_settings, Icons.Default.Settings)
 }
 
 @Composable internal fun AssistantWorkspace(
@@ -59,17 +56,16 @@ internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
     BackHandler(drawer.isOpen || state.page != AssistantPage.CHAT) {
         when {
             drawer.isOpen -> scope.launch { drawer.close() }
-            state.page == AssistantPage.ADVANCED -> state.page = AssistantPage.SETTINGS
             else -> state.page = AssistantPage.CHAT
         }
     }
     ModalNavigationDrawer(drawerState = drawer, gesturesEnabled = drawer.isOpen, drawerContent = {
         ModalDrawerSheet(drawerContainerColor = HubColors.Card) {
             Text(state.name.shown, Modifier.padding(20.dp), color = HubColors.Gold, fontSize = 24.sp)
-            AssistantPage.entries.filter { it != AssistantPage.ADVANCED }.forEach { page ->
+            AssistantPage.entries.forEach { page ->
                 NavigationDrawerItem(
                     label = { Text(stringResource(page.label)) },
-                    selected = state.page == page || page == AssistantPage.SETTINGS && state.page == AssistantPage.ADVANCED,
+                    selected = state.page == page,
                     icon = { Icon(page.icon, null) },
                     onClick = {
                         state.page = page
@@ -87,20 +83,12 @@ internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
                 Text(stringResource(state.page.label), color = HubColors.Text, fontSize = 22.sp)
             }
             when (state.page) {
-                AssistantPage.MODELS -> ModelPage(state)
+                AssistantPage.MODELS -> ModelPage(state.local, state.speechModels, state.listening)
+                AssistantPage.RULES -> BrainPage(state)
                 AssistantPage.MCP -> PhoneMcpScreen(state.local, actions.manageHub)
                 AssistantPage.SETTINGS -> LuciaSettings(state, actions)
-                AssistantPage.ADVANCED -> Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
-                    state.local?.let { HubCard { HubConnectionSettings(it) } }
-                }
                 AssistantPage.CHAT -> Unit
             }
         }
-    }
-}
-
-@Composable private fun ModelPage(state: AssistantState) {
-    Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-        state.local?.let { HubCard { LocalModelSettings(it) } }
     }
 }

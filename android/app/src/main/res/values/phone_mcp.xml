@@ -26,7 +26,7 @@
     <string name="phone_mcp_off">Activa «Permitir MCP local» en Stone → Ajustes → Modo MCP.</string>
     <string name="phone_mcp_signature">Firma incompatible para MCP local.</string>
     <string name="phone_mcp_declared">App compatible detectada. Disponibilidad local sin verificar.</string>
-    <string name="phone_mcp_unavailable">El MCP local no pudo responder. Abre Stone y vuelve a intentarlo.</string>
+    <string name="phone_mcp_unavailable">El MCP local no pudo responder. Abre esta app y vuelve a intentarlo.</string>
     <string name="phone_mcp_link_off">Activa «Redireccionar a Hub» en la app (Ajustes → Modo MCP) para ver sus herramientas.</string>
     <string name="phone_mcp_stone_missing">Stone no está disponible en este teléfono.</string>
     <string name="phone_mcp_connect_external">Conectar un LLM externo</string>
