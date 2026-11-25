@@ -38,28 +38,47 @@ class ModelStore(private val context: Context) {
 
     fun installed(model: LocalModel): File? = target(model).takeIf { it.isFile && it.length() == model.size }
 
-    suspend fun download(model: LocalModel, onProgress: suspend (Float) -> Unit) = withContext(Dispatchers.IO) {
-        downloads.withLock {
-            if (installed(model) != null) return@withLock
-            if (!directory.isDirectory && !directory.mkdirs()) throw ModelDownloadError.Storage()
-            // A killed process can leave a partial file. The shared lock protects active downloads.
-            directory.listFiles { _, name -> name.startsWith("model-") && name.endsWith(".part") }?.forEach { it.delete() }
-            val storage = context.getSystemService(android.os.storage.StorageManager::class.java)
-            val free = runCatching { storage.getAllocatableBytes(storage.getUuidForPath(directory)) }.getOrDefault(0L)
-            if (free < model.size) throw ModelDownloadError.Storage()
-            val connection = (model.url.openConnection() as HttpsURLConnection).apply {
-                connectTimeout = 15_000
-                readTimeout = 15_000
-                setRequestProperty("Accept-Encoding", "identity")
-            }
-            try {
-                if (connection.responseCode != 200) throw IOException("Model download unavailable")
-                connection.inputStream.use { installVerified(it, target(model), model.size, model.sha256, onProgress) }
-            } finally {
-                connection.disconnect()
+    suspend fun download(model: LocalModel, onProgress: suspend (Float) -> Unit) {
+        transfer(model.url, target(model), model.size, model.sha256, onProgress)
+    }
+
+    internal suspend fun download(model: RepositoryModel, onProgress: suspend (Float) -> Unit): File {
+        val file = File(File(directory, "hugging-face"), "${model.sha256}.gguf")
+        transfer(model.url, file, model.size, model.sha256, onProgress)
+        return file
+    }
+
+    internal fun repositoryFile(uri: android.net.Uri): File? {
+        if (uri.scheme != "file") return null
+        val path = uri.path ?: return null
+        val file = File(path)
+        return file.takeIf { it.parentFile == File(directory, "hugging-face") && it.name.matches(Regex("[0-9a-f]{64}\\.gguf")) }
+    }
+
+    private suspend fun transfer(url: java.net.URL, file: File, size: Long, sha: String, onProgress: suspend (Float) -> Unit) =
+        withContext(Dispatchers.IO) {
+            downloads.withLock {
+                if (file.isFile && file.length() == size) return@withLock
+                val parent = requireNotNull(file.parentFile)
+                if (!parent.isDirectory && !parent.mkdirs()) throw ModelDownloadError.Storage()
+                // A killed process can leave a partial file. The shared lock protects active downloads.
+                parent.listFiles { _, name -> name.startsWith("model-") && name.endsWith(".part") }?.forEach { it.delete() }
+                val storage = context.getSystemService(android.os.storage.StorageManager::class.java)
+                val free = runCatching { storage.getAllocatableBytes(storage.getUuidForPath(parent)) }.getOrDefault(0L)
+                if (free < size) throw ModelDownloadError.Storage()
+                val connection = (url.openConnection() as HttpsURLConnection).apply {
+                    connectTimeout = 15_000
+                    readTimeout = 15_000
+                    setRequestProperty("Accept-Encoding", "identity")
+                }
+                try {
+                    if (connection.responseCode != 200) throw IOException("Model download unavailable")
+                    connection.inputStream.use { installVerified(it, file, size, sha, onProgress) }
+                } finally {
+                    connection.disconnect()
+                }
             }
         }
-    }
 
     fun delete(model: LocalModel): Boolean = target(model).let { !it.exists() || it.delete() }
 

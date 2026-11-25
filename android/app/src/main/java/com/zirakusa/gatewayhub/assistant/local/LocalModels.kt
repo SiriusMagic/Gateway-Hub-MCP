@@ -1,19 +1,15 @@
 package com.zirakusa.gatewayhub.assistant.local
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.zirakusa.gatewayhub.R
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LocalModels(
     context: Context,
@@ -23,117 +19,111 @@ class LocalModels(
 ) {
     private val app = context.applicationContext
     private val prefs = context.getSharedPreferences("assistant", Context.MODE_PRIVATE)
-    /** The linked files opened this run (kept open while the app lives, so the model reads them in place). */
-    private val open = HashMap<String, android.os.ParcelFileDescriptor>()
     private val store = ModelStore(context)
-    private var job: Job? = null
+    private val documents = LinkedModelFiles(app)
 
     val supported = LocalLanguageModel.supported
     var installed by mutableStateOf(LocalModel.entries.filter { store.installed(it) != null }.toSet())
         private set
     var selected by mutableStateOf(LocalModel.entries.firstOrNull { it.name == prefs.getString("local_model", null) && it in installed })
         private set
-    /** Models the person already had (a .gguf in Descargas…), used where they are. */
     var linked by mutableStateOf(LinkedModel.load(prefs.getString("linked_models", null)))
         private set
-    /** The linked model in use (then [selected] is null). */
     var selectedLinked by mutableStateOf(linked.firstOrNull { it.id == prefs.getString("local_model", null) })
         private set
-    /** A model is chosen: one downloaded here or one linked. */
     val hasModel get() = selected != null || selectedLinked != null
+    internal val directory = ModelFolderAccess(app, prefs, scope, canChange, ::updateFolder)
+    internal val downloads = ModelDownloads(scope, supported)
     var linkMessage by mutableStateOf<Int?>(null)
         private set
-    var downloading by mutableStateOf<LocalModel?>(null)
-        private set
-    var progress by mutableFloatStateOf(0f)
-        private set
-    var downloadMessage by mutableStateOf<Int?>(null)
-        private set
+
+    init {
+        if (supported) directory.refresh()
+    }
 
     fun file(model: LocalModel) = store.installed(model)
 
-    fun download(model: LocalModel) {
-        if (!supported || job?.isActive == true) return
-        job = scope.launch {
-            downloading = model
-            progress = 0f
-            downloadMessage = null
-            try {
-                store.download(model) { value -> withContext(Dispatchers.Main.immediate) { progress = value } }
-                installed = installed + model
-                if (!hasModel) select(model)
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Exception) {
-                downloadMessage = when (error) {
-                    is ModelDownloadError.Storage -> R.string.local_storage_error
-                    is ModelDownloadError.Integrity -> R.string.local_integrity_error
-                    else -> R.string.local_download_error
-                }
-            } finally {
-                installed = LocalModel.entries.filter { store.installed(it) != null }.toSet()
-                downloading = null
-            }
-        }
+    fun download(model: LocalModel) = downloads.start(builtIn = model) { progress ->
+        store.download(model, progress)
+        installed = LocalModel.entries.filter { store.installed(it) != null }.toSet()
+        if (!hasModel) select(model)
     }
 
-    fun cancelDownload() { job?.cancel() }
+    internal fun download(model: RepositoryModel) = downloads.start(remote = model) { progress ->
+        val file = store.download(model, progress)
+        val installed = LinkedModel(Uri.fromFile(file).toString(), model.name, model.size, Template.guess(model.name))
+        rememberLinked(installed)
+        if (!hasModel) selectLinked(installed)
+    }
 
-    /**
-     * Uses the .gguf at [uri] (picked by the person) where it is: Android keeps the permission to read it, nothing is
-     * copied. The same file twice is one entry. Chosen right away when no model is.
-     */
+    internal fun isRepositoryModel(model: LinkedModel) = store.repositoryFile(model.uri.toUri()) != null
+
+    private suspend fun updateFolder(old: ModelFolder?, new: ModelFolder) {
+        val current = prefs.getString("local_model", null)
+        val removed = old?.models.orEmpty().filter { prior -> new.models.none { it.uri == prior.uri } }
+        if (selected == null) selectedLinked = (linked + new.models).firstOrNull { it.id == current }
+        if (removed.any { it.id == current } && selectedLinked == null) {
+            prefs.edit { remove("local_model") }
+            onUnselected()
+        }
+        documents.close(removed.map(LinkedModel::uri))
+    }
+
+    private fun rememberLinked(model: LinkedModel) {
+        linked = linked.filter { it.uri != model.uri } + model
+        prefs.edit { putString("linked_models", LinkedModel.save(linked)) }
+    }
+
     fun link(uri: android.net.Uri) {
         linkMessage = null
         if (!canChange() || !supported) return
-        val resolver = app.contentResolver
-        val (name, size) = runCatching {
-            resolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME, android.provider.OpenableColumns.SIZE), null, null, null)?.use { c ->
-                if (c.moveToFirst()) c.getString(0).orEmpty() to c.getLong(1) else null
-            }
-        }.getOrNull() ?: ("" to 0L)
-        if (!LinkedModel.accepts(name, size)) { linkMessage = R.string.local_link_not_gguf; return }
-        try { resolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-        catch (_: SecurityException) { linkMessage = R.string.local_link_failed; return }
-        val model = LinkedModel(uri.toString(), name, size, Template.guess(name))
-        linked = linked.filter { it.uri != model.uri } + model
-        prefs.edit { putString("linked_models", LinkedModel.save(linked)) }
+        val model = documents.inspect(uri)
+        if (model == null) { linkMessage = R.string.local_link_not_gguf; return }
+        if (!documents.retain(uri)) { linkMessage = R.string.local_link_failed; return }
+        rememberLinked(model)
         if (!hasModel) selectLinked(model)
     }
 
     fun selectLinked(model: LinkedModel) {
-        if (!canChange() || !supported || model !in linked) return
+        if (!canChange() || !supported || (model !in linked && model !in directory.folder?.models.orEmpty())) return
         selected = null
         selectedLinked = model
         prefs.edit { putString("local_model", model.id) }
     }
 
-    /** Stops using a linked file; the file itself stays where it is. */
+    /** Unlinks shared documents and removes app-owned downloads. */
     fun unlink(model: LinkedModel) {
-        if (!canChange()) return
+        if (!canChange() || model !in linked) return
+        val uri = model.uri.toUri()
+        val downloaded = store.repositoryFile(uri)
+        if (downloaded != null && downloaded.exists() && !downloaded.delete()) {
+            downloads.deleteFailed()
+            return
+        }
         linked = linked - model
         prefs.edit { putString("linked_models", LinkedModel.save(linked)) }
-        runCatching { app.contentResolver.releasePersistableUriPermission(model.uri.toUri(), android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-        synchronized(open) { open.remove(model.uri) }?.let { pfd -> scope.launch { onUnselected(); runCatching { pfd.close() } } }
-        if (selectedLinked == model) {
+        if (downloaded == null) documents.release(uri)
+        val selected = selectedLinked == model
+        if (selected) {
             selectedLinked = null
             prefs.edit { remove("local_model") }
-            scope.launch { onUnselected() }
+        }
+        scope.launch {
+            if (selected) onUnselected()
+            documents.close(listOf(model.uri))
         }
     }
 
-    /**
-     * What to run now: the template and a path the native side can open. A linked file is read through its open
-     * descriptor (/proc/self/fd/N), without copying. Null when nothing is chosen or the file is gone.
-     */
     fun current(): Pair<Template, java.io.File>? {
         selected?.let { m -> return file(m)?.let { m.template to it } }
         val m = selectedLinked ?: return null
-        val pfd = synchronized(open) {
-            open[m.uri] ?: runCatching { app.contentResolver.openFileDescriptor(m.uri.toUri(), "r") }.getOrNull()?.also { open[m.uri] = it }
-        } ?: return null
-        return m.template to java.io.File("/proc/self/fd/${pfd.fd}")
+        store.repositoryFile(m.uri.toUri())?.let { file ->
+            return file.takeIf { it.isFile && it.length() == m.size }?.let { m.template to it }
+        }
+        return documents.path(m)?.let { m.template to it }
     }
+
+    internal fun closeDocuments() = documents.closeAll()
 
     fun select(model: LocalModel) {
         if (!canChange() || !supported || model !in installed) return
@@ -143,9 +133,9 @@ class LocalModels(
     }
 
     fun delete(model: LocalModel) {
-        if (!canChange() || downloading == model) return
+        if (!canChange() || downloads.builtIn == model) return
         if (!store.delete(model)) {
-            downloadMessage = R.string.local_delete_error
+            downloads.deleteFailed()
             return
         }
         installed = installed - model

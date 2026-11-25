@@ -23,7 +23,6 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
 
     internal val phoneMcp = PhoneMcp(app)
     val hub = HubConnection(app, scope) { !busy && pending == null }
-    val models = LocalModels(app, scope, canChange = { !busy && pending == null }, onUnselected = { engine.close() })
     var tone by mutableStateOf(ConversationTone.entries.firstOrNull { it.name == prefs.getString("local_tone", null) } ?: ConversationTone.NATURAL)
         private set
     var draft by mutableStateOf<String?>(null)
@@ -34,6 +33,7 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         private set
     var pending by mutableStateOf<Pending?>(null)
         private set
+    val models = LocalModels(app, scope, canChange = { !busy && pending == null }, onUnselected = { engine.close() })
 
     fun updateTone(value: ConversationTone) {
         tone = value
@@ -158,9 +158,11 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     }
 
     fun close() {
-        models.cancelDownload()
+        models.downloads.cancel()
         turnJob?.cancel()
-        CoroutineScope(Dispatchers.IO).launch { engine.close() }
+        CoroutineScope(Dispatchers.IO).launch {
+            try { engine.close() } finally { models.closeDocuments() }
+        }
     }
 
     private suspend fun generate(

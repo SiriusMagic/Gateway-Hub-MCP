@@ -37,21 +37,21 @@ import com.zirakusa.gatewayhub.ui.HubColors
         Text(stringResource(R.string.local_model_size, model.title, model.sizeLabel), color = HubColors.Text)
         val canChange = !local.busy && local.pending == null
         when {
-            models.downloading == model -> {
-                LinearProgressIndicator(progress = { models.progress }, modifier = Modifier.fillMaxWidth())
-                TextButton(models::cancelDownload) { Text(stringResource(R.string.local_cancel)) }
+            models.downloads.builtIn == model -> {
+                LinearProgressIndicator(progress = { models.downloads.progress }, modifier = Modifier.fillMaxWidth())
+                TextButton(models.downloads::cancel) { Text(stringResource(R.string.local_cancel)) }
             }
             model in models.installed -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(models.selected == model, { models.select(model) }, enabled = canChange,
                     label = { Text(stringResource(if (models.selected == model) R.string.local_active else R.string.local_use)) })
                 TextButton({ models.delete(model) }, enabled = canChange) { Text(stringResource(R.string.local_delete)) }
             }
-            else -> TextButton({ models.download(model) }, enabled = models.downloading == null) {
+            else -> TextButton({ models.download(model) }, enabled = !models.downloads.active) {
                 Text(stringResource(R.string.local_download))
             }
         }
     }
-    models.downloadMessage?.let { Text(stringResource(it), color = HubColors.Bad) }
+    models.downloads.message?.let { Text(stringResource(it), color = HubColors.Bad) }
 
     // A .gguf already on the phone (downloaded with the browser, or by another app into Descargas): used in place.
     val canChange = !local.busy && local.pending == null
@@ -60,7 +60,9 @@ import com.zirakusa.gatewayhub.ui.HubColors
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(models.selectedLinked == model, { models.selectLinked(model) }, enabled = canChange,
                 label = { Text(stringResource(if (models.selectedLinked == model) R.string.local_active else R.string.local_use)) })
-            TextButton({ models.unlink(model) }, enabled = canChange) { Text(stringResource(R.string.local_unlink)) }
+            TextButton({ models.unlink(model) }, enabled = canChange && !models.downloads.active) {
+                Text(stringResource(if (models.isRepositoryModel(model)) R.string.local_delete else R.string.local_unlink))
+            }
         }
     }
     val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
@@ -71,6 +73,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
         Text(stringResource(R.string.local_link))
     }
     models.linkMessage?.let { Text(stringResource(it), color = HubColors.Bad) }
+    ModelSourceSettings(models, canChange)
 
     Text(stringResource(R.string.local_tone), color = HubColors.Text)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

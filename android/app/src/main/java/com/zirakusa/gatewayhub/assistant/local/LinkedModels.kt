@@ -16,7 +16,7 @@ enum class Template {
                 "gemma" in n -> GEMMA
                 Regex("llama[-_ .]?3").containsMatchIn(n) -> LLAMA3
                 "phi-3" in n || "phi3" in n || "phi-4" in n || "phi4" in n -> PHI3
-                "mistral" in n || "mixtral" in n -> MISTRAL
+                "mistral" in n || "ministral" in n || "mixtral" in n -> MISTRAL
                 else -> CHATML
             }
         }
