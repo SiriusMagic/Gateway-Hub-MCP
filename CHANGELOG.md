@@ -1,3 +1,11 @@
+# Arka 0.1.1: reglas de sentimientos en MCP
+
+- **Lucía › MCP › «Reglas de sentimientos»**: junto a «Abrir» y «Herramientas», cada app tiene ahora un botón con
+  todas las frases que Lucía entiende para ella, qué hace cada una y si **pregunta antes** (las que borran o cambian).
+  Arriba, una tarjeta con el total de reglas (140) y las que Lucía hace sola, sin ninguna app (25: música, volumen,
+  alarmas, llamar, linterna…).
+- 106 pruebas Android y 31 del hub.
+
 # Arka 0.1.0: Gateway Hub y Lucía, una sola app
 
 - **Nuevo nombre: Arka**, con su icono nuevo (anillos entrelazados). Es la misma app de siempre: se instala **encima** de

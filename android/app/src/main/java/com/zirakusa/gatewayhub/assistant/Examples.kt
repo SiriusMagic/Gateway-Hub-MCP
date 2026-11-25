@@ -133,6 +133,34 @@ object Examples {
         "weather_places" to "mis lugares del clima"
     )
 
+    /**
+     * One «regla de sentimiento»: a phrase Lucía understands and what it does. [app] is the family app whose tool runs
+     * (null: Lucía does it herself), [label] what the tool does, [asks] whether she asks «¿…?» before doing it.
+     */
+    data class Rule(val phrase: String, val tool: String?, val app: String?, val label: String?, val asks: Boolean)
+
+    /** Every rule, for the «Reglas de sentimientos» lists: Lucía's own first, then one per app tool. */
+    val rules: List<Rule> by lazy {
+        val skills = Skills.every.associateBy { it.tool }
+        actions.map { Rule(it, null, null, null, asks = false) } + tools.map { (tool, phrase) ->
+            val skill = skills[tool]
+            Rule(phrase, tool, skill?.app ?: appOf(tool), skill?.label, asks = skill?.confirm != null)
+        }
+    }
+
+    /** The rules of one family app (by its [Catalog] id), or Lucía's own ones when [app] is null. */
+    fun rulesFor(app: String?): List<Rule> = rules.filter { it.app == app }
+
+    /** A tool without its own skill entry: its app from the tool's prefix (as each app names its tools). */
+    private fun appOf(tool: String): String? = when (tool.substringBefore('_')) {
+        "library", "player", "playlist", "metadata", "equalizer", "settings", "appearance" -> "stone"
+        "calc" -> "calculadora"; "calendar" -> "calendario"; "camera" -> "camara"; "clock" -> "reloj"; "compass" -> "brujula"
+        "contacts" -> "contactos"; "files", "folders" -> "filem"; "gallery" -> "luma"; "launcher" -> "inicio"; "level" -> "nivel"
+        "network" -> "redes"; "notes", "tasks" -> "notas"; "phone" -> "telefono"; "qr" -> "qr"; "rec" -> "grabadora"
+        "sms" -> "sms"; "video" -> "video"; "weather" -> "clima"
+        else -> null
+    }
+
     /** Every example, as «frase» lines for a model, the closest to [query] first (by shared words), at most [max]. */
     fun closest(query: String, max: Int = 40): List<String> {
         val words = Words.normalize(query).split(' ').filter { it.length > 2 }.toSet()
