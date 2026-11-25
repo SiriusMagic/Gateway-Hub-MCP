@@ -125,6 +125,9 @@
     <string name="say_timer">Temporizador de %1$s.</string>
     <string name="say_calling">Listo para llamar a %1$s: toca Llamar.</string>
     <string name="say_confirm_call">¿Llamo a %1$s?</string>
+    <string name="say_confirm_speaker_call">¿Llamo a %1$s en altavoz?</string>
+    <string name="say_call_speaker_manual">Toca Altavoz en la pantalla de la llamada.</string>
+    <string name="do_call_speaker">Altavoz de la llamada</string>
     <string name="say_call_started">Llamando a %1$s.</string>
     <string name="say_need_call_permission">Permite las llamadas para que Lucía pueda iniciarlas.</string>
     <string name="say_greeting">¡Hola! ¿Cómo estás?</string>

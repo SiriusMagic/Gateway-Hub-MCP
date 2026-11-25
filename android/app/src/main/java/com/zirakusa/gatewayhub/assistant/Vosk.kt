@@ -91,7 +91,7 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
     // Each recording owns its callbacks, even when a new recording starts as the old one is closing.
     private val current = AtomicReference<Any?>(null)
 
-    fun start() {
+    fun start(confirmCall: Boolean = false) {
         val recording = Any()
         if (!current.compareAndSet(null, recording)) return
         val freeConversation = conversational()
@@ -99,17 +99,18 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
             if (model == null) {
                 if (current.compareAndSet(recording, null)) failed(NO_MODEL)
             } else if (current.get() === recording) {
-                Thread({ listen(model, recording, freeConversation) }, "lucia-ears").start()
+                Thread({ listen(model, recording, freeConversation, confirmCall) }, "lucia-ears").start()
             }
         }
     }
 
-    private fun listen(model: Model, recording: Any, freeConversation: Boolean) {
+    private fun listen(model: Model, recording: Any, freeConversation: Boolean, confirmCall: Boolean) {
         val mic = Vosk.microphone() ?: run {
             if (current.compareAndSet(recording, null)) failed(NO_MIC)
             return
         }
-        val limited = Recognizer(model, Vosk.RATE.toFloat(), Vocabulary.grammar(Vosk.people(context)))
+        val grammar = if (confirmCall) Hearing.callGrammar() else Vocabulary.grammar(Vosk.people(context))
+        val limited = Recognizer(model, Vosk.RATE.toFloat(), grammar)
         val free = Recognizer(model, Vosk.RATE.toFloat())
         val buffer = ShortArray(Vosk.RATE / 10)
         val gate = EnergyGate()
@@ -136,7 +137,7 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
             }
             val a = said ?: Vosk.text(limited.finalResult)
             val b = (freeSegments + Vosk.text(free.finalResult)).filter(String::isNotBlank).joinToString(" ")
-            Hearing.pick(a, b, freeConversation)
+            if (confirmCall) Hearing.callConfirmation(a, b) else Hearing.pick(a, b, freeConversation)
         } catch (_: RuntimeException) {
             if (current.compareAndSet(recording, null)) failed(NO_MIC)
             return

@@ -72,6 +72,34 @@ class LocalOrdersTest {
         assertEquals(listOf("call 0991234567"), hands.done)
     }
 
+    @Test fun bothRecognizersMustAgreeBeforeHandsFreeDialing() {
+        assertEquals("sí", Hearing.callConfirmation("sí", "y sí"))
+        assertEquals("sí", Hearing.callConfirmation("sí llama", "sí, llama"))
+        assertEquals("no", Hearing.callConfirmation("sí", "no llames"))
+        assertEquals("", Hearing.callConfirmation("sí", "sí pero espera"))
+        assertEquals("", Hearing.callConfirmation("sí", ""))
+        assertEquals("", Hearing.callConfirmation("[unk]", "sí"))
+    }
+
+    @Test fun theSpeakerRequestSurvivesConfirmationAndAndroidPermission() {
+        val state = AssistantState(brain)
+        hands.outgoingAllowed = false
+        state.send("llama a Ana en altavoz", byVoice = true)
+        assertEquals(Say.CONFIRM_SPEAKER_CALL, state.last?.reply?.say)
+        assertEquals(listOf("Ana Pérez"), state.last?.reply?.args)
+        assertTrue(hands.done.isEmpty())
+        state.heard(Hearing.callConfirmation("sí", "y sí"), final = true)
+        assertEquals(Say.NEED_CALL_PERMISSION, state.last?.reply?.say)
+        hands.outgoingAllowed = true
+        state.finishCallPermission(true)
+        assertEquals(listOf("call 0991234567 speaker"), hands.done)
+        assertEquals(Say.NO_CALL, brain.handle("pon en altavoz").reply.say)
+        val inCall = Brain(object : FakeHands() {
+            override fun inCall() = true
+        })
+        assertEquals(Say.CALL_SPEAKER_MANUAL, inCall.handle("pon en altavoz").reply.say)
+    }
+
     @Test fun callsCanBeCancelledAndDeniedPermissionPreparesTheDialer() {
         val state = AssistantState(brain)
         state.send("llama a Ana", byVoice = false)

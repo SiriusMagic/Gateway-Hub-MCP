@@ -87,10 +87,16 @@ object Parser {
             if (who.isNotEmpty() && !has(who, "mensaje", "sms")) return Command(Action.MESSAGE, buildMap { put("who", who); m.groupValues[6].takeIf { it.isNotBlank() }?.let { put("text", it) } })
         }
 
+        if (Regex("^(?:pon(?:la|lo)?|activa|enciende|pasa(?:la|lo)?|cambia) (?:la llamada )?(?:(?:en|al|el) )?altavoz$").matches(t) ||
+            t == "en altavoz" || t == "altavoz") return Command(Action.CALL_SPEAKER)
+
         // Calls: «llama a Ana», «llama al 099 123 4567», «marca 611».
         Regex("^(llama|llamale|llamar|marca|marcale|telefonea)( a| al)? (.+)$").find(t)?.let { m ->
             return Command(Action.CALL, buildMap {
-                put("who", m.groupValues[3].replace(Regex("^(el|la) "), "").trim())
+                val target = m.groupValues[3].replace(Regex("^(el|la) "), "").trim()
+                val speaker = m.groupValues[1] !in setOf("marca", "marcale") && target.endsWith(" en altavoz")
+                put("who", if (speaker) target.removeSuffix(" en altavoz") else target)
+                if (speaker) put("speaker", "1")
                 if (m.groupValues[1] in setOf("marca", "marcale")) put("dial_only", "1")
             })
         }

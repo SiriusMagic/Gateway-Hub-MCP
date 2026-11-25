@@ -37,9 +37,9 @@ open class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toS
     override fun alarm(hour: Int, minute: Int) = done.add("alarm $hour:$minute")
     override fun timer(seconds: Int) = done.add("timer $seconds")
     var outgoingAllowed = true
-    override fun placeCall(number: String): Boolean {
+    override fun placeCall(number: String, speaker: Boolean): Boolean {
         if (!outgoingAllowed) throw Hands.NoCallPermission()
-        return done.add("call $number")
+        return done.add("call $number" + if (speaker) " speaker" else "")
     }
     override fun searchWeb(query: String) = done.add("web $query")
     override fun dial(number: String) = done.add("dial $number")

@@ -83,7 +83,7 @@ object Vocabulary {
         graves agudos ecualizador normal sonido detén conversaciones escribió archivo documento imágenes playa marca agua
         cuadrícula activa desactiva mes cuándo próxima viene
         estás tal triste feliz siento sola solo sí no confirmo confirma cancela cancelar consulta web google investiga genera
-        imagen dibuja entonces multiplicación
+        imagen dibuja entonces multiplicación altavoz ponla ponlo pásala pásalo cambia
     """.trim().split(Regex("\\s+")).toSet()
 
     /** The grammar (JSON list): the base words, the app names and the people's names (each word of them). */
@@ -99,6 +99,19 @@ object Vocabulary {
  * the list, like what to write in a message). This picks what the brain gets. Pure.
  */
 object Hearing {
+    internal fun callGrammar() = JSONArray(listOf("sí", "y sí", "sí llama", "sí llámale", "no", "y no",
+        "no llames", "cancela", "mejor no", "[unk]")).toString()
+
+    /** A short phrase from both recognizers is required before a hands-free confirmation can place a call. */
+    internal fun callConfirmation(limited: String, free: String): String {
+        val freeAnswer = Confirmation.spokenCallAnswer(free)
+        return when {
+            freeAnswer == false -> "no"
+            freeAnswer == true && Confirmation.spokenCallAnswer(limited) == true -> "sí"
+            else -> ""
+        }
+    }
+
     fun pick(limited: String, free: String, conversational: Boolean = false): String {
         val l = limited.replace("[unk]", "").replace(Regex("\\s+"), " ").trim()
         val f = free.trim()

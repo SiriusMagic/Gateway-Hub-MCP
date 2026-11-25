@@ -43,7 +43,7 @@ object Catalog {
     fun appFor(a: Action): FamilyApp? = when (a) {
         Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA -> byId("stone")
         Action.ALARM, Action.TIMER -> byId("reloj")
-        Action.CALL, Action.ANSWER, Action.HANG_UP -> byId("telefono")
+        Action.CALL, Action.CALL_SPEAKER, Action.ANSWER, Action.HANG_UP -> byId("telefono")
         Action.MESSAGE -> byId("sms")
         Action.WEATHER -> byId("clima")
         Action.AGENDA -> byId("calendario")

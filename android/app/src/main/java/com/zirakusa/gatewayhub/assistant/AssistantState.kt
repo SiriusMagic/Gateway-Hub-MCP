@@ -64,6 +64,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     /** Each new order restarts the light running through the graph. */
     var pulse by mutableIntStateOf(0); private set
     val last get() = turns.lastOrNull()
+    internal val askingToCall get() = brain.askingToCall
     val health get() = Graph.health(turns)
     val heat get() = Graph.heat(turns)
 
@@ -72,7 +73,9 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val assistant = local
         if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
         // The orders left after a question: they go on only after «sí».
-        val after = waiting.also { waiting = emptyList() }.takeIf { brain.asking && Intents.yes(heard) }.orEmpty()
+        val after = waiting.also { waiting = emptyList() }.takeIf {
+            if (brain.askingToCall) Confirmation.callAnswer(heard) == true else brain.asking && Intents.yes(heard)
+        }.orEmpty()
         val mode = modeNow()
         if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) {
             brain.cancelOutgoingCall()
@@ -120,7 +123,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
             val turn = brain.handle(order, byVoice)
             complete(turn, speakIt = false)
             replies += turn.reply
-            if (turn.reply.say in setOf(Say.CONFIRM, Say.CONFIRM_CALL, Say.NEED_CALL_PERMISSION)) {
+            if (turn.reply.asksToCall || turn.reply.say in setOf(Say.CONFIRM, Say.NEED_CALL_PERMISSION)) {
                 waiting = orders.drop(i + 1)
                 break
             }

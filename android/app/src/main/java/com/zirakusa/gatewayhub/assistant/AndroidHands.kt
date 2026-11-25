@@ -19,7 +19,7 @@ import androidx.core.net.toUri
 /**
  * The assistant's hands on Android. It speaks to the family apps with Android's standard orders (the same any assistant
  * uses: «poner alarma», «reproducir», «marcar») plus the family's own (FAMILIA.md §10), and falls back to opening the
- * app when an older version doesn't know the order yet. Calls and messages only open the screen ready to confirm.
+ * app when an older version doesn't know the order yet. It places outgoing calls after Lucía has asked for confirmation.
  */
 class AndroidHands(context: Context) : Hands {
     private val app = context.applicationContext
@@ -93,11 +93,13 @@ class AndroidHands(context: Context) : Hands {
 
     override fun dial(number: String) = start(Intent(Intent.ACTION_DIAL, "tel:${Uri.encode(number)}".toUri()), Catalog.byId("telefono"))
 
-    override fun placeCall(number: String): Boolean {
+    override fun placeCall(number: String, speaker: Boolean): Boolean {
         if (!number.matches(Regex("[+0-9 ().-]+"))) return false
         if (ContextCompat.checkSelfPermission(app, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED)
             throw Hands.NoCallPermission()
-        return launchExternal(Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null)))
+        val intent = Intent(Intent.ACTION_CALL, Uri.fromParts("tel", number, null))
+            .putExtra(android.telecom.TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, speaker)
+        return launchExternal(intent)
     }
 
     override fun searchWeb(query: String): Boolean {
@@ -167,6 +169,9 @@ class AndroidHands(context: Context) : Hands {
         return runCatching { app.contentResolver.call("content://$p.inbox".toUri(), "add_note", null, extras)?.getLong("id") }
             .getOrNull()?.takeIf { it > 0 }
     }
+
+    override fun inCall(): Boolean =
+        audio?.mode in setOf(AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION)
 
     private fun phoneAllowed() = ContextCompat.checkSelfPermission(app, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED
     private val telecom get() = app.getSystemService(android.telecom.TelecomManager::class.java)

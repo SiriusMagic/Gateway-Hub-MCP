@@ -41,6 +41,7 @@ class AssistantActivity : ComponentActivity() {
     private lateinit var count: CountEars
     private var beeper: ToneGenerator? = null
     private var resumeCount = false
+    private var callPrompt: Reply? = null
     private val mic = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (it) { if (state.tally != null) countOn(greet = true) else listen() } }
     private val contacts = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) state.last?.let { state.send(it.heard, it.byVoice) }
@@ -65,8 +66,7 @@ class AssistantActivity : ComponentActivity() {
         voice = Voice(this) { ready -> if (::state.isInitialized) state.offlineVoiceReady = ready }
         local = LocalAssistant(this, lifecycleScope)
         hands = AndroidHands(this)
-        state = AssistantState(Brain(hands), { if (it.say != Say.COUNTING) voice.say(Talk.text(it, resources)) },
-            { all -> voice.say(all.joinToString(" ") { Talk.text(it, resources) }) })
+        state = AssistantState(Brain(hands), { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
         state.local = local
         state.message = { getString(it) }
         state.offlineVoiceReady = voice.available
@@ -74,6 +74,10 @@ class AssistantActivity : ComponentActivity() {
         hands.onSilent = { runOnUiThread { state.late(Reply(Say.NOT_PLAYING, listOf("Stone"))) } }
         state.onTurn = { t ->
             if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) }
+            if (t.byVoice && !state.voiceAnswers && t.reply.asksToCall) {
+                callPrompt = t.reply
+                listenForCall(t.reply)
+            }
             if (t.reply.say == Say.NEED_CALL_PERMISSION) outgoingCall.launch(Manifest.permission.CALL_PHONE)
             else if (t.byVoice || t.reply.say == Say.NEED_CONTACTS) afterTurn()
         }
@@ -123,13 +127,41 @@ class AssistantActivity : ComponentActivity() {
     private fun wantsListening(i: Intent?) = i?.action in setOf(LISTEN, Intent.ACTION_ASSIST, Intent.ACTION_VOICE_COMMAND)
 
     private fun listen() {
-        if (local.busy || local.pending != null) return
+        callPrompt = null
+        if (local.busy || local.pending != null || state.listening) return
         if (!Vosk.canListen(this)) return mic.launch(Manifest.permission.RECORD_AUDIO)
-        voice.quiet(); state.partial = ""; state.listening = true
-        ears.start()
+        voice.quiet()
+        startRecording(confirmCall = state.askingToCall)
     }
 
-    private fun stop() { ears.stop(); state.listening = false; state.level = 0f }
+    private fun speakReplies(replies: List<Reply>) {
+        val prompt = replies.lastOrNull()?.takeIf { it.asksToCall }
+        callPrompt = prompt
+        voice.say(replies.joinToString(" ") { Talk.text(it, resources) }) {
+            if (prompt != null) listenForCall(prompt)
+        }
+    }
+
+    private fun listenForCall(prompt: Reply) {
+        if (callPrompt !== prompt) return
+        callPrompt = null
+        if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED) ||
+            state.listening || state.last?.reply !== prompt || !state.askingToCall || !Vosk.canListen(this)) return
+        startRecording(confirmCall = true)
+    }
+
+    private fun startRecording(confirmCall: Boolean) {
+        state.partial = ""
+        state.listening = true
+        ears.start(confirmCall)
+    }
+
+    private fun stop() {
+        callPrompt = null
+        ears.stop()
+        state.listening = false
+        state.level = 0f
+    }
 
     // ---- «Modo conteo» ----
 

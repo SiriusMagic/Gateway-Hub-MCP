@@ -21,7 +21,8 @@ interface Hands {
     fun alarm(hour: Int, minute: Int): Boolean
     fun timer(seconds: Int): Boolean
     fun dial(number: String): Boolean
-    fun placeCall(number: String): Boolean = false
+    fun placeCall(number: String, speaker: Boolean): Boolean = false
+    fun inCall(): Boolean = false
     fun searchWeb(query: String): Boolean = false
     fun message(number: String, text: String?): Boolean
     /** Null: not found; throws [NoContacts] without the permission. */
@@ -59,11 +60,13 @@ enum class Say {
     NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
     TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
-    WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CALL_STARTED, NEED_CALL_PERMISSION
+    WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CONFIRM_SPEAKER_CALL, CALL_SPEAKER_MANUAL, CALL_STARTED, NEED_CALL_PERMISSION
 }
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
-data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList(), val volume: Int? = null)
+data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList(), val volume: Int? = null) {
+    val asksToCall get() = say == Say.CONFIRM_CALL || say == Say.CONFIRM_SPEAKER_CALL
+}
 
 /** One exchange: what was heard, how it was understood, the app that did it, the answer, if it worked and how long it took. */
 data class Turn(val heard: String, val byVoice: Boolean, val command: Command, val app: FamilyApp?, val reply: Reply, val ok: Boolean, val millis: Long) {
@@ -100,7 +103,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL, Action.CALL_SPEAKER) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
@@ -109,6 +112,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             Action.MEDIA -> done(hands.media(MediaKey.valueOf(c["key"]!!)), Reply(Say.MEDIA_DONE, listOf(c["key"]!!)))
             Action.ALARM -> done(hands.alarm(c.int("hour")!!, c.int("minute")!!), Reply(Say.ALARM_SET, listOf(c["hour"]!!, c["minute"]!!)))
             Action.TIMER -> done(hands.timer(c.int("seconds")!!), Reply(Say.TIMER_SET, listOf(c["seconds"]!!)))
+            Action.CALL_SPEAKER -> (if (hands.inCall()) Reply(Say.CALL_SPEAKER_MANUAL) else Reply(Say.NO_CALL)) to false
             Action.CALL, Action.MESSAGE -> reach(c, app!!)
             Action.WEATHER, Action.AGENDA -> {
                 val s = if (hands.installed(app!!)) hands.summary(app) else null
@@ -157,7 +161,8 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private class Pending(val app: FamilyApp, val skill: Skill, val sent: org.json.JSONObject, val said: Map<String, Any?>, val until: Long)
     private var pending: Pending? = null
     /** Lucía asked «¿…?» and waits for «sí» or «no». */
-    val asking get() = pending != null || outgoingCalls.asking
+    val askingToCall get() = outgoingCalls.asking
+    val asking get() = pending != null || askingToCall
 
     /**
      * A family app's tool: the item first when the skill needs one («la lista Rock», «la alarma de las 7»), then the question
@@ -232,7 +237,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         val person = if (who.matches(Regex("[+0-9 .-]+")) && digits.count(Char::isDigit) >= 3) Person(who, digits)
             else try { hands.person(who) } catch (_: Hands.NoContacts) { return Reply(Say.NEED_CONTACTS) to false } ?: return Reply(Say.NO_CONTACT, listOf(who)) to false
         if (c.action == Action.CALL) {
-            return if (c["dial_only"] == "1") outgoingCalls.dial(person) else outgoingCalls.request(person)
+            return if (c["dial_only"] == "1") outgoingCalls.dial(person) else outgoingCalls.request(person, speaker = c["speaker"] == "1")
         }
         return if (hands.message(person.number, c["text"])) Reply(Say.MESSAGING, listOf(person.name)) to true
             else Reply(Say.FAILED, listOf(app.name)) to false
