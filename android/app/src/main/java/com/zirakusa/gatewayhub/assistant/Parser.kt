@@ -22,7 +22,8 @@ object Parser {
         if (volume == null) return one(t)
         val slot = when (volume) { is Volume.Change.To -> "volume" to "${volume.percent}"; is Volume.Change.Step -> "volume_step" to if (volume.up) "up" else "down" }
         val c = if (rest.isEmpty()) Command(Action.UNKNOWN) else one(rest)
-        return if (c.action == Action.UNKNOWN || c.action == Action.VOLUME) Command(Action.VOLUME, mapOf(slot)) else c.copy(slots = c.slots + slot)
+        if (rest.isEmpty() || c.action == Action.VOLUME) return Command(Action.VOLUME, mapOf(slot))
+        return if (c.action == Action.UNKNOWN) c else c.copy(slots = c.slots + slot)
     }
 
     private fun one(t: String): Command {
@@ -89,6 +90,8 @@ object Parser {
 
         if (Regex("^(?:pon(?:la|lo)?|activa|enciende|pasa(?:la|lo)?|cambia) (?:la llamada )?(?:(?:en|al|el) )?altavoz$").matches(t) ||
             t == "en altavoz" || t == "altavoz") return Command(Action.CALL_SPEAKER)
+
+        if (Regex("^(?:llama|llamar|llamale)(?: a| al)?$").matches(t)) return Command(Action.CALL)
 
         // Calls: «llama a Ana», «llama al 099 123 4567», «marca 611».
         Regex("^(llama|llamale|llamar|marca|marcale|telefonea)( a| al)? (.+)$").find(t)?.let { m ->

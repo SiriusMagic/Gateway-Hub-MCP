@@ -13,7 +13,7 @@ object Volume {
     private const val TO = "(?:a|al|en|de|hasta)"
     private val patterns = listOf(
         // «volumen 30», «el volumen al 30 %», «con volumen a 30 por ciento», «sube el volumen a 30»
-        Regex("(?:(?:con|a|al|en|y) )?(?:(?:sube|subele|baja|bajale|pon|ponle|cambia) )?(?:el )?volumen(?: $TO)? (\\d{1,3})(?: ?(?:%|por ciento|porciento))?"),
+        Regex("(?:(?:con|a|al|en|y) )?(?:(?:sube|subele|baja|bajale|pon|ponle|cambia|ajusta) )?(?:el )?volumen(?: $TO)? (\\d{1,3})(?: ?(?:%|por ciento|porciento))?"),
         // «al 30 por ciento (de volumen)», «a 30 %»
         Regex("(?:(?:con|a|al|en|y) )?(\\d{1,3}) ?(?:%|por ciento|porciento)(?: (?:de|del|el|de el) volumen)?"),
         // «volumen al máximo», «a todo volumen», «volumen a la mitad»
@@ -22,7 +22,7 @@ object Volume {
     )
     private val step = Regex("^(?:(sube|subele|subir|aumenta|mas alto|mas fuerte)|(baja|bajale|bajar|disminuye|mas bajo|mas despacio|mas suave))(?: (?:el|un poco|un poco el|mas el))?(?: volumen)?(?: un poco)?(?: mas)?$")
     /** What can be left around a volume once it is taken out («pon el», «y sube»). */
-    private val leftover = Regex("(?:^| )(?:y|con|pon|ponle|sube|subele|baja|bajale|el|la)$")
+    private val leftover = Regex("(?:^| )(?:y|con|pon|ponle|sube|subele|baja|bajale|ajusta|el|la)$")
 
     /** The volume said in [t] and [t] without it. */
     fun take(t: String): Pair<Change?, String> {

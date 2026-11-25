@@ -44,7 +44,7 @@ class AssistantActivity : ComponentActivity() {
     private var callPrompt: Reply? = null
     private val mic = registerForActivityResult(ActivityResultContracts.RequestPermission()) { if (it) { if (state.tally != null) countOn(greet = true) else listen() } }
     private val contacts = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        if (ok) state.last?.let { state.send(it.heard, it.byVoice) }
+        if (ok) state.retryContactPermission()
         // Said «no» for good: Android shows no dialog any more, so the app's page opens, where «Contactos» can be allowed.
         else if (!shouldShowRequestPermissionRationale(Manifest.permission.READ_CONTACTS)) runCatching {
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, "package:$packageName".toUri()))
@@ -74,7 +74,7 @@ class AssistantActivity : ComponentActivity() {
         hands.onSilent = { runOnUiThread { state.late(Reply(Say.NOT_PLAYING, listOf("Stone"))) } }
         state.onTurn = { t ->
             if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) }
-            if (t.byVoice && !state.voiceAnswers && t.reply.asksToCall) {
+            if (t.byVoice && !state.voiceAnswers && (t.reply.asksToCall || t.reply.asksCallName)) {
                 callPrompt = t.reply
                 listenForCall(t.reply)
             }
@@ -135,7 +135,7 @@ class AssistantActivity : ComponentActivity() {
     }
 
     private fun speakReplies(replies: List<Reply>) {
-        val prompt = replies.lastOrNull()?.takeIf { it.asksToCall }
+        val prompt = replies.lastOrNull()?.takeIf { it.asksToCall || it.asksCallName }
         callPrompt = prompt
         voice.say(replies.joinToString(" ") { Talk.text(it, resources) }) {
             if (prompt != null) listenForCall(prompt)
@@ -146,14 +146,14 @@ class AssistantActivity : ComponentActivity() {
         if (callPrompt !== prompt) return
         callPrompt = null
         if (!lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED) ||
-            state.listening || state.last?.reply !== prompt || !state.askingToCall || !Vosk.canListen(this)) return
-        startRecording(confirmCall = true)
+            state.listening || state.last?.reply !== prompt || !(state.askingToCall || state.askingCallName) || !Vosk.canListen(this)) return
+        startRecording(confirmCall = state.askingToCall)
     }
 
     private fun startRecording(confirmCall: Boolean) {
         state.partial = ""
         state.listening = true
-        ears.start(confirmCall)
+        ears.start(confirmCall, contactName = state.askingCallName)
     }
 
     private fun stop() {

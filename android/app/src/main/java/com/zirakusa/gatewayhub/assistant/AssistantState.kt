@@ -34,6 +34,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     /** Orders said after one that asks «¿…?»: they run after the «sí». */
     private var waiting = emptyList<String>()
+    private var callNameUntil = 0L
     internal var local: LocalAssistant? = null
     internal var message: (Int) -> String = { "" }
     private val localTurns = LocalTurns({ message(it) }, ::complete)
@@ -65,6 +66,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var pulse by mutableIntStateOf(0); private set
     val last get() = turns.lastOrNull()
     internal val askingToCall get() = brain.askingToCall
+    internal val askingCallName get() = last?.reply?.asksCallName == true && System.currentTimeMillis() <= callNameUntil
     val health get() = Graph.health(turns)
     val heat get() = Graph.heat(turns)
 
@@ -72,6 +74,15 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val heard = text.trim()
         val assistant = local
         if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
+        val nameReply = last?.takeIf { askingCallName }
+        callNameUntil = 0L
+        if (nameReply != null && brain.commandFor(heard).action == Action.UNKNOWN) {
+            PhoneSpeech.answerName(heard)?.let { name ->
+                val command = nameReply.command.copy(slots = nameReply.command.slots + ("who" to name))
+                complete(brain.handle(heard, byVoice, command))
+                return
+            }
+        }
         // The orders left after a question: they go on only after «sí».
         val after = waiting.also { waiting = emptyList() }.takeIf {
             if (brain.askingToCall) Confirmation.callAnswer(heard) == true else brain.asking && Intents.yes(heard)
@@ -87,7 +98,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
             return
         }
         // «Llama a Luis y dime la hora»: each order in turn.
-        val plan = Intents.split(heard, ::knows)
+        val plan = Intents.split(heard, brain::commandFor)
         if (plan.size > 1) return runAll(plan, byVoice)
         val command = brain.commandFor(plan[0]).takeIf { it.action != Action.UNKNOWN } ?: brain.commandFor(heard)
         if (mode == AnswerMode.BOTH && assistant != null && StoneRequests.matches(heard, command)) {
@@ -123,12 +134,18 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
             val turn = brain.handle(order, byVoice)
             complete(turn, speakIt = false)
             replies += turn.reply
+            if (turn.reply.asksCallName) break
             if (turn.reply.asksToCall || turn.reply.say in setOf(Say.CONFIRM, Say.NEED_CALL_PERMISSION)) {
                 waiting = orders.drop(i + 1)
                 break
             }
         }
         if (byVoice && voiceAnswers) speakAll(replies.filter { it.say != Say.COUNTING })
+    }
+
+    internal fun retryContactPermission() {
+        val request = last?.takeIf { it.reply.say == Say.NEED_CONTACTS } ?: return
+        complete(brain.handle(request.heard, request.byVoice, request.command))
     }
 
     internal fun finishCallPermission(granted: Boolean) {
@@ -146,6 +163,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     private fun complete(turn: Turn, speakIt: Boolean) {
         turns = (turns + turn).takeLast(MAX)
+        if (turn.reply.asksCallName) callNameUntil = System.currentTimeMillis() + Brain.CONFIRM_MS
         pulse++
         if (speakIt && turn.byVoice && voiceAnswers) speak(turn.reply)
         if (turn.command.action == Action.COUNT) startTally(turn.command["title"].orEmpty())

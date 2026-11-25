@@ -39,6 +39,7 @@ object Talk {
                 else -> R.string.say_greeting
             })
             Say.MESSAGING -> res.getString(R.string.say_messaging, a[0])
+            Say.ASK_CALL_CONTACT -> res.getString(R.string.say_ask_call_contact)
             Say.NO_CONTACT -> res.getString(R.string.say_no_contact, a[0])
             Say.NEED_CONTACTS -> res.getString(R.string.say_need_contacts)
             Say.TIME -> res.getString(R.string.say_time, "%d:%02d".format(a[0].toInt(), a[1].toInt()))

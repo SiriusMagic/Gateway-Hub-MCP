@@ -55,17 +55,21 @@ object Vosk {
      * already has it), by each first letter. Kept 10 minutes.
      */
     fun people(context: Context): List<String> {
-        cached?.let { (at, names) -> if (System.currentTimeMillis() - at < 600_000) return names }
-        val names = if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) runCatching {
+        val permitted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        cached?.let { if (it.permitted == permitted && System.currentTimeMillis() - it.at < it.lifetime) return it.names }
+        val names = if (permitted) runCatching {
             context.contentResolver.query(ContactsContract.Contacts.CONTENT_URI, arrayOf(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY), null, null, null)?.use { c ->
                 buildList { while (c.moveToNext() && size < 500) add(c.getString(0).orEmpty()) }
             }.orEmpty()
         }.getOrDefault(emptyList()) else fromPhoneApp(context)
-        cached = System.currentTimeMillis() to names
+        cached = ContactCache(System.currentTimeMillis(), permitted, names)
         return names
     }
 
-    @Volatile private var cached: Pair<Long, List<String>>? = null
+    private data class ContactCache(val at: Long, val permitted: Boolean, val names: List<String>) {
+        val lifetime = if (names.isEmpty()) 30_000L else 600_000L
+    }
+    @Volatile private var cached: ContactCache? = null
 
     private fun fromPhoneApp(context: Context): List<String> {
         val hands = AndroidHands(context.applicationContext)
@@ -91,7 +95,7 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
     // Each recording owns its callbacks, even when a new recording starts as the old one is closing.
     private val current = AtomicReference<Any?>(null)
 
-    fun start(confirmCall: Boolean = false) {
+    fun start(confirmCall: Boolean = false, contactName: Boolean = false) {
         val recording = Any()
         if (!current.compareAndSet(null, recording)) return
         val freeConversation = conversational()
@@ -99,17 +103,18 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
             if (model == null) {
                 if (current.compareAndSet(recording, null)) failed(NO_MODEL)
             } else if (current.get() === recording) {
-                Thread({ listen(model, recording, freeConversation, confirmCall) }, "lucia-ears").start()
+                Thread({ listen(model, recording, freeConversation, confirmCall, contactName) }, "lucia-ears").start()
             }
         }
     }
 
-    private fun listen(model: Model, recording: Any, freeConversation: Boolean, confirmCall: Boolean) {
+    private fun listen(model: Model, recording: Any, freeConversation: Boolean, confirmCall: Boolean, contactName: Boolean) {
         val mic = Vosk.microphone() ?: run {
             if (current.compareAndSet(recording, null)) failed(NO_MIC)
             return
         }
-        val grammar = if (confirmCall) Hearing.callGrammar() else Vocabulary.grammar(Vosk.people(context))
+        val names = if (confirmCall) emptyList() else Vosk.people(context)
+        val grammar = if (confirmCall) Hearing.callGrammar() else Vocabulary.grammar(names)
         val limited = Recognizer(model, Vosk.RATE.toFloat(), grammar)
         val free = Recognizer(model, Vosk.RATE.toFloat())
         val buffer = ShortArray(Vosk.RATE / 10)
@@ -137,7 +142,11 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
             }
             val a = said ?: Vosk.text(limited.finalResult)
             val b = (freeSegments + Vosk.text(free.finalResult)).filter(String::isNotBlank).joinToString(" ")
-            if (confirmCall) Hearing.callConfirmation(a, b) else Hearing.pick(a, b, freeConversation)
+            when {
+                confirmCall -> Hearing.callConfirmation(a, b)
+                contactName -> PhoneSpeech.contactName(a, b, names)
+                else -> Hearing.pick(a, b, freeConversation, names)
+            }
         } catch (_: RuntimeException) {
             if (current.compareAndSet(recording, null)) failed(NO_MIC)
             return

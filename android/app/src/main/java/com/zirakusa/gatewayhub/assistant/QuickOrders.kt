@@ -8,7 +8,7 @@ internal object QuickOrders {
     private val greeting = Regex("^(?:hola(?: (?:luc[ií]a|c[oó]mo (?:est[aá]s|listas)|qu[eé] tal))?|c[oó]mo est[aá]s|qu[eé] tal)$", RegexOption.IGNORE_CASE)
     private val web = Regex("^(?:busca(?:me|r)?|consulta(?:r)?|investiga) en (?:internet|(?:la )?web|google)(?: (?:sobre )?(.+))?$", RegexOption.IGNORE_CASE)
     private val image = Regex("^(?:genera|crea|dibuja|haz(?:me)?) (?:una |un )?(?:imagen|dibujo|ilustracion)(?: .*|$)")
-    private val math = Regex("^(?:entonces +)?calcula +(.+)$", RegexOption.IGNORE_CASE)
+    private val math = Regex("^(?:entonces +)?calcul(?:a|ar|es) +(.+)$", RegexOption.IGNORE_CASE)
     private val number = Regex("[+-]?(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)")
     private val spelling = mapOf("multiplicado por" to "*", "dividido entre" to "/", "dividido por" to "/",
         "por" to "*", "entre" to "/", "mas" to "+", "menos" to "-", "x" to "*")
@@ -40,6 +40,10 @@ internal object QuickOrders {
         var expr = Words.normalize(raw.replace(decimal, "§"))
             .replace('§', '.').replace('×', '*').replace('÷', '/')
             .replace(Regex("\\by (?=mas\\b|menos\\b)"), "")
+        expr = expr.replace(Regex("""\b([2-9]0) y (1|un|uno|[2-9])\b""")) { match ->
+            val unit = match.groupValues[2].toIntOrNull() ?: 1
+            (match.groupValues[1].toInt() + unit).toString()
+        }.replace(Regex("""\b(?:un|uno)\b"""), "1")
         for ((word, symbol) in spelling) expr = expr.replace(Regex("\\b$word\\b"), symbol)
         expr = expr.replace(Regex("(?<=\\d)x(?=[+\\-]?[0-9])"), "*")
         if (Regex("[0-9.] +[0-9.]").containsMatchIn(expr)) return null

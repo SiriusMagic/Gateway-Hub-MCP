@@ -57,7 +57,7 @@ interface Hands {
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
-    NO_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
+    NO_CONTACT, ASK_CALL_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
     TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
     WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CONFIRM_SPEAKER_CALL, CALL_SPEAKER_MANUAL, CALL_STARTED, NEED_CALL_PERMISSION
@@ -65,6 +65,7 @@ enum class Say {
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
 data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList(), val volume: Int? = null) {
+    val asksCallName get() = say == Say.ASK_CALL_CONTACT
     val asksToCall get() = say == Say.CONFIRM_CALL || say == Say.CONFIRM_SPEAKER_CALL
 }
 
@@ -88,6 +89,9 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         pending?.let { p -> answer(Words.normalize(heard).replace('ñ', 'n'))?.let { (reply, ok) ->
             return Turn(heard, byVoice, Command(Action.TOOL, mapOf("app" to p.app.id, "tool" to p.skill.tool)), p.app, reply, ok, clock() - start)
         } }
+        if (c.action == Action.CALL && (c["who"].isNullOrBlank() || byVoice && PhoneSpeech.missingName(c["who"].orEmpty()))) {
+            return Turn(heard, byVoice, c, Catalog.byId("telefono"), Reply(Say.ASK_CALL_CONTACT), false, clock() - start)
+        }
         val app = when (c.action) { Action.OPEN, Action.TOOL -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
         // The volume first, so music never starts too loud; then the order.
         val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null

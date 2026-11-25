@@ -5,21 +5,21 @@ import kotlin.math.max
 /**
  * Picks who «Ana» or «Ana Pérez» is among the contacts found: the same name first, then one starting the same, then one
  * with all the words said in any order («jefe Disled» is «Disled Jefe»), then one that sounds alike («Dísled», «Vox» for
- * «Box») when it is clearly the closest. Any other only when it is the only one found. Never a guess between several
+ * «Box») when it is clearly the closest. Never a guess between several
  * people. Pure.
  */
 object People {
     fun best(found: List<Person>, said: String): Person? {
-        val s = Words.normalize(said)
+        val s = Words.normalize(said).removePrefix("mi ")
         if (s.isBlank()) return null
         // One entry per person: a contact with two numbers is still one person (its first number).
         val withNumber = found.filter { it.number.any(Char::isDigit) }.distinctBy { Words.normalize(it.name) }
         fun name(p: Person) = Words.normalize(p.name)
         withNumber.firstOrNull { name(it) == s }?.let { return it }
-        withNumber.firstOrNull { name(it).startsWith(s) }?.let { return it }
+        withNumber.filter { name(it).startsWith("$s ") }.let { if (it.isNotEmpty()) return it.singleOrNull() }
         val words = s.split(' ')
         withNumber.filter { p -> words.all { w -> name(p).split(' ').any { it.startsWith(w) } } }.let { if (it.size == 1) return it[0] }
-        return alike(withNumber, s) ?: withNumber.singleOrNull()
+        return alike(withNumber, s)
     }
 
     /**

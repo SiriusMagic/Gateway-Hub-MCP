@@ -70,7 +70,7 @@ object Vocabulary {
         toma haz hazme saca escanea lee qr código códigos prueba velocidad internet rápido notas tareas archivos descargas galería
         fotos imágenes luma stone video videos reloj cronómetro calendario calculadora contactos teléfono llamadas mensajes redes
         wifi brújula nivel inicio música cero uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece catorce quince
-        dieciséis diecisiete dieciocho diecinueve veinte veinticinco treinta cuarenta cincuenta sesenta noventa por favor oye hola
+        dieciséis diecisiete dieciocho diecinueve veinte veinticinco treinta cuarenta cincuenta sesenta setenta ochenta noventa por favor oye hola
         contar conteo modo vamos nuevo empieza quiero ayúdame casa volumen por ciento porciento sube súbele baja bájale subir bajar
         máximo mínimo mitad tope todo alto bajo fuerte suave más menos con hasta aumenta disminuye poco cambia
         contesta atiende cuelga rechaza corta llamada anota apunta nota linterna luz enciende apaga prende reinicia repite
@@ -83,7 +83,7 @@ object Vocabulary {
         graves agudos ecualizador normal sonido detén conversaciones escribió archivo documento imágenes playa marca agua
         cuadrícula activa desactiva mes cuándo próxima viene
         estás tal triste feliz siento sola solo sí no confirmo confirma cancela cancelar consulta web google investiga genera
-        imagen dibuja entonces multiplicación altavoz ponla ponlo pásala pásalo cambia
+        imagen dibuja entonces multiplicación calcules llames pongas subas bajes reproduzcas altavoz ponla ponlo pásala pásalo cambia
     """.trim().split(Regex("\\s+")).toSet()
 
     /** The grammar (JSON list): the base words, the app names and the people's names (each word of them). */
@@ -112,15 +112,16 @@ object Hearing {
         }
     }
 
-    fun pick(limited: String, free: String, conversational: Boolean = false): String {
+    fun pick(limited: String, free: String, conversational: Boolean = false, contacts: List<String> = emptyList()): String {
         val l = limited.replace("[unk]", "").replace(Regex("\\s+"), " ").trim()
         val f = free.trim()
         if (conversational && (LocalTurns.chatQuery(f) != null || LocalTurns.hubQuery(f) != null ||
             StoneRequests.matches(f, Parser.parse(f)))) return f
         // Several orders in one breath («llama a Luis y dime la hora»): the free recognizer keeps all of them.
-        if (Intents.split(f) { Parser.parse(it).action != Action.UNKNOWN }.size > 1) return f
+        if (Intents.split(f, Parser::parse).size > 1) return f
         val byList = Parser.parse(l)
         val byFree = Parser.parse(f)
+        PhoneSpeech.preferredCall(byList, l, byFree, f, contacts)?.let { return it }
         if (byList.action == Action.UNKNOWN && byFree.action != Action.UNKNOWN) return f
         if (byFree.action == Action.WEB_SEARCH && byList.action == Action.WEB_SEARCH && !byFree["query"].isNullOrBlank()) return f
         if (byFree["calculation"] != null && byList["calculation"] == null &&

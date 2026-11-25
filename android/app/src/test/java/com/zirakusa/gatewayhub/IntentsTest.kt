@@ -21,7 +21,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class IntentsTest {
     private fun knows(t: String) = Parser.parse(t).action != Action.UNKNOWN
-    private fun split(t: String) = Intents.split(t, ::knows)
+    private fun split(t: String) = Intents.split(t, Parser::parse)
 
     @Test fun oneSentenceManyOrders() {
         assertEquals(listOf("llama a Luis", "qué hora es"), split("Hey Luna llama a Luis por favor y ayúdame con la hora"))
