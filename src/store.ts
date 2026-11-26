@@ -3,6 +3,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Agent, CallStat, HubAdminStore, HubEnv, HubStoreApi, MetricsSummary, Note } from "./modules/types.ts";
 import { serve } from "./serve.ts";
+import { SqlFeedbackQueue } from "./feedback/queue.ts";
 import { Limiter } from "./auth.ts";
 
 type Row = Record<string, string | number>;
@@ -17,10 +18,12 @@ export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubA
   requests = new Limiter(120);   // per caller and minute
   failures = new Limiter(20);    // wrong tokens per caller and minute
   private sql: SqlStorage;
+  readonly feedback: SqlFeedbackQueue;
 
   constructor(ctx: DurableObjectState, env: HubEnv) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
+    this.feedback = new SqlFeedbackQueue(this.sql);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS notes(id TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL,
       created INTEGER NOT NULL, updated INTEGER NOT NULL)`);
     this.sql.exec("CREATE TABLE IF NOT EXISTS config(key TEXT PRIMARY KEY, value TEXT NOT NULL)");
