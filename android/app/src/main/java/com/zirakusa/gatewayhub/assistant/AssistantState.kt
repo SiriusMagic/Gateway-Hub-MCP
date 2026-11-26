@@ -48,6 +48,19 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var typed by mutableStateOf("")
     var listening by mutableStateOf(false)
     var partial by mutableStateOf("")
+    internal var wakePanel by mutableStateOf(false)
+    internal var wakeRequest by mutableStateOf("")
+        private set
+    private var beforeWake: Turn? = null
+    internal val wakeReply get() = last?.takeUnless { it === beforeWake }
+
+    internal fun openWakePanel() {
+        beforeWake = last
+        wakeRequest = ""
+        partial = ""
+        brainOpen = false
+        wakePanel = true
+    }
     var level by mutableFloatStateOf(0f)
     var voiceAnswers by mutableStateOf(true)
     /** Lucía's settings page and what the phone allows (the activity keeps these up to date). */
@@ -105,6 +118,10 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val heard = text.trim()
         val assistant = local
         if (heard.isBlank() || proposal != null || executing || assistant?.busy == true || assistant?.pending != null) return
+        if (wakePanel) {
+            beforeWake = last
+            wakeRequest = heard
+        }
         musicPrompt?.let { prompt ->
             val choice = prompt.musicChoice ?: return@let
             val number = Words.normalize(heard).toIntOrNull()
@@ -326,7 +343,14 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     }
 
     fun sendTyped() { send(typed, byVoice = false); typed = "" }
-    fun heard(text: String, final: Boolean) { partial = text; if (final) { listening = false; partial = ""; send(text, byVoice = true) } }
+    fun heard(text: String, final: Boolean) {
+        partial = text
+        if (final) {
+            listening = false
+            partial = ""
+            send(text, byVoice = true)
+        }
+    }
 
     companion object { const val MAX = 40 }
 }

@@ -61,6 +61,7 @@ class WakeService : Service() {
         val r = Recognizer(model, Vosk.RATE.toFloat(), name.grammar())
         val gate = EnergyGate()
         val buffer = ShortArray(Vosk.RATE / 10)
+        var heardName = false
         try {
             mic.startRecording()
             while (running.get()) {
@@ -68,9 +69,16 @@ class WakeService : Service() {
                 if (n <= 0) continue
                 if (!gate.open(gate.rms(buffer, n))) continue      // silence: nothing to decode
                 val text = if (r.acceptWaveForm(buffer, n)) Vosk.text(r.result) else Vosk.text(r.partialResult, "partial")
-                if (name.heard(text)) { r.reset(); running.set(false); wake(this); break }
+                if (name.heard(text)) {
+                    running.set(false)
+                    heardName = true
+                    break
+                }
             }
         } finally { runCatching { mic.stop() }; mic.release(); r.close() }
+        if (heardName) ContextCompat.getMainExecutor(this).execute {
+            if (instance === this && Prefs(this).wake && !paused) wake(this)
+        }
     }
 
     private fun stopListening() { running.set(false); thread?.join(500); thread = null }
@@ -102,8 +110,8 @@ class WakeService : Service() {
          * otherwise a notification to tap (Android doesn't let apps jump in front by themselves).
          */
         fun wake(context: Context) {
-            val listen = Intent(context, AssistantActivity::class.java).setAction(AssistantActivity.LISTEN).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            if (LuciaService.show(Bundle().apply { putBoolean(AssistantActivity.LISTEN, true) })) return
+            val listen = Intent(context, AssistantActivity::class.java).setAction(AssistantActivity.WAKE).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (LuciaService.show(Bundle().apply { putBoolean(AssistantActivity.WAKE, true) })) return
             if (Settings.canDrawOverlays(context) && runCatching { context.startActivity(listen); true }.getOrDefault(false)) return
             val nm = context.getSystemService(NotificationManager::class.java) ?: return
             nm.createNotificationChannel(NotificationChannel(CALL, context.getString(R.string.wake_call_channel), NotificationManager.IMPORTANCE_HIGH))

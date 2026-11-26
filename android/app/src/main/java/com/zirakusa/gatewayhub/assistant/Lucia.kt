@@ -32,7 +32,8 @@ class LuciaSessionService : VoiceInteractionSessionService() {
 class LuciaSession(service: LuciaSessionService) : VoiceInteractionSession(service) {
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
-        startAssistantActivity(Intent(context, AssistantActivity::class.java).setAction(AssistantActivity.LISTEN))
+        val action = if (args?.getBoolean(AssistantActivity.WAKE) == true) AssistantActivity.WAKE else AssistantActivity.LISTEN
+        startAssistantActivity(Intent(context, AssistantActivity::class.java).setAction(action))
         hide()
     }
 }

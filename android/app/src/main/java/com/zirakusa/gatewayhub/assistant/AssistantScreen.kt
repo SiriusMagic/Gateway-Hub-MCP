@@ -62,7 +62,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
     val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
     val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {}, val installVoice: () -> Unit = {},
     val manageHub: () -> Unit = {}, val setMode: (AnswerMode) -> Unit = {}, val setRulesWhenLocked: (Boolean) -> Unit = {},
-    val setInterpreter: (Interpreter) -> Unit = {}, val stopChatAudio: () -> Unit = {})
+    val setInterpreter: (Interpreter) -> Unit = {}, val stopChatAudio: () -> Unit = {}, val dismissWake: () -> Unit = {})
 
 /** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {
@@ -71,7 +71,19 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         androidx.activity.compose.BackHandler { state.brainOpen = false }
         return BrainPage(state)
     }
-    AssistantWorkspace(state, actions) { showMenu -> Talking(state, actions, showMenu) }
+    if (state.wakePanel) {
+        WakePanel(state, actions, dismiss = {
+            actions.stopChatAudio()
+            state.partial = ""
+            state.wakePanel = false
+            actions.dismissWake()
+        }, openChat = {
+            state.page = AssistantPage.CHAT
+            state.wakePanel = false
+        })
+    } else {
+        AssistantWorkspace(state, actions) { showMenu -> Talking(state, actions, showMenu) }
+    }
     FeedbackDialogs(state)
     state.proposal?.let { plan ->
         AlertDialog(

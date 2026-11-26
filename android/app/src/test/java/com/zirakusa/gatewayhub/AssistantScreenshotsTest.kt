@@ -8,12 +8,14 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.zirakusa.gatewayhub.assistant.AssistantActions
 import com.zirakusa.gatewayhub.assistant.AssistantPage
 import com.zirakusa.gatewayhub.assistant.AssistantScreen
 import com.zirakusa.gatewayhub.assistant.AssistantState
 import com.zirakusa.gatewayhub.assistant.Brain
+import com.zirakusa.gatewayhub.assistant.WakeName
 import com.zirakusa.gatewayhub.ui.HubTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -90,6 +92,32 @@ class AssistantScreenshotsTest {
             val clip = context.getSystemService(ClipboardManager::class.java).primaryClip
             assertEquals(expected, clip?.getItemAt(0)?.text?.toString())
         }
+    }
+
+    @Test fun wakePanelShowsDictationAndAcceptsATypedRequest() {
+        val state = AssistantState(Brain(FakeHands()))
+        state.name = WakeName.LUNA
+        state.openWakePanel()
+        state.listening = true
+        compose.setContent { HubTheme { AssistantScreen(state, AssistantActions(stop = { state.listening = false })) } }
+        compose.onNodeWithText("Luna").assertExists()
+        compose.onNodeWithText("Escuchando…").assertExists()
+        compose.runOnIdle { state.heard("qué tiempo", final = false) }
+        compose.onNodeWithText("qué tiempo").assertExists()
+        compose.onRoot().captureRoboImage("build/screenshots/assistant-wake.png")
+
+        compose.runOnIdle { state.heard("qué tiempo hace", final = true) }
+        compose.onNodeWithText("qué tiempo hace").assertExists()
+        compose.onNodeWithText("Escuchando…").assertDoesNotExist()
+        val input = compose.onNodeWithText("Escribe tu petición…")
+        input.performClick()
+        input.performTextInput("pon una alarma a las 7")
+        val res = ApplicationProvider.getApplicationContext<Context>().resources
+        compose.onNodeWithContentDescription(res.getString(R.string.send)).performClick()
+        compose.onNodeWithText("Alarma a las 7:00.").assertExists()
+        compose.onNodeWithText("Abrir chat").performClick()
+        compose.onNodeWithContentDescription("Nuevo chat").assertExists()
+        compose.onNodeWithText("Alarma a las 7:00.").assertExists()
     }
 
     @Test fun newChatClearsTheConversationAndCancelsThePendingCall() {

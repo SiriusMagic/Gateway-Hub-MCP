@@ -97,6 +97,7 @@
         <!-- Lucía, the assistant inside Arka: no icon of her own; opened by Arka, its shortcut, «Oye Lucía» or the
              phone's assist gesture when Arka is the assistant. -->
         <activity android:name=".assistant.AssistantActivity" android:exported="true" android:label="@string/lucia"
+            android:theme="@style/Theme.GatewayHub.Assistant"
             android:launchMode="singleTask" android:windowSoftInputMode="adjustResize"
             android:taskAffinity="${applicationId}.assistant">
             <intent-filter>

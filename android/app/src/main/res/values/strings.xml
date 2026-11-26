@@ -232,6 +232,10 @@
     <string name="wake_title">Escuchar «Oye %1$s»</string>
     <string name="wake_hint">Dices «Oye» u «Hola» y su nombre, y se abre lista para escucharte. Todo en el teléfono; en silencio casi no gasta.</string>
     <string name="wake_name">Nombre</string>
+    <string name="wake_panel_listening">Escuchando…</string>
+    <string name="wake_panel_write">Escribe tu petición…</string>
+    <string name="wake_panel_open_chat">Abrir chat</string>
+    <string name="wake_panel_close">Cerrar panel de voz</string>
     <string name="only_charging">Solo mientras carga</string>
     <string name="only_charging_hint">Con batería no escucha su nombre (el botón y los gestos siguen).</string>
     <string name="default_title">Asistente del teléfono</string>

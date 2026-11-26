@@ -130,10 +130,11 @@ class AssistantActivity : ComponentActivity() {
             level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } },
             conversational = { state.modeNow() != AnswerMode.RULES })
         Vosk.model(this) { m -> runOnUiThread { state.modelReady = m != null } }   // warm up while the screen opens
+        if (savedInstanceState?.getBoolean(SHOW_WAKE_PANEL) == true) state.openWakePanel()
         setContent {
             HubTheme {
                 AssistantScreen(state, AssistantActions(listen = ::listen, stop = ::stop, makeDefault = ::makeDefault, setWake = ::askWake,
-                    stopChatAudio = { stop(); voice.quiet() },
+                    stopChatAudio = { stop(); voice.quiet() }, dismissWake = { moveTaskToBack(true) },
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
                     allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
                     installVoice = ::installVoice, setMode = { prefs.mode = it; state.mode = it },
@@ -145,10 +146,19 @@ class AssistantActivity : ComponentActivity() {
                         openNote = { state.tallySavedId?.let(hands::openNote) }, share = ::shareCount, again = { state.startTally(""); countOn(greet = true) }))
             }
         }
-        if (savedInstanceState == null && wantsListening(intent)) listen()
+        if (savedInstanceState == null) handleInvocation(intent)
     }
 
-    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); if (wantsListening(intent)) listen() }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleInvocation(intent)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(SHOW_WAKE_PANEL, state.wakePanel)
+        super.onSaveInstanceState(outState)
+    }
     override fun onStart() {
         super.onStart(); WakeService.paused = true                                   // Lucía takes the microphone while open
         state.feedback?.retry()
@@ -164,11 +174,16 @@ class AssistantActivity : ComponentActivity() {
         runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(feedbackNetwork) }
         local.close(); ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
 
-    private fun wantsListening(i: Intent?) = i?.action in setOf(LISTEN, Intent.ACTION_ASSIST, Intent.ACTION_VOICE_COMMAND)
+    private fun handleInvocation(intent: Intent?) {
+        val action = intent?.action
+        if (action == RETURN_TO_ASSISTANT) return
+        if (action == WAKE) state.openWakePanel() else state.wakePanel = false
+        if (action == WAKE || action == LISTEN || action == Intent.ACTION_ASSIST || action == Intent.ACTION_VOICE_COMMAND) listen()
+    }
 
     private fun listen() {
         callPrompt = null
-        if (local.busy || local.pending != null || state.listening) return
+        if (local.busy || local.pending != null || state.executing || state.proposal != null || state.listening || state.tally != null) return
         if (!Vosk.canListen(this)) return mic.launch(Manifest.permission.RECORD_AUDIO)
         voice.quiet()
         startRecording(confirmCall = state.askingToCall)
@@ -318,5 +333,10 @@ class AssistantActivity : ComponentActivity() {
         catch (_: ActivityNotFoundException) { startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)) }
     }
 
-    companion object { const val LISTEN = "com.zirakusa.gatewayhub.assistant.LISTEN" }
+    companion object {
+        const val LISTEN = "com.zirakusa.gatewayhub.assistant.LISTEN"
+        internal const val WAKE = "com.zirakusa.gatewayhub.assistant.WAKE"
+        internal const val RETURN_TO_ASSISTANT = "com.zirakusa.gatewayhub.assistant.RETURN"
+        private const val SHOW_WAKE_PANEL = "showWakePanel"
+    }
 }

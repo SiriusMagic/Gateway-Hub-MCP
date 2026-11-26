@@ -4,5 +4,11 @@
         <item name="android:navigationBarColor">#FF111015</item>
         <item name="android:windowBackground">@color/hub_background</item>
     </style>
+    <style name="Theme.GatewayHub.Assistant" parent="Theme.GatewayHub">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
     <color name="hub_background">#FF111015</color>
 </resources>

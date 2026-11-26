@@ -190,7 +190,7 @@ class AndroidHands(context: Context) : Hands {
     override fun comeBack() {
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             runCatching {
-                app.startActivity(Intent(app, AssistantActivity::class.java)
+                app.startActivity(Intent(app, AssistantActivity::class.java).setAction(AssistantActivity.RETURN_TO_ASSISTANT)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP))
             }
         }, 1_800)
