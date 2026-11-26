@@ -177,6 +177,11 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         throw McpFailure.Unavailable()
     }
 
+    internal fun clearConversation() {
+        history = emptyList()
+        dismiss()
+    }
+
     fun leave() {
         stop()
         dismiss()

@@ -76,6 +76,31 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     val health get() = Graph.health(turns)
     val heat get() = Graph.heat(turns)
 
+    internal val canRestartChat get() = !executing && local?.busy != true &&
+        (turns.isNotEmpty() || typed.isNotEmpty() || listening)
+
+    internal fun restartChat() {
+        if (executing || local?.busy == true) return
+        brain.cancelQuestion()
+        localTurns.clearReview()
+        local?.clearConversation()
+        waiting = null
+        musicPrompt = null
+        musicUntil = 0L
+        callNameUntil = 0L
+        proposal = null
+        correction = null
+        votes = emptyMap()
+        feedbackFailed = false
+        contactNotice = ""
+        turns = emptyList()
+        typed = ""
+        partial = ""
+        listening = false
+        level = 0f
+        pulse = 0
+    }
+
     fun send(text: String, byVoice: Boolean) {
         val heard = text.trim()
         val assistant = local

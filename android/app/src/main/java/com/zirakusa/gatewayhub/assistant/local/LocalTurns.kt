@@ -13,6 +13,8 @@ import com.zirakusa.gatewayhub.assistant.Turn
 internal class LocalTurns(private val message: (Int) -> String, private val complete: (Turn) -> Unit) {
     private var reviewTurn: Turn? = null
 
+    fun clearReview() { reviewTurn = null }
+
     fun route(assistant: LocalAssistant, heard: String, byVoice: Boolean): Boolean {
         val chatQuery = chatQuery(heard)
         if (chatQuery != null) {

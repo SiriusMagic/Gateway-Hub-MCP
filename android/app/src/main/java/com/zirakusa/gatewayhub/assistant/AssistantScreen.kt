@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -56,7 +57,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
     val setWake: (Boolean) -> Unit = {}, val setName: (WakeName) -> Unit = {}, val setOnlyCharging: (Boolean) -> Unit = {},
     val allowAppear: () -> Unit = {}, val setVoice: (Boolean) -> Unit = {}, val installVoice: () -> Unit = {},
     val manageHub: () -> Unit = {}, val setMode: (AnswerMode) -> Unit = {}, val setRulesWhenLocked: (Boolean) -> Unit = {},
-    val setInterpreter: (Interpreter) -> Unit = {})
+    val setInterpreter: (Interpreter) -> Unit = {}, val stopChatAudio: () -> Unit = {})
 
 /** «Asistente»: the conversation and a box to write or the microphone to speak; the brain's map is in her settings. */
 @Composable fun AssistantScreen(state: AssistantState, actions: AssistantActions = AssistantActions(), counting: CountActions = CountActions()) {
@@ -102,6 +103,16 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
                 Text(if (h.total == 0) stringResource(R.string.assistant_hint) else pluralStringResource(R.plurals.assistant_health, h.total, h.total, h.understood, h.done, h.averageMs),
                     color = HubColors.Muted, fontSize = 12.sp)
             }
+            IconButton(
+                onClick = {
+                    actions.stopChatAudio()
+                    state.restartChat()
+                },
+                enabled = state.canRestartChat
+            ) {
+                Icon(Icons.Default.Refresh, stringResource(R.string.assistant_restart_chat),
+                    tint = if (state.canRestartChat) HubColors.Text else HubColors.Muted.copy(alpha = 0.45f))
+            }
             IconButton({ actions.setVoice(!state.voiceAnswers) }) {
                 Icon(if (state.voiceAnswers) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                     stringResource(if (state.voiceAnswers) R.string.voice_on else R.string.voice_off), tint = HubColors.Muted)
@@ -116,6 +127,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         LaunchedEffect(state.last, busy) {
             if (busy) list.scrollToItem(state.turns.size + introCount)
             else if (state.turns.isNotEmpty()) list.animateScrollToItem(state.turns.lastIndex + introCount)
+            else list.scrollToItem(0)
         }
         LazyColumn(Modifier.weight(1f), state = list, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (showIntro) item {

@@ -77,6 +77,26 @@ class AssistantScreenshotsTest {
         assertEquals(1, state.turns.size)
     }
 
+    @Test fun restartChatClearsTheConversationAndCancelsThePendingCall() {
+        val hands = FakeHands()
+        val state = AssistantState(Brain(hands))
+        compose.setContent { HubTheme { AssistantScreen(state) } }
+        compose.runOnIdle {
+            state.send("llama a Ana", byVoice = false)
+            assertEquals(true, state.askingToCall)
+            state.typed = "Borrador"
+        }
+        compose.onNodeWithContentDescription("Reiniciar chat").performClick()
+        compose.onNodeWithText("Reproduce música").assertExists()
+        compose.onNodeWithText("llama a Ana").assertDoesNotExist()
+        compose.runOnIdle {
+            assertEquals("", state.typed)
+            assertEquals(0, state.health.total)
+            state.send("sí", byVoice = false)
+            assertEquals(emptyList<String>(), hands.done)
+        }
+    }
+
     /** «Vamos a contar» turns the screen into the count; − and + fix a line; the total is big enough to read from afar. */
     @Test fun counting() {
         val state = AssistantState(Brain(FakeHands()))

@@ -133,6 +133,7 @@ class AssistantActivity : ComponentActivity() {
         setContent {
             HubTheme {
                 AssistantScreen(state, AssistantActions(listen = ::listen, stop = ::stop, makeDefault = ::makeDefault, setWake = ::askWake,
+                    stopChatAudio = { stop(); voice.quiet() },
                     setName = { prefs.name = it; state.name = it; restartWake() }, setOnlyCharging = { prefs.onlyCharging = it; state.onlyCharging = it; restartWake() },
                     allowAppear = ::allowAppear, setVoice = { prefs.voiceAnswers = it; state.voiceAnswers = it },
                     installVoice = ::installVoice, setMode = { prefs.mode = it; state.mode = it },
