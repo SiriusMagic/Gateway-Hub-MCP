@@ -19,6 +19,7 @@ interface Hands {
     fun open(app: FamilyApp): Boolean
     fun playMusic(query: String?): Boolean
     fun cancelMusicRetry() {}
+    fun preferStoneTitleAction() = false
     fun playRecommended(): Boolean
     fun media(key: MediaKey): Boolean
     fun alarm(hour: Int, minute: Int): Boolean

@@ -81,3 +81,5 @@ La cola agrupa correcciones por patrones de intención. En esta primera versión
 «pon música» tomadas de un vocabulario cerrado. El modelo recibe una frase sintética y solo puede proponer una
 variante de ese vocabulario. El workflow genera el caso de prueba y verifica la regresión antes de abrir un PR.
 Las correcciones que no se pueden proyectar quedan disponibles en la cola privada para revisión manual.
+
+El [inventario de acciones](INVENTARIO-INTENCIONES.md) enlaza el mapa de Stone y la familia, el catálogo versionado y el contrato de reproducción por título del canal MCP local.

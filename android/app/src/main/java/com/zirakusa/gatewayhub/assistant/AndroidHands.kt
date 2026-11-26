@@ -54,6 +54,8 @@ class AndroidHands(context: Context) : Hands {
     private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { button(KeyEvent.KEYCODE_MEDIA_PLAY) },
         later = { ms, run -> main.postDelayed(run, ms) }, silent = { onSilent() })
 
+    override fun preferStoneTitleAction() = true
+
     override fun cancelMusicRetry() = check.cancel()
 
     override fun playMusic(query: String?): Boolean {
@@ -232,7 +234,13 @@ class AndroidHands(context: Context) : Hands {
             "REDIRECT_OFF" -> throw Hands.ToolOff()
             else -> throw Hands.ToolError(answer.getString("error").orEmpty(), answer.getString("message").orEmpty())
         }
-        val result = org.json.JSONObject(answer.getString("response") ?: return null).optJSONObject("result") ?: return null
+        val rpc = org.json.JSONObject(answer.getString("response") ?: return null)
+        rpc.optJSONObject("error")?.let {
+            val message = it.optString("message")
+            val code = if (it.optInt("code") == -32602 && message.startsWith("Unknown tool")) "UNKNOWN_TOOL" else "MCP_RPC_ERROR"
+            throw Hands.ToolError(code, message)
+        }
+        val result = rpc.optJSONObject("result") ?: return null
         val content = result.optJSONObject("structuredContent") ?: org.json.JSONObject()
         if (result.optBoolean("isError")) content.optJSONObject("error").let { e ->
             throw Hands.ToolError(e?.optString("code").orEmpty(), e?.optString("message").orEmpty())

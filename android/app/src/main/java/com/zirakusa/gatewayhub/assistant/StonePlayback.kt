@@ -19,6 +19,10 @@ internal class StonePlayback(private val hands: Hands, private val io: Coroutine
         if (!hands.installed(app)) return Result(Reply(Say.NOT_INSTALLED, listOf(app.name)), false)
         hands.cancelMusicRetry()
         val query = command["query"]
+        if (query != null && hands.preferStoneTitleAction()) {
+            StoneTitleAction.run(query, command, selected, skipVolume, ::call, { hands.open(app) },
+                { returnToArka(command) }, stages)?.let { return it }
+        }
         var label = selected?.label
         var id = selected?.id
         try {

@@ -27,6 +27,44 @@ class StonePlaybackTest {
         assertTrue(music.ok)
     }
 
+    @Test fun bundledCatalogMatchesTheOneCallContract() {
+        val data = javaClass.getResourceAsStream("/intent-actions/stone.v1.json")!!.bufferedReader().use { it.readText() }
+        val catalog = JSONObject(data)
+        assertEquals(1, catalog.getInt("schemaVersion"))
+        val entries = catalog.getJSONArray("actions")
+        val actions = (0 until entries.length()).map(entries::getJSONObject)
+        assertEquals(actions.size, actions.map { it.getString("id") }.toSet().size)
+        val pilot = actions.single { it.getString("id") == "stone.player.play_by_title" }
+        assertEquals(StoneTitleAction.TOOL, pilot.getString("herramienta"))
+        assertEquals(setOf("titulo", "volumen", "ecualizador", "segundoPlano", "idPista"),
+            pilot.getJSONObject("entrada").getJSONObject("properties").keys().asSequence().toSet())
+    }
+
+    @Test fun prefersOneSignedCallForTheWholeMusicAction() {
+        val stone = FakeStone().apply { nativeTitle = true }
+        val state = AssistantState(Brain(stone))
+        state.send("Pon música en segundo plano New Americana con el volumen a 50 y el ecualizador activo", false)
+        assertEquals(listOf("title New Americana", "return"), stone.done)
+        val args = stone.nativeArgs!!
+        assertEquals(50, args.getInt("volumen"))
+        assertTrue(args.getBoolean("ecualizador"))
+        assertTrue(args.getBoolean("segundoPlano"))
+        assertEquals(53, state.last!!.reply.volume)
+        assertTrue(state.last!!.ok)
+    }
+
+    @Test fun fallsBackOnlyWhenTheToolIsUnknown() {
+        val stone = FakeStone().apply { nativeTitle = true; nativeError = "UNKNOWN_TOOL" }
+        val state = AssistantState(Brain(stone))
+        state.send("Pon música New Americana", false)
+        assertEquals(listOf("title New Americana", "search New Americana", "play 1", "state"), stone.done)
+        stone.done.clear()
+        stone.nativeError = "MCP_RPC_ERROR"
+        state.send("Pon música New Americana", false)
+        assertEquals(listOf("title New Americana"), stone.done)
+        assertFalse(state.last!!.ok)
+    }
+
     @Test fun missingAndAmbiguousTracksNeverStartOtherMusic() {
         val stone = FakeStone().apply { songs = listOf() }
         val state = AssistantState(Brain(stone))
@@ -81,6 +119,11 @@ class StonePlaybackTest {
     }
 
     private class FakeStone : FakeHands() {
+        var nativeTitle = false
+        var nativeError: String? = null
+        var nativeArgs: JSONObject? = null
+        override fun preferStoneTitleAction() = nativeTitle
+
         var closed = false
         var eqMissing = false
         var volumeAllowed = true
@@ -96,6 +139,15 @@ class StonePlaybackTest {
         }
 
         override fun tool(app: FamilyApp, name: String, args: JSONObject): JSONObject? = when (name) {
+            "player_play_by_title" -> {
+                done += "title ${args.getString("titulo")}"
+                nativeError?.let { throw Hands.ToolError(it, "") }
+                nativeArgs = args
+                JSONObject().put("track", songs.first()).put("status", "playing")
+                    .put("segundoPlano", args.optBoolean("segundoPlano")).put("steps", JSONObject()
+                        .put("play", JSONObject().put("code", "OK"))
+                        .put("volume", JSONObject().put("code", "OK").put("actual", 53)))
+            }
             "library_search" -> {
                 done += "search ${args.getString("query")}"
                 if (closed) throw Hands.ToolError("STONE_CLOSED", "")

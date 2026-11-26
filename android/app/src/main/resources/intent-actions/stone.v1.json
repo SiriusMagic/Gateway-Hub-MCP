@@ -1,0 +1,4447 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "1.0.0",
+  "app": {
+    "id": "stone",
+    "package": "com.zirakusa.stone.kotlin.preview",
+    "baseCommit": "cf2f0951b469294c87d2108a71aa5440f1ddf498",
+    "baseVersion": "1.7.30",
+    "baseVersionCode": 64
+  },
+  "actions": [
+    {
+      "id": "stone.navigation.open_library",
+      "area": "Navegación y biblioteca",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Botón Inicio de reproductor y rail horizontal → cambia pestaña y cierra reproductor",
+      "firma": "sin argumentos → biblioteca visible",
+      "requisitos": "Pantalla",
+      "ejemplosEs": [
+        "Abre la biblioteca de Stone"
+      ],
+      "ambiguedad": "Si pide una colección, resolver su tipo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 328,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 183,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 75,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.navigation.open_player",
+      "area": "Navegación y biblioteca",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Tap en minirreproductor, portada o título del widget → abre PlayerScreen/MainActivity",
+      "firma": "sin argumentos → reproductor visible",
+      "requisitos": "Cola/pista si quiere contexto",
+      "ejemplosEs": [
+        "Abre el reproductor"
+      ],
+      "ambiguedad": "Distinguir mostrar de empezar a tocar.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 61,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 84,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 85,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.navigation.open_settings",
+      "area": "Navegación y biblioteca",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Cabecera, rail y buscador de Ajustes → página seleccionada",
+      "firma": "pagina? → panel de ajustes",
+      "requisitos": "Stone en primer plano",
+      "ejemplosEs": [
+        "Abre los ajustes de audio"
+      ],
+      "ambiguedad": "Pedir sección si se dijo «ajustes de eso».",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 185,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsScreens.kt",
+          "linea": 70,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsScreens.kt",
+          "linea": 152,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.library.search",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "library_search",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "query",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "kind",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Buscar en biblioteca filtra query; el MCP usa Song.matches sobre título, artista, álbum, carpeta y género",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 82,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "query,kind?,limit? → total y results",
+      "requisitos": "Índice disponible, permiso multimedia o SAF",
+      "ejemplosEs": [
+        "Busca música de Halsey"
+      ],
+      "ambiguedad": "Preguntar categoría si confunde título con artista.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibrarySearch.kt",
+          "linea": 24,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 174,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 82,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.browse",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "library_browse",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "kind",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Pestañas y tarjetas de artista, álbum, género y carpeta → abre colección; MCP devuelve grupos",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 173,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "kind → nombres y conteos",
+      "requisitos": "Índice disponible; pantalla para navegar dentro de la colección",
+      "ejemplosEs": [
+        "Muéstrame mis álbumes"
+      ],
+      "ambiguedad": "Pedir el grupo si se dijo «mis colecciones».",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibraryContent.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/AlbumCard.kt",
+          "linea": 25,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/ArtistCard.kt",
+          "linea": 25,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/GenreCards.kt",
+          "linea": 29,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 173,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.stats",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "library_stats",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Conteo programático del índice por tipo y playlists",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 96,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "sin argumentos → totales",
+      "requisitos": "Índice disponible",
+      "ejemplosEs": [
+        "¿Cuántas canciones tengo?"
+      ],
+      "ambiguedad": "Separar pistas de videos.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 96,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.sort",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "library_sort",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "by",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "descending",
+          "tipo": "boolean",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Menú de orden → LibraryViewState, compartido con el MCP",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 168,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "by,descending? → orden nuevo de biblioteca",
+      "requisitos": "Índice disponible",
+      "ejemplosEs": [
+        "Ordena canciones por título"
+      ],
+      "ambiguedad": "Distinguir orden visual de la cola.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 84,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryOrdering.kt",
+          "linea": 9,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 168,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.get_sort",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "library_get_sort",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Lee el orden actual y sus opciones sin escribir",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 164,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "sin argumentos → by,descending y opciones",
+      "requisitos": "Host de Stone",
+      "ejemplosEs": [
+        "¿En qué orden aparecen las canciones?"
+      ],
+      "ambiguedad": "Aclarar si habla de la cola.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 164,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.rescan",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "library_rescan",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Actualizar índice → refreshLibrary/LibraryViewModel",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 103,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "sin argumentos → escaneo solicitado",
+      "requisitos": "Permisos multimedia o acceso SAF vigente",
+      "ejemplosEs": [
+        "Actualiza mi biblioteca"
+      ],
+      "ambiguedad": "No cambiar carpeta o permisos por inferencia.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/LibraryScanSettings.kt",
+          "linea": 24,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryViewModel.kt",
+          "linea": 96,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 103,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.pick_folder",
+      "area": "Navegación y biblioteca",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Selector Android de carpeta → SAF persistente y escaneo",
+      "firma": "uri elegida por el usuario → carpeta indexada",
+      "requisitos": "Selector Android y concesión del usuario",
+      "ejemplosEs": [
+        "Cambia la carpeta de música"
+      ],
+      "ambiguedad": "Abrir selector; jamás adivinar la ruta.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 190,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 156,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/scan/FolderScanner.kt",
+          "linea": 20,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.library.favorites",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "library_favorites",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Colección Favoritos y lectura de pistas favoritas",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 181,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "sin argumentos → lista de favoritas",
+      "requisitos": "Biblioteca indexada",
+      "ejemplosEs": [
+        "Lista mis canciones favoritas"
+      ],
+      "ambiguedad": "Aclarar audio o videos.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 46,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 181,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.set_favorite",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "library_set_favorite",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "favorite",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Corazón/acción de pista y lotes → favorito por ID; widget usa pista actual",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 26,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Navegación y biblioteca",
+      "luna": "mcp",
+      "firma": "songIds,favorite → estado persistido",
+      "requisitos": "Resolver título o pista actual; puede alternar en UI",
+      "ejemplosEs": [
+        "Marca esta pista como favorita"
+      ],
+      "ambiguedad": "Pedir título o confirmar referencia si hay varias.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 26,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 83,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 424,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.library.share",
+      "area": "Navegación y biblioteca",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Menú/selección múltiple → selector Android de compartir",
+      "firma": "ids → selector de aplicación y destinatario",
+      "requisitos": "Permiso a archivos + elección de destino",
+      "ejemplosEs": [
+        "Comparte estas canciones"
+      ],
+      "ambiguedad": "Mostrar selector; no enviar automáticamente.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibrarySelection.kt",
+          "linea": 43,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerSheetsHost.kt",
+          "linea": 76,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/user/SongActions.kt",
+          "linea": 23,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.library.delete_file",
+      "area": "Navegación y biblioteca",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Selección o menú → confirmar; borra archivo físico por SongFileDeleter",
+      "firma": "ids → borrado o denegación",
+      "requisitos": "Confirmar en Stone y permiso Android de escritura cuando se solicite",
+      "ejemplosEs": [
+        "Borra el archivo de esta canción"
+      ],
+      "ambiguedad": "Distinguir archivo, cola y playlist; nunca inferir borrado.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 304,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 365,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/user/SongFileDeleter.kt",
+          "linea": 13,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.library.recently_deleted",
+      "area": "Navegación y biblioteca",
+      "tipo": "consulta",
+      "luna": "adaptacion",
+      "descripcion": "Pantalla de eliminados recientes muestra registros internos",
+      "firma": "sin argumentos → historial de eliminados",
+      "requisitos": "Pantalla; verificar archivo real antes de prometer recuperación",
+      "ejemplosEs": [
+        "Muestra lo que se borró recientemente"
+      ],
+      "ambiguedad": "No afirmar que se puede restaurar un archivo borrado.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/RecentlyDeletedSheet.kt",
+          "linea": 37,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/user/SongDispositionStore.kt",
+          "linea": 7,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.player.play",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_play",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Botón central alterna; herramienta Stone reanuda de forma condicional",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 32,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "directa",
+      "firma": "sin argumentos → reproducción activa",
+      "requisitos": "Pista actual/cola, Android media session o host",
+      "ejemplosEs": [
+        "Reanuda la música"
+      ],
+      "ambiguedad": "Si no hay pista, preguntar si debe elegir o iniciar.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 57,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 46,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 224,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 157,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 80,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 32,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.pause",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_pause",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Mismos controles físicos de alternancia; la herramienta pausa si estaba sonando",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 35,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "directa",
+      "firma": "sin argumentos → reproducción en pausa",
+      "requisitos": "Sesión activa",
+      "ejemplosEs": [
+        "Pausa la música"
+      ],
+      "ambiguedad": "No vaciar cola ni cerrar Stone.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 57,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 46,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 224,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 157,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 80,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 35,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.next",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_next",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Siguiente del compacto, deslizar pista, widget y MediaSession",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 38,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "directa",
+      "firma": "sin argumentos → siguiente de cola",
+      "requisitos": "Cola con siguiente; devuelve estado real si se necesita confirmar",
+      "ejemplosEs": [
+        "Pon la siguiente canción"
+      ],
+      "ambiguedad": "Si dice «otra» y no hay cola, pedir título o confirmar recomendaciones.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 61,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 103,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 60,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 81,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 326,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.previous",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_previous",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Control Anterior → PlaybackViewModel.previous → Media3 seekToPrevious; puede reiniciar según posición",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 39,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "sin argumentos → efecto del control Anterior",
+      "requisitos": "Cola/reproductor preparado",
+      "ejemplosEs": [
+        "Pulsa el botón anterior de Stone"
+      ],
+      "ambiguedad": "Distinguir del salto estricto a la pista anterior.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 54,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 103,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 60,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 82,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 325,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.previous_track",
+      "area": "Reproducción y cola",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Intención de salto estricto de pista; requiere adaptar el motor para seekToPreviousMediaItem o resolver índice anterior bajo la cola real",
+      "firma": "sin argumentos → pista previa o NO_PREVIOUS_TRACK",
+      "requisitos": "Cola con anterior",
+      "ejemplosEs": [
+        "Pon la canción anterior"
+      ],
+      "ambiguedad": "No usar «vuelve al inicio» como sinónimo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 325,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 64,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.player.restart_current",
+      "area": "Reproducción y cola",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Reiniciar en la misma pista usando seek(0); barra de progreso permite hacerlo; RESTART de Arka cae hoy en tecla anterior",
+      "firma": "positionSeconds=0 → misma pista, posición cero",
+      "requisitos": "Pista preparada",
+      "ejemplosEs": [
+        "Vuelve al inicio de esta canción"
+      ],
+      "ambiguedad": "No pasar a otra pista ni alternar pausa.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 36,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 430,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 40,
+          "revision": "codex/inventario-intenciones"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.player.seek_relative",
+      "area": "Reproducción y cola",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Para audio leer player_state y aplicar seek a posición acotada; gestos de video usan su desplazamiento; queda por enlazar intención de voz",
+      "firma": "deltaSeconds → posición acotada entre 0 y duración",
+      "requisitos": "Pista y posición actual válidas; verificar ID entre lectura y escritura",
+      "ejemplosEs": [
+        "Retrocede 10 segundos"
+      ],
+      "ambiguedad": "Preguntar unidades o dirección si faltan.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoGestures.kt",
+          "linea": 46,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 584,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 40,
+          "revision": "codex/inventario-intenciones"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.player.state",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "player_state",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Estado del MVVM que alimenta compacto, reproductor y widget; IPC devuelve estado y posición",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 31,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "sin argumentos → id, título, posición, volumen, estado y cola",
+      "requisitos": "Host activo",
+      "ejemplosEs": [
+        "¿Qué canción está sonando?"
+      ],
+      "ambiguedad": "Distinguir pista en pausa de ausencia de pista.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 49,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 244,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 31,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.seek",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_seek",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "positionSeconds",
+          "tipo": "number",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Arrastre de progreso de audio y salto por línea sincronizada → seek absoluto",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 40,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "positionSeconds → posición solicitada",
+      "requisitos": "Pista preparada; restricciones de la fuente",
+      "ejemplosEs": [
+        "Ve al minuto dos de la canción"
+      ],
+      "ambiguedad": "Preguntar si es tiempo absoluto o desplazamiento.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 29,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 175,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoTimeline.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 40,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.play_song",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_play_song",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Tap en pistas/resultado → PlaybackViewModel.play con contexto; MCP por id usa biblioteca del mismo tipo",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 57,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "songId → inicia pista y forma cola de biblioteca",
+      "requisitos": "Acceso al medio; id resuelto",
+      "ejemplosEs": [
+        "Reproduce la pista seleccionada"
+      ],
+      "ambiguedad": "Usar la acción por título si no se tiene id y se desea una cola de una pista.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibraryContent.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibrarySongRow.kt",
+          "linea": 27,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 273,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 57,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.play_by_title",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "hublink_local_firmado",
+      "herramienta": "player_play_by_title",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "titulo",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "volumen",
+          "tipo": "integer",
+          "requerido": false
+        },
+        {
+          "nombre": "ecualizador",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "segundoPlano",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "idPista",
+          "tipo": "string",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Una llamada firmada → PlayByTitle, usa PlaybackViewModel.play y el motor de Stone",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/PlayByTitle.kt",
+        "linea": 18,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "piloto",
+      "firma": "titulo,volumen?,ecualizador?,segundoPlano?,idPista? → pista confirmada, coincidencias o fallo por etapa",
+      "requisitos": "Versión que anuncia la herramienta local; misma firma, permiso local, biblioteca y motor listos",
+      "ejemplosEs": [
+        "Pon música en segundo plano New Americana con el volumen a 50 y el ecualizador activo"
+      ],
+      "ambiguedad": "Coincidencia literal única primero; presentar artista y álbum si hay varias.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/PlayByTitle.kt",
+          "linea": 18,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
+          "linea": 62,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 273,
+          "revision": "codex/inventario-intenciones"
+        }
+      ],
+      "version": "capacidad anunciada por tools/list",
+      "entrada": {
+        "type": "object",
+        "required": [
+          "titulo"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "volumen": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "ecualizador": {
+            "type": "boolean"
+          },
+          "segundoPlano": {
+            "type": "boolean",
+            "default": false
+          },
+          "idPista": {
+            "type": "string"
+          }
+        }
+      },
+      "salidas": [
+        "playing",
+        "partial",
+        "ambiguous",
+        "failed"
+      ]
+    },
+    {
+      "id": "stone.player.queue",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "player_queue",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Abrir hoja de cola desde compacto/reproductor; lista de índices y pista actual",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 55,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "sin argumentos → elementos con índice",
+      "requisitos": "Cola activa; pantalla solo para mostrar",
+      "ejemplosEs": [
+        "¿Qué sigue en la cola?"
+      ],
+      "ambiguedad": "Distinguir leer de abrir la hoja.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 69,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 209,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 52,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 55,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.queue_play",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_queue_play",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "index",
+          "tipo": "integer",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Tap en fila → playAt por índice",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 64,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "index → pista en esa posición",
+      "requisitos": "Cola vigente; los índices pueden cambiar",
+      "ejemplosEs": [
+        "Pon la tercera de la cola"
+      ],
+      "ambiguedad": "Convertir número humano a índice; confirmar si la cola cambió.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 135,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 64,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.queue_move",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_queue_move",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "from",
+          "tipo": "integer",
+          "requerido": true
+        },
+        {
+          "nombre": "to",
+          "tipo": "integer",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Arrastre vertical → move",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 68,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "from,to → cola reordenada",
+      "requisitos": "Cola vigente",
+      "ejemplosEs": [
+        "Mueve la tercera canción arriba"
+      ],
+      "ambiguedad": "Pide posición si hay varias interpretaciones.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 151,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 68,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.queue_remove",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_queue_remove",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "index",
+          "tipo": "integer",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Deslizar fila → removeAt",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 73,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "index → fila quitada",
+      "requisitos": "Cola vigente",
+      "ejemplosEs": [
+        "Quita esta pista de la cola"
+      ],
+      "ambiguedad": "Aclarar índice; no borrar archivo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 112,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 73,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.queue_clear",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_queue_clear",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Papelera y diálogo → clearQueue",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 77,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "sin argumentos → cola vacía y reproducción detenida",
+      "requisitos": "Confirmación UI; Luna debe confirmar cambio amplio",
+      "ejemplosEs": [
+        "Vacía la cola"
+      ],
+      "ambiguedad": "Aclarar si quería solo pausar.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 78,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 196,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 77,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.queue_next",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_queue_next",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Opción Reproducir después → playNext",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 62,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "songId → inserción tras pista actual",
+      "requisitos": "Canción única y cola",
+      "ejemplosEs": [
+        "Pon esta canción después de la actual"
+      ],
+      "ambiguedad": "Aclarar que no es reproducir ya.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerSheetsHost.kt",
+          "linea": 76,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 62,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.set_shuffle",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_set_shuffle",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "enabled",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Botón alternar aleatorio en compacto/cola y acceso de cabecera",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 86,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "enabled → estado de aleatorio",
+      "requisitos": "Cola preparada",
+      "ejemplosEs": [
+        "Activa el modo aleatorio"
+      ],
+      "ambiguedad": "Preguntar activar o desactivar si no se dijo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 76,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 181,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 86,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.set_repeat",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_set_repeat",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "mode",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Botón cicla repetición y modo del mini",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 90,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "mode → off,one,all",
+      "requisitos": "Cola preparada",
+      "ejemplosEs": [
+        "Repite solo esta canción"
+      ],
+      "ambiguedad": "Aclarar una pista, todo o desactivar.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 83,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 83,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 90,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.set_speed",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_set_speed",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "speed",
+          "tipo": "number",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Hoja velocidad → setSpeed",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 44,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "speed 0.5 a 2.0 → multiplicador",
+      "requisitos": "Motor listo",
+      "ejemplosEs": [
+        "Reproduce a velocidad uno punto cinco"
+      ],
+      "ambiguedad": "Distinguir velocidad de volumen.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 163,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 431,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 44,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.set_volume",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_set_volume",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "percent",
+          "tipo": "integer",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Teclas físicas, slider, gesto de video, silencio/restaurar → volumen multimedia",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 50,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "directa",
+      "firma": "percent → nivel logrado según pasos Android; amplificación según modo",
+      "requisitos": "Audio activo; permiso/ruta Android",
+      "ejemplosEs": [
+        "Pon volumen al 50 por ciento"
+      ],
+      "ambiguedad": "Si se pide volumen alto aclarar porcentaje y modo, sobre todo por encima de 100.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/MainActivity.kt",
+          "linea": 27,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/system/VolumeOverlay.kt",
+          "linea": 6,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoGestures.kt",
+          "linea": 84,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoSidePanels.kt",
+          "linea": 69,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoControlRow.kt",
+          "linea": 63,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 50,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.sleep_timer",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_sleep_timer",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "minutes",
+          "tipo": "integer",
+          "requerido": true
+        },
+        {
+          "nombre": "finishTrack",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "fadeOut",
+          "tipo": "boolean",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Hoja temporal desde reproductor y Ajustes → setSleepTimer",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 66,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "minutes,finishTrack?,fadeOut? → programado; 0 cancela",
+      "requisitos": "Pista/sesión para completar parada",
+      "ejemplosEs": [
+        "Apaga la música en 20 minutos"
+      ],
+      "ambiguedad": "Diferenciar pausa en 20 minutos y pausa al final de la pista.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 149,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/SleepTimerSheet.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsScreens.kt",
+          "linea": 189,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 66,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.sleep_timer_extend",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_sleep_timer_extend",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "minutes",
+          "tipo": "integer",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Control para ampliar temporizador → extendSleepTimer",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 75,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Reproducción y cola",
+      "luna": "mcp",
+      "firma": "minutes → se suma al tiempo restante",
+      "requisitos": "Temporizador vigente o empieza uno",
+      "ejemplosEs": [
+        "Dale diez minutos más al temporizador"
+      ],
+      "ambiguedad": "No sustituir el total cuando se dijo «más».",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 521,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 75,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.player.open_recommendations",
+      "area": "Reproducción y cola",
+      "tipo": "ui",
+      "luna": "directa",
+      "descripcion": "Gesto hacia arriba, pantalla o intent PLAY_RECOMMENDED → selección de recomendaciones",
+      "firma": "sin argumentos → muestra sugerencias o reproduce según entrada",
+      "requisitos": "Biblioteca indexada; UI para escoger",
+      "ejemplosEs": [
+        "Abre recomendaciones de Stone"
+      ],
+      "ambiguedad": "Preguntar si quiere verlas o reproducirlas.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 104,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 257,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/RecommendationsSheet.kt",
+          "linea": 48,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/ExternalOpen.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.navigation.open_notification",
+      "area": "Reproducción y cola",
+      "tipo": "ui",
+      "luna": "directa",
+      "descripcion": "Tap en notificación de sesión o resumen → PendingIntent MainActivity; controles de sesión vienen de Media3",
+      "firma": "sin argumentos → abre Stone",
+      "requisitos": "Notificación existente; Android 13+ puede negar avisos",
+      "ejemplosEs": [
+        "Abre Stone"
+      ],
+      "ambiguedad": "Visibilidad del panel del sistema se comprueba en teléfono.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StonePlaybackService.kt",
+          "linea": 419,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/notifications/NewFilesNotifier.kt",
+          "linea": 69,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 94,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.list",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "playlist_list",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Pestaña Listas, tarjetas normal/compacta → colecciones; MCP devuelve listas personales",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 107,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "sin argumentos → id,nombre,conteo",
+      "requisitos": "Biblioteca cargada",
+      "ejemplosEs": [
+        "¿Qué listas tengo?"
+      ],
+      "ambiguedad": "Distinguir listas propias y automáticas.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 30,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 107,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.songs",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "playlist_songs",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "playlistId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Tap tarjeta → colección y canciones en orden",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 191,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "playlistId → canciones en orden",
+      "requisitos": "Resolver lista",
+      "ejemplosEs": [
+        "Muestra las canciones de Gimnasio"
+      ],
+      "ambiguedad": "Ofrecer listas homónimas.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 70,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 191,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.create",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "playlist_create",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "name",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Botón Nueva lista y selector de pista → diálogo de nombre y createPlaylist",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 112,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "name → lista creada",
+      "requisitos": "Nombre no vacío; confirmación en diálogo",
+      "ejemplosEs": [
+        "Crea una lista Gimnasio"
+      ],
+      "ambiguedad": "No agregar canciones salvo petición explícita.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 94,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 395,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 112,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.add_songs",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "playlist_add_songs",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "playlistId",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Agregar a lista desde pista o selección → addToPlaylist",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+        "linea": 118,
+        "revision": "codex/inventario-intenciones"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "playlistId,songIds → pertenencia actualizada",
+      "requisitos": "Resolver tanto lista como pistas",
+      "ejemplosEs": [
+        "Añade New Americana a Gimnasio"
+      ],
+      "ambiguedad": "Pedir cuál si varios títulos o listas coinciden.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibrarySelection.kt",
+          "linea": 76,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 373,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
+          "linea": 118,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.remove_songs",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "playlist_remove_songs",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "playlistId",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Botón quitar dentro de lista personal → removeFromPlaylist",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 198,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "playlistId,songIds → pertenencia actualizada",
+      "requisitos": "Lista personal e ids estables",
+      "ejemplosEs": [
+        "Quita New Americana de Gimnasio"
+      ],
+      "ambiguedad": "Distinguir de archivo y cola.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 85,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 198,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.play",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "playlist_play",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "playlistId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Play de cabecera → play primera pista con lista como cola",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 207,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "playlistId → primera pista y cola",
+      "requisitos": "Lista con canciones",
+      "ejemplosEs": [
+        "Reproduce mi lista Gimnasio"
+      ],
+      "ambiguedad": "Aclarar si «Gimnasio» es pista o lista.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 78,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 207,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.rename",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "playlist_rename",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "playlistId",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "name",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Herramienta sin botón localizado → LibraryViewModel.renamePlaylist",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 36,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "playlistId,name → nombre nuevo",
+      "requisitos": "Resolver id y nombre nuevo",
+      "ejemplosEs": [
+        "Cambia Gimnasio a Entrenamiento"
+      ],
+      "ambiguedad": "Pedir selección si hay homónimas.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 36,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
+          "linea": 122,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.delete",
+      "tipo": "cambio",
+      "riesgo": "critical",
+      "canal": "mcp_local",
+      "herramienta": "playlist_delete",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "playlistId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Herramienta de borrado → LibraryViewModel.deletePlaylist",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 43,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "playlistId → lista eliminada, archivos conservados",
+      "requisitos": "Confirmación explícita del asistente; modo escritura remoto puede pedir confirmación en pantalla",
+      "ejemplosEs": [
+        "Elimina la lista Gimnasio"
+      ],
+      "ambiguedad": "Aclarar que son listas y pedir aprobación antes de borrar.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 43,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
+          "linea": 123,
+          "revision": "codex/inventario-intenciones"
+        }
+      ]
+    },
+    {
+      "id": "stone.playlist.set_cover",
+      "area": "Listas, letras y metadatos",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Opciones de portada de tarjeta → selector local, guardar o restaurar en PlaylistCoverStore",
+      "firma": "playlistId,imagen? → portada personalizada o restaurada",
+      "requisitos": "Selector Android; lista/colección identificada",
+      "ejemplosEs": [
+        "Cambia la portada de Gimnasio"
+      ],
+      "ambiguedad": "Pedir imagen y diferenciar de portada de canción.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 105,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/PlaylistLibrary.kt",
+          "linea": 75,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/user/PlaylistCoverStore.kt",
+          "linea": 13,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.library.lyrics",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "library_lyrics",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Botón letras/gesto desde abajo, hoja sincronizada; lectura MCP desde pista",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 185,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "songId → letra guardada o vacía",
+      "requisitos": "Pista seleccionada; mostrar hoja es navegación",
+      "ejemplosEs": [
+        "Muéstrame la letra de la canción actual"
+      ],
+      "ambiguedad": "Preguntar si quiere buscar en línea cuando falta.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/CompactPlayerControls.kt",
+          "linea": 68,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 103,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 59,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 185,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.metadata.search_lyrics",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "metadata_search_lyrics",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Búsqueda automática LRCLIB y navegador web de letras; lista de coincidencias",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLibraryEditActions.kt",
+        "linea": 34,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "songId,limit? → candidatos y confianza",
+      "requisitos": "Internet y pista resuelta; navegación web es UI",
+      "ejemplosEs": [
+        "Busca la letra de esta canción"
+      ],
+      "ambiguedad": "Elegir versión/idioma cuando hay varias.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 123,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 105,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLibraryEditActions.kt",
+          "linea": 34,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.metadata.set_lyrics",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_set_lyrics",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "lyrics",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Editor de letra, pegar/guardar desde hoja → LyricsOverrides y permisos para incrustar",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 94,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "songId,lyrics,dryRun? → letra local y resultado de escritura",
+      "requisitos": "Confirmación según política y MediaStore si toca archivo",
+      "ejemplosEs": [
+        "Guarda esta letra en esta canción"
+      ],
+      "ambiguedad": "No sustituir ni borrar sin confirmación.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 92,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 133,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+          "linea": 94,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.metadata.get",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "metadata_get",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Editor de etiquetas precarga datos; tool retorna etiquetas de canción/video",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 60,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "songId → etiquetas y datos disponibles",
+      "requisitos": "Pista identificada",
+      "ejemplosEs": [
+        "Lee los datos de esta canción"
+      ],
+      "ambiguedad": "Aclarar título, archivo u otra pista.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/tags/AudioTagEditorSheet.kt",
+          "linea": 47,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/tags/VideoTagEditorSheet.kt",
+          "linea": 44,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+          "linea": 60,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.metadata.update",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_update",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Editar etiquetas/portada vía editor visible y Android MediaWriteGate; MCP ofrece variante por URL de portada",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 73,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "songId,tags?,coverUrl?,dryRun? → edición o respaldo",
+      "requisitos": "Confirmación de edición, permiso Android cuando aplique, red solo para URL autorizada",
+      "ejemplosEs": [
+        "Cambia el artista de esta canción a Halsey"
+      ],
+      "ambiguedad": "Aclarar si se cambia etiqueta, nombre del archivo o portada.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/tags/AudioTagEditorSheet.kt",
+          "linea": 47,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/tags/VideoTagEditorSheet.kt",
+          "linea": 44,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/tags/MediaWriteGate.kt",
+          "linea": 19,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+          "linea": 73,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.metadata.undo",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_undo",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "backupId",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "batchId",
+          "tipo": "string",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Sin botón análogo localizado; MCP usa diario de respaldo para restaurar",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 119,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Listas, letras y metadatos",
+      "luna": "mcp",
+      "firma": "backupId? o batchId? → restauración de cambios",
+      "requisitos": "Respaldo disponible; confirmar alcance y permiso de escritura",
+      "ejemplosEs": [
+        "Deshaz el último cambio de etiquetas"
+      ],
+      "ambiguedad": "No mezclar con restaurar un archivo borrado.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/tags/EditJournal.kt",
+          "linea": 41,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+          "linea": 119,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.equalizer.get",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "equalizer_get",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Hoja y lectura de configuración, bandas y preset",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 102,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "sin argumentos → estado guardado y bandas",
+      "requisitos": "Host disponible; verificar efecto físico por ruta de audio",
+      "ejemplosEs": [
+        "¿Está activo el ecualizador de Stone?"
+      ],
+      "ambiguedad": "Distinguir configuración y efecto de audio real.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 189,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 102,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.equalizer.set_enabled",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "equalizer_set_enabled",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "enabled",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Switch y botón desactivar → setEqualizerEnabled; se guarda preferencia",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 104,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "enabled → configuración nueva; modo batería suspende efecto",
+      "requisitos": "Efecto Android/ruta compatible; saber el modo de audio",
+      "ejemplosEs": [
+        "Activa el ecualizador"
+      ],
+      "ambiguedad": "Preguntar activar/desactivar si no se dijo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 243,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 254,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 437,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 104,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.equalizer.set_by_genre",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "equalizer_set_by_genre",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "enabled",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Switch por género → setEqualizerByGenre",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 131,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "enabled → preset por género",
+      "requisitos": "Etiqueta válida o conserva curva personal",
+      "ejemplosEs": [
+        "Usa el ecualizador por género"
+      ],
+      "ambiguedad": "Distinguir de un preset fijo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 251,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 131,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.equalizer.set_band",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "equalizer_set_band",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "band",
+          "tipo": "integer",
+          "requerido": true
+        },
+        {
+          "nombre": "value",
+          "tipo": "integer",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Tap y arrastre vertical de banda → setEqualizerBand",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 108,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "index,value → banda guardada",
+      "requisitos": "Identificar frecuencia y nivel -10 a 10",
+      "ejemplosEs": [
+        "Sube la banda de 63 Hz a 3"
+      ],
+      "ambiguedad": "Pedir frecuencia o cantidad si falta.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 306,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
+          "linea": 485,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 108,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.equalizer.set_preset",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "equalizer_set_preset",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "preset",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Selección de preset → setEqualizerPreset",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 126,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "preset → curva activa/guardada",
+      "requisitos": "Preset existente; modo de audio",
+      "ejemplosEs": [
+        "Pon el preset Rock"
+      ],
+      "ambiguedad": "Preguntar nombre cuando hay variantes.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 277,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 126,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.get",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "appearance_get",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Consulta tema, colores, escalas, nombre interno, forma de portada, icono predefinido e idioma",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 20,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "sin argumentos → claves/configuración; sin imágenes ni URI de fondo/avatar",
+      "requisitos": "Host para idioma/tema",
+      "ejemplosEs": [
+        "¿Qué tema y qué icono tiene Stone?"
+      ],
+      "ambiguedad": "Aclarar si se refiere al acceso personalizado o al icono normal.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 33,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 20,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.set_theme",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "appearance_set_theme",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "theme",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Temas en Ajustes → StoneApp.onTheme; guarda el preset global",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 33,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "theme → nuevo tema predefinido",
+      "requisitos": "Clave válida",
+      "ejemplosEs": [
+        "Pon el tema oscuro de Stone"
+      ],
+      "ambiguedad": "Pedir opción si «pon la imagen» se refiere al fondo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsScreens.kt",
+          "linea": 103,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 95,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 33,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.set_look",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "appearance_set_look",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "accent",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "accentHex",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "textColor",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "iconColor",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "fontScale",
+          "tipo": "number",
+          "requerido": false
+        },
+        {
+          "nombre": "iconScale",
+          "tipo": "number",
+          "requerido": false
+        },
+        {
+          "nombre": "appTitle",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "songLayout",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "launcherIcon",
+          "tipo": "string",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Paleta/swatch, escalas, nombre interno de 30 caracteres e icono predefinido → StoneLook.save / LauncherIcon.apply",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 41,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "accent/hex,textColor,iconColor,fontScale,iconScale,appTitle,songLayout,launcherIcon → valores parciales",
+      "requisitos": "Opciones del tema/launcher; etiqueta declarada del paquete permanece",
+      "ejemplosEs": [
+        "Llama a Stone «Mi música» dentro de la app"
+      ],
+      "ambiguedad": "Distinguir texto interno de etiqueta Android y acceso personalizado.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 46,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 53,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 57,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 66,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 70,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 89,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 94,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 41,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.set_font_style",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "appearance_set_font_style",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "style",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Selector de letra cursiva/recta → StoneLook.fontStyle",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 55,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "style → roman o italic",
+      "requisitos": "Selección válida",
+      "ejemplosEs": [
+        "Pon la letra de Stone en cursiva"
+      ],
+      "ambiguedad": "Distinguir estilo de texto de letra de canción.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 68,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 55,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.set_artwork_shape",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "appearance_set_artwork_shape",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "shape",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Selector de forma de portada → StoneLook.artworkShape",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 59,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "shape → round_spin, square, round o fullscreen",
+      "requisitos": "Reproductor para verlo",
+      "ejemplosEs": [
+        "Pon la portada redonda sin girar"
+      ],
+      "ambiguedad": "Distinguir forma de imagen o portada incrustada.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 73,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookArtworkShape.kt",
+          "linea": 29,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 59,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.set_background_image",
+      "area": "Ecualizador y aspecto",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Buscar/quitar imagen y editor de geometría → LookImages.save y StoneLook",
+      "firma": "imagen elegida?,encuadre? → fondo y persistencia",
+      "requisitos": "Selector Android para imagen nueva; sin setter/archivo por MCP actual",
+      "ejemplosEs": [
+        "Usa esta foto como fondo de Stone"
+      ],
+      "ambiguedad": "Identificar imagen y pedir quita/cambia/encuadra.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 36,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 76,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookBackgroundEditor.kt",
+          "linea": 34,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/persistence/LookImages.kt",
+          "linea": 13,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.appearance.set_avatar_image",
+      "area": "Ecualizador y aspecto",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Selector/quitar avatar interno → copia privada y StoneLook",
+      "firma": "imagen elegida? → avatar interno guardado",
+      "requisitos": "Consentimiento del selector; sin herramienta MCP de imagen propia",
+      "ejemplosEs": [
+        "Cambia el avatar de Stone"
+      ],
+      "ambiguedad": "Distinguir avatar del icono de inicio.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 40,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 83,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/components/StoneAvatar.kt",
+          "linea": 12,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.appearance.pin_custom_shortcut",
+      "area": "Ecualizador y aspecto",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Botón Crear acceso usa nombre interno y avatar o icono predefinido → ShortcutManagerCompat",
+      "firma": "nombre/avatar configurados → solicitud de anclar acceso",
+      "requisitos": "Launcher admite accesos fijados y puede pedir confirmación",
+      "ejemplosEs": [
+        "Pon un acceso de Stone con mi foto"
+      ],
+      "ambiguedad": "No prometer reemplazar nombre del paquete ni icono de todos los launchers.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 97,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 110,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.appearance.reset_look",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "appearance_reset_look",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Botón restablecer → StoneLook.reset; MCP resetDefaults",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 64,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Ecualizador y aspecto",
+      "luna": "mcp",
+      "firma": "sin argumentos → valores personalizados por defecto",
+      "requisitos": "Confirmación de Luna si hay personalización que perder",
+      "ejemplosEs": [
+        "Restablece el aspecto de Stone"
+      ],
+      "ambiguedad": "Distinguir aspecto, tema y borrado de datos.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/look/LookSettings.kt",
+          "linea": 104,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 64,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.appearance.visual_only",
+      "area": "Ecualizador y aspecto",
+      "tipo": "visual",
+      "luna": "no_aplica",
+      "descripcion": "Fondo degradado, paleta sugerida, avatar renderizado, badges de letras, animación de portada y mini progreso",
+      "firma": "sin operación invocable → render del estado",
+      "requisitos": "Estado local/tema",
+      "ejemplosEs": [],
+      "ambiguedad": "Si pide cambiar un valor, usar la acción subyacente.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/theme/StoneBackdrop.kt",
+          "linea": 21,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/components/StoneArtwork.kt",
+          "linea": 16,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 8,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/QueueSheet.kt",
+          "linea": 211,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerArtwork.kt",
+          "linea": 30,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/MiniPlayer.kt",
+          "linea": 77,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.video.get",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "video_get",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Consulta ajuste de escala y opciones",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 138,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "sin argumentos → scale,opciones",
+      "requisitos": "Host disponible",
+      "ejemplosEs": [
+        "¿Cómo está ajustada la imagen de video?"
+      ],
+      "ambiguedad": "Distinguir escala de brillo y zoom temporal.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 138,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoPreferences.kt",
+          "linea": 16,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.video.set_scale",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "video_set_scale",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "scale",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Opciones de video → guardar escala y actualizar renderer",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 143,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "scale → auto,fit,zoom,fill",
+      "requisitos": "Pantalla para ver cambio; clave válida",
+      "ejemplosEs": [
+        "Ajusta el video completo sin recortarlo"
+      ],
+      "ambiguedad": "Pedir si quiere rellenar o conservar proporción.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoOptionsSheet.kt",
+          "linea": 47,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 263,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 143,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.video.set_brightness",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "video_set_brightness",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "percent",
+          "tipo": "integer",
+          "requerido": false
+        },
+        {
+          "nombre": "auto",
+          "tipo": "boolean",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Slider o gesto izquierdo → brillo de ventana, no brillo global del teléfono",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 147,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "percent?,auto? → brillo de Stone o seguir sistema",
+      "requisitos": "Ventana visible",
+      "ejemplosEs": [
+        "Baja el brillo del video al 30 por ciento"
+      ],
+      "ambiguedad": "Distinguir volumen de brillo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoGestures.kt",
+          "linea": 215,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoSidePanels.kt",
+          "linea": 53,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 147,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.video.set_orientation",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "video_set_orientation",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "orientation",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Controles en modo video y host → orientación solicitada",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 158,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "orientation → portrait,landscape,auto",
+      "requisitos": "Activity visible; Android puede imponer rotación",
+      "ejemplosEs": [
+        "Pon Stone en horizontal"
+      ],
+      "ambiguedad": "Preguntar si se refiere a rotación del video o app.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoOptionsSheet.kt",
+          "linea": 47,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
+          "linea": 128,
+          "revision": "codex/inventario-intenciones"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+          "linea": 158,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.video.gestures_and_pip",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Controles visibles, gestos, selección audio solo/PiP y ajustes de acciones de video",
+      "firma": "acción/gesto → chrome, PiP o reproducción solo audio",
+      "requisitos": "Video en ejecución; API/ajuste Android para PiP",
+      "ejemplosEs": [
+        "Pon el video en ventana flotante"
+      ],
+      "ambiguedad": "Aclarar PiP, segundo plano de audio o pantalla completa.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/VideoGestures.kt",
+          "linea": 90,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/PlayerScreen.kt",
+          "linea": 113,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/VideoControlSettings.kt",
+          "linea": 72,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/LandscapeVideoChrome.kt",
+          "linea": 51,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/video/PortraitVideoChrome.kt",
+          "linea": 44,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.settings.get",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "settings_get",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Consulta transiciones, aceleración, perfil, alertas, widget e indicadores expuestos",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 75,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "sin argumentos → configuración expuesta",
+      "requisitos": "Host para perfil, no requiere pantalla para los valores almacenados",
+      "ejemplosEs": [
+        "¿Qué ajustes de reproducción tiene Stone?"
+      ],
+      "ambiguedad": "Pedir apartado si el resultado sería largo.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsScreens.kt",
+          "linea": 44,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 75,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.settings.set_audio_mode",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "settings_set_audio_mode",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "mode",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Ajustes de reproducción y accesos rápidos → perfil de audio",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 70,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "mode → battery,balanced,hifi,sleepy,custom",
+      "requisitos": "Perfil puede suspender EQ o modificar techo de audio",
+      "ejemplosEs": [
+        "Cambia Stone a modo ahorro"
+      ],
+      "ambiguedad": "Aclarar si quiere temporizador o perfil de batería.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsPlaybackDetails.kt",
+          "linea": 26,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 145,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+          "linea": 70,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.audio.set_level",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "audio_set_level",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "mode",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "maxPercent",
+          "tipo": "integer",
+          "requerido": false
+        },
+        {
+          "nombre": "gainPercent",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Sliders y restablecimiento de ganancia/techo, almacenados por perfil",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 57,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "mode,maxPercent?,gain? → niveles del perfil",
+      "requisitos": "Confirmar amplificación solicitada",
+      "ejemplosEs": [
+        "Ajusta el límite del modo Cine"
+      ],
+      "ambiguedad": "Distinguir techo de nivel actual; pedir valor.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/AudioLevelSettings.kt",
+          "linea": 50,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 57,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.settings.set_transitions",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "settings_set_transitions",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "gapless",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "crossfade",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "crossfadeSeconds",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Pantalla transiciones → gapless/crossfade y tiempos",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 87,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "gapless?,crossfadeSeconds? y otros del esquema → ajustes",
+      "requisitos": "Perfil y motor; opciones pueden afectar próxima transición",
+      "ejemplosEs": [
+        "Pon fundido entre canciones"
+      ],
+      "ambiguedad": "Pedir duración si es relevante.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/TransitionSettings.kt",
+          "linea": 19,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 87,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.settings.set_option",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "settings_set_option",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "option",
+          "tipo": "string",
+          "requerido": true
+        },
+        {
+          "nombre": "enabled",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Ajustes binarios que el tool lista, como reescaneo y aviso de archivos",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 109,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "luna": "mcp",
+      "firma": "option,enabled → ajuste guardado",
+      "requisitos": "Permiso POST_NOTIFICATIONS antes de esperar avisos; verificar si requiere abrir Stone",
+      "ejemplosEs": [
+        "Activa avisos de canciones nuevas"
+      ],
+      "ambiguedad": "Distinguir avisos, recordatorio y notificación de reproducción.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/LibraryScanSettings.kt",
+          "linea": 24,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/NotificationSettings.kt",
+          "linea": 28,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+          "linea": 109,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ]
+    },
+    {
+      "id": "stone.notifications.schedule",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Horarios/días de recordatorio o resumen → NotificationScheduler y NotificationAlarmReceiver",
+      "firma": "tipo,fecha/hora → alarma programada",
+      "requisitos": "POST_NOTIFICATIONS; Android decide entrega y exactitud",
+      "ejemplosEs": [
+        "Pon un recordatorio de música a las ocho"
+      ],
+      "ambiguedad": "Pedir horario/tipo; distinguir temporizador de audio.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/NotificationSettings.kt",
+          "linea": 30,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/NotificationSettings.kt",
+          "linea": 76,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/notifications/NotificationScheduler.kt",
+          "linea": 28,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.settings.pin_widget",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Botón de widget → solicitud a AppWidgetManager y confirmación launcher",
+      "firma": "sin argumentos → solicitud; no garantiza que se ancló",
+      "requisitos": "Launcher compatible y aprobación del usuario",
+      "ejemplosEs": [
+        "Añade el widget de Stone"
+      ],
+      "ambiguedad": "No confundir con fijar el acceso personalizado.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/WidgetSettings.kt",
+          "linea": 51,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StoneWidgetProvider.kt",
+          "linea": 26,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.settings.onboarding_access",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Primera ejecución cambia idioma y solicita permiso multimedia Android",
+      "firma": "idioma y decisión Android → biblioteca accesible",
+      "requisitos": "Pantalla; elección del usuario",
+      "ejemplosEs": [
+        "Abre los permisos de biblioteca"
+      ],
+      "ambiguedad": "Nunca conceder permisos automáticamente.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/onboarding/OnboardingScreen.kt",
+          "linea": 43,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/onboarding/OnboardingScreen.kt",
+          "linea": 62,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/LibraryScanSettings.kt",
+          "linea": 38,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.settings.diagnostics_and_feedback",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Menús de diagnóstico/legal/feedback, agitar, adjuntar captura y selector de compartir",
+      "firma": "sección/adjunto → vista o borrador",
+      "requisitos": "UI y consentimiento para compartir contenido del teléfono",
+      "ejemplosEs": [
+        "Abre diagnóstico de Stone"
+      ],
+      "ambiguedad": "Preguntar qué reporte y a quién antes de compartir.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsScreens.kt",
+          "linea": 198,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 178,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/feedback/FeedbackReport.kt",
+          "linea": 44,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SystemDiagnosticsDetail.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/feedback/CrashReportCard.kt",
+          "linea": 22,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.settings.quick_actions",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Editar accesos rápidos de Inicio → guardar orden y botones visibles",
+      "firma": "ids,orden → accesos visibles",
+      "requisitos": "Pantalla de ajustes; no ejecutar la operación al reordenar acceso",
+      "ejemplosEs": [
+        "Mueve Ecualizador arriba entre los atajos"
+      ],
+      "ambiguedad": "Aclarar cuál botón y posición.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/settings/SettingsShortcutsDetail.kt",
+          "linea": 39,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/LibraryScreen.kt",
+          "linea": 145,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/QuickActions.kt",
+          "linea": 11,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.player.set_ringtone",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "cambio",
+      "luna": "adaptacion",
+      "descripcion": "Menú de pista y hoja Tono → elige recorte e intenta guardar/aplicar tono",
+      "firma": "songId,inicio → tono o permiso de Android",
+      "requisitos": "Pista compatible, escritura MediaStore/ajustes según Android; confirmación del usuario",
+      "ejemplosEs": [
+        "Usa esta canción como tono de llamada"
+      ],
+      "ambiguedad": "Pedir punto de inicio y confirmar cambio de sistema.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerSheetsHost.kt",
+          "linea": 66,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 342,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/sheets/PlayerToolsSheets.kt",
+          "linea": 351,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.library.select_tracks",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Pulsación larga, seleccionar todo, editar o salir; las acciones reciben la selección",
+      "firma": "ids → selección de UI",
+      "requisitos": "Pantalla de biblioteca y colección abierta",
+      "ejemplosEs": [
+        "Selecciona estas tres pistas"
+      ],
+      "ambiguedad": "Pedir cuáles y evitar ejecutar acciones posteriores sin orden.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibrarySelection.kt",
+          "linea": 26,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibrarySelection.kt",
+          "linea": 33,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/components/LibraryContent.kt",
+          "linea": 32,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/library/video/VideoSelection.kt",
+          "linea": 25,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.lyrics.toggle_autoscroll",
+      "area": "Vídeo, ajustes del sistema y notificaciones",
+      "tipo": "ui",
+      "luna": "adaptacion",
+      "descripcion": "Botón de seguimiento en letras y tap de línea sincronizada → autoScroll en hoja",
+      "firma": "enabled → seguimiento visual de letra",
+      "requisitos": "Hoja abierta y letra sincronizada",
+      "ejemplosEs": [
+        "Haz que la letra siga la canción"
+      ],
+      "ambiguedad": "Distinguir sincronizar pantalla de editar letra.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 206,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        },
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/feature/player/lyrics/LyricsSheet.kt",
+          "linea": 175,
+          "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+        }
+      ],
+      "invocable": false
+    },
+    {
+      "id": "stone.metadata.update_many",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_update_many",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "changes",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Edit many songs/videos in one call (rename videos, fix an album or artist  everywhere…). Android asks at most once for the whole batch. 'changes' is a JSON array of objects with songId  plus any field of metadata_update. Returns a summary with progress per item and a batchId for metadata_undo.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 86,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.set_lyrics_many",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_set_lyrics_many",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "changes",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Save lyrics for many songs at once. 'changes' is a JSON array of  {songId, lyrics} (empty lyrics deletes). Backed up as one batch.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 103,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.history",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "metadata_history",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Recent edits made through the API, newest first, with their backupId and batchId.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMetadataActions.kt",
+        "linea": 111,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.appearance.set_accent",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "appearance_set_accent",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "accent",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Change the accent colour used for highlights (a preset key).",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 37,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.settings.set_language",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "settings_set_language",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "language",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Change the app language.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLookActions.kt",
+        "linea": 66,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.player.play_songs",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_play_songs",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Play a custom list of songs in the given order (this replaces the queue).",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 80,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.player.set_favorite",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "player_set_favorite",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "favorite",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Mark or unmark the song that is playing as favourite.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 94,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.equalizer.set_bands",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "equalizer_set_bands",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "values",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Set ALL ten equalizer bars at once, from 31 Hz to 16 kHz. Turns the equalizer on.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
+        "linea": 117,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.activity",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "stone_activity",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "onlyErrors",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "tool",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "token",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Your own recent calls (kept after Stone closes), newest first, with  status and error code; other agents' calls are not shown. Use onlyErrors=true to see what failed and why.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneAgentActions.kt",
+        "linea": 12,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.metrics",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "stone_metrics",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "How the MCP server and its internet link are working since Stone started: requests  per route, HTTP status, JSON-RPC methods, calls per tool, latency and queue-wait buckets, relay reconnections,  timeouts (504), work refused because it waited too long, and repeated changes answered from the first result.  Totals for all agents; contains no tokens, addresses or arguments.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneAgentActions.kt",
+        "linea": 22,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.troubleshoot",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "stone_troubleshoot",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "code",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "query",
+          "tipo": "string",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Dictionary of solutions: what an error code means and the steps that fix it,  plus recommended workflows (WORKFLOW_LYRICS, WORKFLOW_GENRES, WORKFLOW_BULK). Call it when a tool returns  an error, before retrying.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneAgentActions.kt",
+        "linea": 28,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.job_status",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "stone_job_status",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "jobId",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "since",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Progress of a background job: status (running, waiting, paused, done,  cancelled), done/total, percent, a result per song and the songs left. Without jobId lists recent jobs.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneAgentActions.kt",
+        "linea": 35,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.job_resume",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "stone_job_resume",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Continue a paused or cancelled job from the first song not done yet.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneAgentActions.kt",
+        "linea": 42,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.job_cancel",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "stone_job_cancel",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Stop a background job; songs already done keep their changes (metadata_undo  with its batchId reverts them).",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneAgentActions.kt",
+        "linea": 44,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.stone.help",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "stone_help",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "query",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "category",
+          "tipo": "string",
+          "requerido": false
+        }
+      ],
+      "descripcion": "START HERE if unsure. Lists Stone's tools by category or finds them by intention  (e.g. query \\\"equalizer\\\", \\\"brightness\\\", \\\"queue\\\"). Returns names, parameters and the usual workflow.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneGuide.kt",
+        "linea": 53,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.suggest_tags_many",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_suggest_tags_many",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "onlyMissing",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "fields",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "minConfidence",
+          "tipo": "number",
+          "requerido": false
+        },
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Look many songs up in iTunes (paced to avoid HTTP 429) and fill in  tags. dryRun=true only returns the best suggestion per song with its confidence. Without dryRun it writes  'fields' (default genre) only where confidence >= minConfidence; the others come back with needsReview=true.  Up to ${StoneJobs.SYNC_LIMIT} songs answer directly; more run as a background job (jobId). Backed up as one batch.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneBulkActions.kt",
+        "linea": 17,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.prepare_write",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "metadata_prepare_write",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Ask Android ONCE for permission to write many files before a bulk edit  (tags, lyrics inside the file). Without songIds it takes every song (kind/query filter). Stone must be open;  the user approves on the phone. Returns how many files are writable now.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneBulkActions.kt",
+        "linea": 64,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.audio.get_levels",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "audio_get_levels",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Volume ceiling (maxPercent) and software gain of each audio mode, and the active mode.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 50,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.audio.reset_levels",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "audio_reset_levels",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [],
+      "descripcion": "Restore the default level of every audio mode.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 71,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.settings.set_hardware_acceleration",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "settings_set_hardware_acceleration",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "mode",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Hardware decoding policy for audio and video.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 101,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.settings.set_play_with_others",
+      "tipo": "cambio",
+      "riesgo": "reversible",
+      "canal": "mcp_local",
+      "herramienta": "settings_set_play_with_others",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "enabled",
+          "tipo": "boolean",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Keep playing when another app plays sound (true) or pause (false).",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneSettingsActions.kt",
+        "linea": 105,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.fetch_lyrics",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_fetch_lyrics",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "choices",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "minConfidence",
+          "tipo": "number",
+          "requerido": false
+        },
+        {
+          "nombre": "overwrite",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Find lyrics on lrclib.net for many songs, match each result to the right song  (title, artist, duration → confidence) and save the confident ones in one batch. Results below minConfidence  are not saved: they come back as LOW_CONFIDENCE with candidates; save the right ones with 'choices'.  Without songIds it takes songs that have no lyrics yet. Lyrics also go inside writable files (embeddedInFile).  Up to ${StoneJobs.SYNC_LIMIT} songs answer directly; more run as a background job (jobId). Backed up: metadata_undo reverts it.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLibraryEditActions.kt",
+        "linea": 48,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.suggest_tags",
+      "tipo": "consulta",
+      "riesgo": "read",
+      "canal": "mcp_local",
+      "herramienta": "metadata_suggest_tags",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songId",
+          "tipo": "string",
+          "requerido": true
+        }
+      ],
+      "descripcion": "Look a song up in the public iTunes catalogue and return possible tags  (title, artist, album, genre, year, coverUrl) with a confidence 0-1. Apply one with metadata_update.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLibraryEditActions.kt",
+        "linea": 95,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    },
+    {
+      "id": "stone.metadata.rename",
+      "tipo": "cambio",
+      "riesgo": "persistent",
+      "canal": "mcp_local",
+      "herramienta": "metadata_rename",
+      "esquemaAutoritativo": "tools/list",
+      "parametros": [
+        {
+          "nombre": "songIds",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "field",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "template",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "clean",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "stripExtras",
+          "tipo": "boolean",
+          "requerido": false
+        },
+        {
+          "nombre": "find",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "replace",
+          "tipo": "string",
+          "requerido": false
+        },
+        {
+          "nombre": "startIndex",
+          "tipo": "integer",
+          "requerido": false
+        },
+        {
+          "nombre": "limit",
+          "tipo": "integer",
+          "requerido": false
+        }
+      ],
+      "descripcion": "Rename many songs or videos at once with a template and/or clean-up. Template  placeholders: {title} {artist} {album} {file} (file name) {date} {n} {n:2} (counter). 'clean' removes technical  noise (underscores, extensions, [1080p], x264, YouTube ids…). Optional regex find/replace. Use dryRun first.",
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneLibraryEditActions.kt",
+        "linea": 108,
+        "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
+      },
+      "luna": "mcp_sin_frase_validada",
+      "controles": [],
+      "requisitos": "Consultar esquema y disponibilidad a través del proveedor local. Las escrituras pueden requerir confirmación."
+    }
+  ]
+}

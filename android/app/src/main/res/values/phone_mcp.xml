@@ -43,7 +43,7 @@
         <item quantity="many">%1$d apps cambiadas.</item>
         <item quantity="other">%1$d apps cambiadas.</item>
     </plurals>
-    <!-- Reglas de sentimientos (Examples.kt): shown only in RS, not in MCP. -->
+    <!-- Ejemplos del mapa de reconocimiento de intenciones. -->
     <plurals name="phone_mcp_rules_total">
         <item quantity="one">%1$d regla en total · %2$d las hace Lucía sin ninguna app</item>
         <item quantity="many">%1$d reglas en total · %2$d las hace Lucía sin ninguna app</item>
@@ -51,7 +51,7 @@
     </plurals>
     <string name="phone_mcp_rules_hide">Ocultar</string>
     <string name="phone_mcp_rule_asks">pregunta antes</string>
-    <!-- «RS» (Reconocimiento de intenciones): its own page in the side menu. -->
+    <!-- Pantalla de reconocimiento de intenciones en el menú lateral. -->
     <string name="rs_menu">Reconocimiento de intenciones</string>
     <string name="rs_title">Reconocimiento de intenciones</string>
     <string name="rs_intro">Todo lo que las reglas de Lucía entienden: la frase, lo que hace y si pregunta antes. Con el intérprete «Reconocimiento de intenciones», el modelo convierte lo que dices en una de estas reglas.</string>
