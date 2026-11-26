@@ -1,0 +1,21 @@
+<resources>
+    <string name="intent_like">Me gusta</string>
+    <string name="intent_dislike">No me gusta</string>
+    <string name="intent_wrong">Qué hizo mal</string>
+    <string name="intent_expected">Qué esperabas</string>
+    <string name="intent_save">Guardar</string>
+    <string name="intent_save_failed">No se pudo guardar el feedback en este teléfono.</string>
+    <string name="intent_share">Compartir feedback con mi Hub</string>
+    <string name="intent_share_details">Si lo activas, Arka enviará tus votos y correcciones pendientes al Hub de tu sesión, junto con la frase original, la interpretación y el resultado. Puedes desactivarlo en cualquier momento. Si cambias de Hub, vuelve a activar el envío en estos ajustes.</string>
+    <string name="intent_alias_choose">Asociar «%1$s» a un contacto</string>
+    <string name="intent_aliases">Alias de contactos</string>
+    <string name="intent_alias_empty">Puedes elegir un contacto al corregir una acción de llamada.</string>
+    <string name="intent_alias_edit">Cambiar</string>
+    <string name="intent_alias_remove">Quitar</string>
+    <string name="intent_alias_failed">No pude guardar ese contacto. Intenta elegir un número en Contactos.</string>
+    <string name="intent_alias_saved">Alias guardado en este teléfono.</string>
+    <string name="intent_done">Listo</string>
+    <string name="intent_plan_question">¿Ejecuto estas acciones?</string>
+    <string name="intent_play_current_volume">Reproducir al volumen actual</string>
+    <string name="intent_ambiguous_contact">Hay varios contactos para «%1$s». Dime el nombre completo o escribe el número.</string>
+</resources>

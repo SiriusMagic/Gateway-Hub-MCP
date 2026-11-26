@@ -98,7 +98,7 @@ internal object QuickOrders {
                 }
                 index = match.range.last + 1
             }
-            mapOf("calculation" to (sum + term).stripTrailingZeros().toPlainString())
+            mapOf("expression" to parts, "calculation" to (sum + term).stripTrailingZeros().toPlainString())
         } catch (_: ArithmeticException) {
             mapOf("math_error" to "division_by_zero")
         }

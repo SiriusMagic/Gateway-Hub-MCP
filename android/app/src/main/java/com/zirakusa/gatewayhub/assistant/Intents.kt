@@ -46,8 +46,23 @@ object Intents {
         // A message's text goes to someone else: always whole. A note may end where a clear order begins.
         if (first.action == Action.MESSAGE && first["text"] != null) return listOf(whole)
         if (first.action == Action.NOTE) return freeText(whole, parse)
-        val parts = whole.split(joints).map(::clean).filter(String::isNotBlank).flatMap { closedSequence(it, parse) }
-        return if (parts.size > 1 && parts.all { complete(parse(it)) }) parts else listOf(whole)
+        // Keep conjunctions inside a song title or its modifiers. Split only at a recognizable next action.
+        val boundaries = joints.findAll(whole).take(20).toList()
+        var from = 0
+        val parts = mutableListOf<String>()
+        for (joint in boundaries) {
+            val head = clean(whole.substring(from, joint.range.first))
+            val tail = clean(whole.substring(joint.range.last + 1))
+            val command = parse(head)
+            if (!complete(command) || !complete(parse(tail)) && !clearOrder.containsMatchIn(tail)) continue
+            if (command.action == Action.PLAY_MUSIC && !clearOrder.containsMatchIn(tail) &&
+                parse(tail).action in setOf(Action.PLAY_MUSIC, Action.OPEN)) continue
+            parts += head
+            from = joint.range.last + 1
+        }
+        parts += clean(whole.substring(from))
+        val orders = parts.flatMap { closedSequence(it, parse) }
+        return if (orders.size > 1 && orders.all { complete(parse(it)) }) orders else listOf(whole)
     }
 
     /**

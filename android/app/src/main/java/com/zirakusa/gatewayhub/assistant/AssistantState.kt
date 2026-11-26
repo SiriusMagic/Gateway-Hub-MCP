@@ -3,7 +3,7 @@ package com.zirakusa.gatewayhub.assistant
 import androidx.compose.runtime.getValue
 import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.assistant.local.LocalTurns
-import com.zirakusa.gatewayhub.assistant.local.StoneRequests
+import kotlinx.coroutines.runBlocking
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +33,13 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     }
 
     /** Orders said after one that asks «¿…?»: they run after the «sí». */
-    private var waiting = emptyList<String>()
+    private data class Waiting(val plan: IntentPlan, val from: Int)
+    private var waiting: Waiting? = null
+    private var musicPrompt: Turn? = null
+    private var musicUntil = 0L
+    internal var executeOrders: (suspend () -> Unit) -> Unit = { runBlocking { it() } }
+    internal var executing by mutableStateOf(false)
+        private set
     private var callNameUntil = 0L
     internal var local: LocalAssistant? = null
     internal var message: (Int) -> String = { "" }
@@ -73,95 +79,188 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     fun send(text: String, byVoice: Boolean) {
         val heard = text.trim()
         val assistant = local
-        if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
+        if (heard.isBlank() || proposal != null || executing || assistant?.busy == true || assistant?.pending != null) return
+        musicPrompt?.let { prompt ->
+            val choice = prompt.musicChoice ?: return@let
+            val number = Words.normalize(heard).toIntOrNull()
+            if (System.currentTimeMillis() <= musicUntil) {
+                if (choice.volumeBlocked && Intents.yes(heard)) return chooseMusic(prompt, 0)
+                if (!choice.volumeBlocked && number != null && number in 1..choice.options.size) return chooseMusic(prompt, number - 1)
+            }
+            musicPrompt = null
+        }
+
         val nameReply = last?.takeIf { askingCallName }
         callNameUntil = 0L
         if (nameReply != null && brain.commandFor(heard).action == Action.UNKNOWN) {
             PhoneSpeech.answerName(heard)?.let { name ->
                 val command = nameReply.command.copy(slots = nameReply.command.slots + ("who" to name))
-                complete(brain.handle(heard, byVoice, command))
+                val confirmedName = nameReply.evidence?.plan?.let { previous ->
+                    val steps = previous.steps.toMutableList()
+                    val index = nameReply.evidence?.step ?: 0
+                    steps[index] = IntentStep(steps[index].phrase, command)
+                    IntentEvidence(previous.copy(steps = steps), index)
+                }
+                finish(brain.handle(heard, byVoice, command).also { it.evidence = confirmedName })
                 return
             }
         }
-        // The orders left after a question: they go on only after «sí».
-        val after = waiting.also { waiting = emptyList() }.takeIf {
+
+        val after = waiting.also { waiting = null }?.takeIf {
             if (brain.askingToCall) Confirmation.callAnswer(heard) == true else brain.asking && Intents.yes(heard)
-        }.orEmpty()
+        }
+        if (brain.asking) {
+            val answer = if (brain.askingToCall) Confirmation.callAnswer(heard)
+                else if (Intents.yes(heard)) true else false.takeIf { Confirmation.no.matches(Words.normalize(heard)) }
+            if (answer != null) {
+                val order = brain.commandFor(heard)
+                val turn = brain.handle(heard, byVoice, order)
+                if (turn.reply.say == Say.NEED_CALL_PERMISSION) waiting = after
+                val original = last?.evidence
+                if (original != null && turn.command.action == original.plan.steps[original.step].command.action) turn.evidence = original
+                if (after != null && turn.reply.say != Say.NEED_CALL_PERMISSION) {
+                    complete(turn, speakIt = false)
+                    return runOrders { runSteps(after.plan, byVoice, after.from, listOf(turn.reply)) }
+                }
+                finish(turn)
+                return
+            }
+            brain.cancelQuestion()
+        }
+
+        val plan = IntentPlan.validated(heard, Intents.split(heard, brain::commandFor), brain::commandFor)
+        if (plan != null) return runAll(plan, byVoice)
+
         val mode = modeNow()
-        if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) {
-            brain.cancelOutgoingCall()
-            return
-        }
-        // Only the model: it understands everything; the rules only carry out its orders (and still ask «¿…?»).
-        if (mode == AnswerMode.MODEL && assistant != null && !brain.asking) {
-            localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders -> runAll(orders, byVoice) }
-            return
-        }
-        // «Llama a Luis y dime la hora»: each order in turn.
-        val plan = Intents.split(heard, brain::commandFor)
-        if (plan.size > 1) return runAll(plan, byVoice)
-        val command = brain.commandFor(plan[0]).takeIf { it.action != Action.UNKNOWN } ?: brain.commandFor(heard)
-        if (mode == AnswerMode.BOTH && assistant != null && StoneRequests.matches(heard, command)) {
-            brain.cancelOutgoingCall()
-            localTurns.stone(assistant, heard, heard, byVoice)
-            return
-        }
-        val turn = brain.handle(heard, byVoice, command)
-        if (turn.reply.say == Say.NEED_CALL_PERMISSION) {
-            waiting = after
-            complete(turn)
-        } else if (turn.reply.say == Say.NOT_UNDERSTOOD && mode == AnswerMode.BOTH && assistant != null) {
-            // The model says it in Lucía's own orders; only when there are none, it talks.
-            localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders -> runAll(orders, byVoice) }
-        } else if (after.isNotEmpty()) {
-            runAll(after, byVoice, first = turn)
-        } else {
-            complete(turn)
-        }
+        if (mode != AnswerMode.RULES && assistant != null) {
+            if (localTurns.route(assistant, heard, byVoice)) return
+            localTurns.interpret(assistant, heard, byVoice, interpreter, ::knows) { orders, source ->
+                val proposal = IntentPlan.validated(heard, orders, brain::commandFor, source) ?: return@interpret false
+                this.proposal = proposal
+                proposalByVoice = byVoice
+                true
+            }
+        } else finish(brain.handle(heard, byVoice))
     }
 
-    /** Whether the rules know [text] as an order. */
     private fun knows(text: String) = brain.commandFor(text).action != Action.UNKNOWN
 
-    /**
-     * Several orders, one after another, answered together. One that asks first («¿Borro la lista?») stops there: the
-     * rest waits for the «sí».
-     */
-    private fun runAll(orders: List<String>, byVoice: Boolean, first: Turn? = null) {
-        val replies = mutableListOf<Reply>()
-        first?.let { complete(it, speakIt = false); replies += it.reply }
-        for ((i, order) in orders.withIndex()) {
-            val turn = brain.handle(order, byVoice)
+    private fun runAll(plan: IntentPlan, byVoice: Boolean, from: Int = 0) = runOrders { runSteps(plan, byVoice, from) }
+
+    private suspend fun runSteps(plan: IntentPlan, byVoice: Boolean, from: Int, previous: List<Reply> = emptyList()) {
+        val replies = previous.toMutableList()
+        for (index in from until plan.steps.size) {
+            val step = plan.steps[index]
+            val turn = brain.execute(step.phrase, byVoice, step).also { it.evidence = IntentEvidence(plan, index) }
             complete(turn, speakIt = false)
             replies += turn.reply
             if (turn.reply.asksCallName) break
-            if (turn.reply.asksToCall || turn.reply.say in setOf(Say.CONFIRM, Say.NEED_CALL_PERMISSION)) {
-                waiting = orders.drop(i + 1)
+            if (turn.musicChoice != null || turn.reply.asksToCall || turn.reply.say in setOf(Say.CONFIRM, Say.NEED_CALL_PERMISSION)) {
+                waiting = Waiting(plan, index + 1)
                 break
             }
         }
         if (byVoice && voiceAnswers) speakAll(replies.filter { it.say != Say.COUNTING })
     }
 
+    internal fun chooseMusic(prompt: Turn, index: Int, cancel: Boolean = false) {
+        if (executing || prompt !== musicPrompt || System.currentTimeMillis() > musicUntil) return
+        val choice = prompt.musicChoice ?: return
+        val selected = choice.options.getOrNull(index)
+        if (!cancel && !choice.volumeBlocked && selected == null) return
+        val remaining = waiting
+        waiting = null
+        musicPrompt = null
+        runOrders {
+            val turn = if (cancel) prompt.copy(reply = Reply(Say.CANCELLED), ok = false)
+                else brain.music(prompt.heard, prompt.byVoice, prompt.command, selected, choice.volumeBlocked)
+            turn.evidence = prompt.evidence
+            finish(turn)
+            if (turn.musicChoice != null) waiting = remaining
+            else if (remaining != null && !cancel) runSteps(remaining.plan, prompt.byVoice, remaining.from)
+        }
+    }
+
+    private fun runOrders(work: suspend () -> Unit) {
+        executing = true
+        executeOrders {
+            try { work() } finally { executing = false }
+        }
+    }
+
+    internal var proposal by mutableStateOf<IntentPlan?>(null)
+        private set
+    private var proposalByVoice = false
+
+    internal fun confirmPlan(approved: Boolean) {
+        val plan = proposal ?: return
+        proposal = null
+        if (approved) runAll(plan, proposalByVoice)
+    }
+
+    private fun finish(turn: Turn) = complete(turn)
+
     internal fun retryContactPermission() {
         val request = last?.takeIf { it.reply.say == Say.NEED_CONTACTS } ?: return
-        complete(brain.handle(request.heard, request.byVoice, request.command))
+        complete(brain.handle(request.heard, request.byVoice, request.command).also { it.evidence = request.evidence })
     }
 
     internal fun finishCallPermission(granted: Boolean) {
         val turn = last?.takeIf { it.reply.say == Say.NEED_CALL_PERMISSION } ?: return
-        val rest = waiting.also { waiting = emptyList() }
+        val rest = waiting.also { waiting = null }
         val (reply, ok) = brain.finishCallPermission(granted) ?: return
-        turns = turns.dropLast(1) + turn.copy(reply = reply, ok = ok)
+        turns = turns.dropLast(1) + turn.copy(reply = reply, ok = ok).also { it.evidence = turn.evidence }
         if (turn.byVoice && voiceAnswers) speak(reply)
-        if (reply.say == Say.CALL_STARTED && rest.isNotEmpty()) runAll(rest, turn.byVoice)
+        last?.let { feedback?.save(it, feedbackText(it)) }
+        if (reply.say == Say.CALL_STARTED && rest != null) runAll(rest.plan, turn.byVoice, rest.from)
     }
 
     fun confirmHub(confirmed: Boolean) { local?.let { localTurns.confirm(it, confirmed) } }
 
     private fun complete(turn: Turn) = complete(turn, speakIt = true)
 
+    internal var feedback: IntentFeedback? = null
+    internal var feedbackText: (Turn) -> String = { it.reply.args.joinToString(" ") }
+    internal var correction by mutableStateOf<Turn?>(null)
+    internal var votes by mutableStateOf(emptyMap<String, IntentVote>())
+        private set
+    internal var feedbackFailed by mutableStateOf(false)
+        private set
+    internal var shareFeedback by mutableStateOf(false)
+    internal var editAliases by mutableStateOf(false)
+    internal var savedAliases by mutableStateOf(emptyList<String>())
+    internal var chooseContact: (String) -> Unit = {}
+    internal var contactNotice by mutableStateOf("")
+
+    internal fun vote(turn: Turn, opinion: IntentVote, wrong: String = "", expected: String = "") {
+        val id = turn.evidence?.id ?: return
+        if (feedback?.save(turn, feedbackText(turn), opinion, wrong, expected) != true) {
+            feedbackFailed = true
+            return
+        }
+        feedbackFailed = false
+        votes = votes + (id to opinion)
+    }
+
+    internal fun updateSharing(value: Boolean) {
+        shareFeedback = value
+        feedback?.share(value)
+    }
+
+    internal fun removeAlias(name: String) {
+        feedback?.putAlias(name, null)
+        savedAliases = feedback?.aliases().orEmpty()
+    }
+
     private fun complete(turn: Turn, speakIt: Boolean) {
+        if (turn.evidence == null && turn.reply.say !in setOf(Say.CONFIRM, Say.CANCELLED)) {
+            turn.evidence = IntentEvidence(IntentPlan(turn.heard, listOf(IntentStep(turn.heard, turn.command)), turn.modelSource), 0)
+        }
+        if (turn.evidence != null) feedback?.save(turn, feedbackText(turn))
+        if (turn.musicChoice != null) {
+            musicPrompt = turn
+            musicUntil = System.currentTimeMillis() + Brain.CONFIRM_MS
+        }
         turns = (turns + turn).takeLast(MAX)
         if (turn.reply.asksCallName) callNameUntil = System.currentTimeMillis() + Brain.CONFIRM_MS
         pulse++
@@ -193,8 +292,10 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
      */
     fun late(reply: Reply) {
         val t = turns.lastOrNull() ?: return
+        if (t.command.action == Action.PLAY_MUSIC && (t.command["query"] != null || t.command["equalizer"] != null)) return
         if (t.command.action !in setOf(Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA)) return
-        turns = turns.dropLast(1) + t.copy(reply = reply.copy(volume = t.reply.volume), ok = false)
+        turns = turns.dropLast(1) + t.copy(reply = reply.copy(volume = t.reply.volume), ok = false).also { it.evidence = t.evidence }
+        last?.let { feedback?.save(it, feedbackText(it)) }
         pulse++
         if (t.byVoice && voiceAnswers) speak(reply)
     }
@@ -205,8 +306,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     companion object { const val MAX = 40 }
 }
 
-/** Who understands what is said. RULES: Lucía's own rules (instant, offline, no model). MODEL: the local model reads
- * everything and turns it into her orders or talks. BOTH: the rules first, the model for what they miss. */
+/** Who understands what is said. RULES: Lucía's own rules (instant, offline, no model). MODEL: the local model interprets or chats after the local rules. BOTH: the rules first, the model for what they miss. */
 enum class AnswerMode { RULES, MODEL, BOTH; companion object { fun from(s: String?) = entries.firstOrNull { it.name == s } ?: BOTH } }
 
 /** How the model carries out what it understood. FEELINGS: as Lucía's own orders (her rules do them and ask «¿…?»).

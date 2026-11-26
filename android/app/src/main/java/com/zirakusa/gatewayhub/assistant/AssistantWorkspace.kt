@@ -45,7 +45,7 @@ internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
     CHAT(R.string.assistant_chat_tab, Icons.AutoMirrored.Filled.Chat),
     MODELS(R.string.local_models, Icons.Default.Apps),
     MCP(R.string.phone_mcp_title, Icons.Default.Hub),
-    /** «RS», Regla de Sentimiento: its own page, apart from MCP. */
+    /** Reconocimiento de intenciones: its own page, apart from MCP. */
     RS(R.string.rs_menu, Icons.Default.Psychology),
     SETTINGS(R.string.lucia_settings, Icons.Default.Settings),
     ADVANCED(R.string.assistant_advanced, Icons.Default.Settings)

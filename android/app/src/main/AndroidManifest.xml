@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Automatic linking (Redireccionar a Hub). Declared here too, so it exists whichever app is installed
          first; "signature" means only apps signed with the same key ever get it. -->

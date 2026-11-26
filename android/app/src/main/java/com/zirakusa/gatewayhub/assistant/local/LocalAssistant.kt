@@ -80,6 +80,11 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
      * What was said, as Lucía's own orders («llama a Luis», «qué hora es»): the model only rewrites, with her examples in
      * front of it; each order then goes through the rules, which still ask before changing anything. Empty: no order.
      */
+    internal fun source(promptVersion: String) = com.zirakusa.gatewayhub.assistant.ModelSource(
+        models.selected?.name ?: models.selectedLinked?.name ?: "local",
+        "${models.selected?.template ?: models.selectedLinked?.template ?: Template.entries.first()} / $promptVersion"
+    )
+
     internal suspend fun orders(query: String, understood: (String) -> Boolean): List<String> {
         val examples = com.zirakusa.gatewayhub.assistant.Examples.closest(query)
         val instruction = "Eres el traductor de órdenes de Lucía, una asistente en un teléfono Android. Convierte lo que pide " +

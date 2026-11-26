@@ -72,8 +72,8 @@ import kotlinx.coroutines.launch
                 PhoneMcpCard(row) { on -> scope.launch { phone?.setRemote(row.app, on); refresh++ } }
             }
         }
-        // «Sentimientos», one more app in the list (Lucía's rules), with the same card as the others.
-        item { SentimientosCard(openRs) }
+        // Reconocimiento de intenciones, one more app in the list (Lucía's rules), with the same card as the others.
+        item { IntentRecognitionCard(openRs) }
     }
 }
 
@@ -134,10 +134,10 @@ import kotlinx.coroutines.launch
 }
 
 /**
- * «Sentimientos» as one more app of «Apps de este teléfono», with the same card: «Abrir» opens RS (its rules). It has no
+ * Reconocimiento de intenciones as one more app of «Apps de este teléfono», with the same card: «Abrir» opens RS (its rules). It has no
  * MCP tools of its own yet, so «Herramientas» says so and what integration is missing; no tool is made up here.
  */
-@Composable private fun SentimientosCard(openRs: () -> Unit) {
+@Composable private fun IntentRecognitionCard(openRs: () -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     HubCard {
         Text(stringResource(R.string.interpreter_feelings), color = HubColors.Text, fontSize = 18.sp)
