@@ -127,23 +127,26 @@ class AllToolsTest {
             .put(JSONObject().put("id", "s2").put("title", "Persiana americana").put("artist", "Soda Stereo")))!!
         assertEquals("Pongo 2 canciones de «soda stereo», empezando por «De música ligera».", com.zirakusa.gatewayhub.assistant.MusicPick.say(artist, "soda stereo"))
         assertEquals(null, com.zirakusa.gatewayhub.assistant.MusicPick.pick("x", JSONArray()))
-        // Through Lucía: search, then play; with no tools (an old Stone) the standard order, as before.
+        // The assistant searches, plays only the requested ID and verifies the result.
         val apps = Apps(); val turn = Brain(apps).handle("reproducir música despacito")
         assertEquals("Suena «Despacito».", turn.reply.args[0]); assertTrue(turn.ok)
-        assertEquals("stone player_play_songs {\"songIds\":\"s9\"}", apps.asked.last())
+        assertTrue("stone player_play_songs {\"songIds\":\"s9\"}" in apps.asked)
+        assertTrue(apps.asked.last().startsWith("stone player_state"))
         assertTrue(apps.asked.any { it.startsWith("stone library_search") })
     }
 
     /** Apps answering on the phone, as their link channels do; [asked] keeps every call. */
     private class Apps : FakeHands() {
         val asked = mutableListOf<String>(); var captured = mutableListOf<Boolean>()
+        private var song = "s7"
         override fun now(): LocalDateTime = LocalDateTime.of(2026, 11, 24, 9, 0)
         override fun capture(selfie: Boolean) = captured.add(selfie)
         override fun tool(app: FamilyApp, name: String, args: JSONObject): JSONObject? {
             asked += "${app.id} $name $args"
             return when (name) {
                 "playlist_list" -> JSONObject().put("playlists", JSONArray().put(JSONObject().put("id", "p1").put("name", "Gym")))
-                "player_state" -> JSONObject().put("playing", true).put("title", "De música ligera").put("songId", "s7")
+                "player_state" -> JSONObject().put("playing", true).put("title", "De música ligera").put("songId", song)
+                "player_play_songs" -> { song = args.getString("songIds"); JSONObject().put("ok", true) }
                 "library_search" -> JSONObject().put("results", JSONArray().put(JSONObject().put("id", "s9").put("title", "Despacito")))
                 "calendar_events" -> JSONObject().put("events", JSONArray().put(JSONObject().put("id", 3).put("title", "Reunión con Ana")))
                 "notes_search" -> JSONObject().put("notes", JSONArray().put(JSONObject().put("id", 5).put("title", "Compras")))

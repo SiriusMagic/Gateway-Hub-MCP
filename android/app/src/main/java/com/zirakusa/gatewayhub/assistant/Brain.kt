@@ -1,9 +1,11 @@
 package com.zirakusa.gatewayhub.assistant
 
 import java.time.LocalDateTime
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.runBlocking
 
 /** A person found in the phone's contacts. */
-data class Person(val name: String, val number: String)
+data class Person(val name: String, val number: String, val contactKey: String? = null)
 
 /** A family app's «Hoy» summary (see Inicio's FAMILIA.md §7). */
 data class Summary(val title: String, val lines: List<String>, val empty: String)
@@ -16,6 +18,7 @@ interface Hands {
     fun installed(app: FamilyApp): Boolean
     fun open(app: FamilyApp): Boolean
     fun playMusic(query: String?): Boolean
+    fun cancelMusicRetry() {}
     fun playRecommended(): Boolean
     fun media(key: MediaKey): Boolean
     fun alarm(hour: Int, minute: Int): Boolean
@@ -51,6 +54,7 @@ interface Hands {
     fun now(): LocalDateTime = LocalDateTime.now()
     class NoCallPermission : Exception()
     class NoContacts : Exception()
+    class AmbiguousContact : Exception()
     class NoPhone : Exception()
     class ToolOff : Exception()
     class ToolError(val code: String, message: String) : Exception(message)
@@ -59,7 +63,7 @@ interface Hands {
 /** What the assistant answers, written and spoken by the screen in the user's language. */
 enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
-    NO_CONTACT, ASK_CALL_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
+    NO_CONTACT, ASK_CALL_CONTACT, ASK_AMBIGUOUS_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
     TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
     WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CONFIRM_SPEAKER_CALL, CALL_SPEAKER_MANUAL, CALL_STARTED, NEED_CALL_PERMISSION
@@ -67,18 +71,39 @@ enum class Say {
 
 /** [volume]: the volume set along with the order («pon música al 30 %»), said after the answer. */
 data class Reply(val say: Say, val args: List<String> = emptyList(), val lines: List<String> = emptyList(), val volume: Int? = null) {
-    val asksCallName get() = say == Say.ASK_CALL_CONTACT
+    val asksCallName get() = say in setOf(Say.ASK_CALL_CONTACT, Say.ASK_AMBIGUOUS_CONTACT)
     val asksToCall get() = say == Say.CONFIRM_CALL || say == Say.CONFIRM_SPEAKER_CALL
 }
 
 /** One exchange: what was heard, how it was understood, the app that did it, the answer, if it worked and how long it took. */
 data class Turn(val heard: String, val byVoice: Boolean, val command: Command, val app: FamilyApp?, val reply: Reply, val ok: Boolean, val millis: Long) {
+    internal var modelSource: ModelSource? = null
+    internal var evidence: IntentEvidence? = null
+    internal var observed: Map<String, String> = emptyMap()
+    internal var musicChoice: StonePlayback.Result? = null
     /** The lit path of the graph: input → app → action. Whether it worked ([ok]) is marked apart, not as a node. */
     val path get() = Graph.path(byVoice, command, app, reply.volume != null)
 }
 
 /** Understands and acts. Pure apart from its [Hands]. */
 class Brain(private val hands: Hands, private val clock: () -> Long = System::currentTimeMillis) {
+    internal var stoneIo: CoroutineDispatcher? = null
+
+    internal suspend fun execute(heard: String, byVoice: Boolean, step: IntentStep): Turn =
+        if (step.command.action == Action.PLAY_MUSIC && !asking) music(heard, byVoice, step.command)
+        else handle(heard, byVoice, step.command)
+
+    internal suspend fun music(heard: String, byVoice: Boolean, command: Command,
+        selected: StonePlayback.Song? = null, skipVolume: Boolean = false): Turn {
+        val start = clock()
+        val stone = StonePlayback(hands, stoneIo)
+        val result = stone.run(command, selected, skipVolume)
+        return Turn(heard, byVoice, command, Catalog.byId("stone"), result.reply, result.ok, clock() - start).also {
+            it.observed = stone.stages.toMap()
+            it.musicChoice = result.takeIf { result.options.isNotEmpty() || result.volumeBlocked }
+        }
+    }
+
     companion object { const val CONFIRM_MS = 60_000L }
     /** The rules first; what they don't know, said again in Lucía's own words ([Meaning], layer 2), before any model. */
     internal fun commandFor(heard: String): Command {
@@ -99,6 +124,9 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         if (c.action == Action.CALL && (c["who"].isNullOrBlank() || byVoice && PhoneSpeech.missingName(c["who"].orEmpty()))) {
             return Turn(heard, byVoice, c, Catalog.byId("telefono"), Reply(Say.ASK_CALL_CONTACT), false, clock() - start)
         }
+        if (c.action == Action.PLAY_MUSIC) return runBlocking { StonePlayback(hands, null).run(c).let { result ->
+            Turn(heard, byVoice, c, Catalog.byId("stone"), result.reply, result.ok, clock() - start)
+        } }
         val app = when (c.action) { Action.OPEN, Action.TOOL -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
         // The volume first, so music never starts too loud; then the order.
         val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null
@@ -112,30 +140,14 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         return Volume.apply(v, hands.volume())
     }
 
-    /**
-     * «Reproduce música alone» through Stone's own tools (MCP on the phone): it finds the song in the library and plays it,
-     * the rest of what matched after it. Null when Lucía can't ask Stone (local MCP off, an old Stone): then the standard
-     * «play from search» order, as before.
-     */
-    private fun playByTools(app: FamilyApp, query: String): Pair<Reply, Boolean>? {
-        val found = try { hands.tool(app, "library_search", org.json.JSONObject().put("query", query).put("kind", "audio").put("limit", MusicPick.MAX)) }
-            catch (_: Exception) { return null } ?: return null
-        val pick = MusicPick.pick(query, found.optJSONArray("results"))
-            ?: return Reply(Say.TOOL_RESULT, listOf("No encontré «$query» en tu biblioteca de Stone.")) to false
-        val played = try { hands.tool(app, "player_play_songs", org.json.JSONObject().put("songIds", pick.ids.joinToString(","))) }
-            catch (_: Exception) { return null } ?: return null
-        return if (played.optJSONObject("error") != null) null else Reply(Say.TOOL_RESULT, listOf(MusicPick.say(pick, query))) to true
-    }
-
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL, Action.CALL_SPEAKER) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL, Action.CALL_SPEAKER, Action.CALCULATE) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
-            Action.PLAY_MUSIC -> c["query"].let { q -> q?.let { playByTools(app!!, it) }
-                ?: done(hands.playMusic(q), if (q == null) Reply(Say.PLAYING) else Reply(Say.PLAYING_QUERY, listOf(q))) }
+            Action.PLAY_MUSIC -> error("Music must be executed by StonePlayback")
             Action.PLAY_RECOMMENDED -> done(hands.playRecommended(), Reply(Say.RECOMMENDED))
             Action.MEDIA -> done(hands.media(MediaKey.valueOf(c["key"]!!)), Reply(Say.MEDIA_DONE, listOf(c["key"]!!)))
             Action.ALARM -> done(hands.alarm(c.int("hour")!!, c.int("minute")!!), Reply(Say.ALARM_SET, listOf(c["hour"]!!, c["minute"]!!)))
@@ -257,13 +269,18 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private val outgoingCalls = OutgoingCalls(hands, clock)
     internal fun finishCallPermission(granted: Boolean) = outgoingCalls.finishPermission(granted)
     internal fun cancelOutgoingCall() = outgoingCalls.cancel()
+    internal fun cancelQuestion() { pending = null; outgoingCalls.cancel() }
 
     /** «Llama a Ana» / «escríbele a Ana»: a number as said, or the contact's. */
     private fun reach(c: Command, app: FamilyApp): Pair<Reply, Boolean> {
         val who = c["who"].orEmpty()
         val digits = who.filter { it.isDigit() || it == '+' }
         val person = if (who.matches(Regex("[+0-9 .-]+")) && digits.count(Char::isDigit) >= 3) Person(who, digits)
-            else try { hands.person(who) } catch (_: Hands.NoContacts) { return Reply(Say.NEED_CONTACTS) to false } ?: return Reply(Say.NO_CONTACT, listOf(who)) to false
+            else try { hands.person(who) }
+            catch (_: Hands.NoContacts) { return Reply(Say.NEED_CONTACTS) to false }
+            catch (_: Hands.AmbiguousContact) {
+                return Reply(Say.ASK_AMBIGUOUS_CONTACT, listOf(who)) to false
+            } ?: return Reply(Say.NO_CONTACT, listOf(who)) to false
         if (c.action == Action.CALL) {
             return if (c["dial_only"] == "1") outgoingCalls.dial(person) else outgoingCalls.request(person, speaker = c["speaker"] == "1")
         }

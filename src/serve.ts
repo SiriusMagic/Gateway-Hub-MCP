@@ -1,3 +1,5 @@
+import { feedback } from "./feedback/api.ts";
+import type { FeedbackQueue } from "./feedback/queue.ts";
 // Every request to the hub, after the Worker checked HTTPS: limits, size, who is calling, then
 // /mcp (AI clients) or /admin (owner).
 import type { HubAdminStore, HubContext, HubEnv, HubStoreApi } from "./modules/types.ts";
@@ -30,7 +32,7 @@ const rpcError = (status: number, message: string, extra: Record<string, string>
   json(status, { jsonrpc: "2.0", id: null, error: { code: -32001, message } }, extra);
 
 export interface Limits { requests: Limiter; failures: Limiter }
-export type ServeStore = HubStoreApi & HubAdminStore & Limits;
+export type ServeStore = HubStoreApi & HubAdminStore & Limits & { feedback?: FeedbackQueue };
 
 function rejected(store: ServeStore, caller: string, missing: boolean) {
   store.failures.hit(caller);
@@ -55,6 +57,10 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
   }
   if (store.failures.blocked(caller)) return rpcError(429, "Gateway Hub: too many wrong tokens. Wait a minute.", { "Retry-After": "60" });
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY) return rpcError(413, "Gateway Hub: body larger than 1 MiB.");
+  if (url.pathname.startsWith("/api/feedback/") && store.feedback) {
+    return feedback(request, url.pathname.slice("/api/feedback/".length), store.feedback, owner,
+      env.FEEDBACK_REVIEW_TOKEN, () => rejected(store, caller, !request.headers.has("Authorization")));
+  }
   const ctx: HubContext = { store, env, fetch: (input, init) => fetcher(input, init) };
 
   if (url.pathname === "/mcp") {

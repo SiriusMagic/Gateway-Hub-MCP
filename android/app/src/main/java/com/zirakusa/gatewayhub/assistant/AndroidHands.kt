@@ -51,26 +51,15 @@ class AndroidHands(context: Context) : Hands {
     /** Called when music was asked for but nothing sounds a few seconds later (see [PlayCheck]). */
     var onSilent: () -> Unit = {}
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
-    /** What was asked last («alone»), so the second try can look for it with Stone's own tools. */
-    private var asked: String? = null
-    private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { if (!playAsked()) button(KeyEvent.KEYCODE_MEDIA_PLAY) },
+    private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { button(KeyEvent.KEYCODE_MEDIA_PLAY) },
         later = { ms, run -> main.postDelayed(run, ms) }, silent = { onSilent() })
 
-    /**
-     * Stone was closed, so its tools could not answer: now that it is up, look for what was asked and play it (MCP on the
-     * phone, only with «Permitir MCP local»). False when there is nothing to look for or Stone still can't answer.
-     */
-    private fun playAsked(): Boolean {
-        val query = asked ?: return false
-        val found = runCatching { tool(stone, "library_search", org.json.JSONObject().put("query", query).put("kind", "audio").put("limit", MusicPick.MAX)) }.getOrNull()
-        val pick = MusicPick.pick(query, found?.optJSONArray("results")) ?: return false
-        return runCatching { tool(stone, "player_play_songs", org.json.JSONObject().put("songIds", pick.ids.joinToString(","))) }.getOrNull() != null
-    }
+    override fun cancelMusicRetry() = check.cancel()
 
     override fun playMusic(query: String?): Boolean {
-        asked = query
-        val play = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).putExtra(SearchManager.QUERY, query.orEmpty())
-            .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, if (query == null) "vnd.android.cursor.item/*" else MediaStore.Audio.Media.ENTRY_CONTENT_TYPE)
+        if (query != null) return false // A named song is resolved through the signed Stone channel.
+        val play = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).putExtra(SearchManager.QUERY, "")
+            .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
         // An older Stone does not know the order: it is opened, and PlayCheck presses «play» once it is up.
         val ok = start(play, stone, fallback = false) || open(stone)
         if (ok) check.start()
@@ -78,7 +67,6 @@ class AndroidHands(context: Context) : Hands {
     }
 
     override fun playRecommended(): Boolean {
-        asked = null
         if (!start(Intent(PLAY_RECOMMENDED), stone, fallback = false)) return playMusic(null)
         check.start(); return true
     }
@@ -139,19 +127,27 @@ class AndroidHands(context: Context) : Hands {
      * The contact said: from the phone's contacts with the permission, otherwise through Teléfono (it already has it),
      * so Lucía needs no permission of her own. Close names are tried too («Vox» finds «Box»).
      */
+    var contactAlias: (String) -> String? = { null }
+
     override fun person(name: String): Person? {
         val allowed = ContextCompat.checkSelfPermission(app, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        contactAlias(name)?.let {
+            if (!allowed) throw Hands.NoContacts()
+            return ContactAliases.resolve(app, it.toUri())
+        }
         val found = if (allowed) contacts(name).ifEmpty { People.guesses(name).flatMap(::contacts).distinct() }
             else byPhoneApp(name) ?: throw Hands.NoContacts()
-        return People.best(found, name)
+        val choices = People.candidates(found, name)
+        if (choices.size > 1) throw Hands.AmbiguousContact()
+        return choices.singleOrNull()
     }
 
     private fun contacts(query: String): List<Person> {
         val uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(query))
         val found = ArrayList<Person>()
         runCatching {
-            app.contentResolver.query(uri, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY, ContactsContract.CommonDataKinds.Phone.NUMBER), null, null, null)?.use { c ->
-                while (c.moveToNext() && found.size < 50) found += Person(c.getString(0).orEmpty(), c.getString(1).orEmpty())
+            app.contentResolver.query(uri, arrayOf(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY, ContactsContract.CommonDataKinds.Phone.NUMBER, ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY), null, null, null)?.use { c ->
+                while (c.moveToNext() && found.size < 50) found += Person(c.getString(0).orEmpty(), c.getString(1).orEmpty(), c.getString(2))
             }
         }
         return found

@@ -31,7 +31,7 @@ gateway-hub-mcp/
 │       ├── assistant/local/Planner.kt  # Capa 3: el modelo encadena hasta 3 herramientas (lee al momento, cambia con «sí»)
 │       ├── assistant/local/ToolGrammar.kt  # Gramáticas GBNF: el modelo solo escribe JSON con herramientas reales
 │       └── assistant/      # Asistente: Words y Parser (español → orden, puros), Catalog (apps de la familia),
-│                           # Brain (decide y actúa por Hands), Graph (árbol entrada → app → acción), BrainPage (mapa en Ajustes), Skills, StoneSkills, FamilySkills y MoreSkills (herramientas MCP de cada app como frases: las reglas de sentimiento, RS) y Speech (sus respuestas en español), AndroidHands (intents),
+│                           # Brain (decide y actúa por Hands), Graph (árbol entrada → app → acción), BrainPage (mapa en Ajustes), Skills, StoneSkills, FamilySkills y MoreSkills (herramientas MCP de cada app como frases: las reglas de reconocimiento de intenciones) y Speech (sus respuestas en español), AndroidHands (intents),
 │                           # Vosk/VoskEars (voz sin internet, modelo en assets/model-es), Listening (palabra
 │                           # «Oye Lucía», EnergyGate, vocabulario), WakeService (escucha en primer plano),
 │                           # Lucia* (asistente predeterminado: gesto de esquina y botón), Voice (TTS), BrainCanvas,
@@ -50,3 +50,34 @@ gateway-hub-mcp/
 3. **Nada de código oculto:** cada función se usa desde el panel o desde una herramienta.
 4. **Sin secretos en el código:** van en `wrangler secret` o en el panel.
 5. Archivos cerca de 100 líneas; divídelos antes de 150.
+
+## Reconocimiento de intenciones y feedback
+
+Arka conserva la frase y valida el plan antes de ejecutar las órdenes conocidas. Calculadora resuelve operaciones
+simples en el teléfono. Stone usa MCP local para buscar por título, resolver una coincidencia y aplicar volumen y
+ecualizador antes de reproducir. La búsqueda por título necesita una versión de Stone con `library_search` y
+`player_play_songs`, acceso MCP local permitido y la firma de la familia. Si Stone aún no abrió su reproductor, Arka
+lo abre y reintenta las consultas de lectura. Android controla si puede traer Arka al frente.
+
+Los votos y correcciones quedan en el teléfono en almacenamiento cifrado. Para sincronizarlos, se activa
+**Compartir feedback con mi Hub** en los ajustes del asistente y se configura la sesión de propietario. Esa sesión
+sirve para obtener una credencial de instalación. Los envíos posteriores usan la credencial limitada a feedback.
+El propietario puede consultar los eventos recientes en `GET /api/feedback/private` y revocar una instalación con
+`DELETE /api/feedback/credentials` y el JSON `{"installation":"<ID de instalación>"}`. Ambas rutas requieren su
+token en la cabecera Authorization. Los alias se guardan en el teléfono y se resuelven de nuevo al usar el contacto.
+
+### Activar la revisión por lotes
+
+1. Desplegar el Worker y guardar una clave aleatoria independiente como secreto `FEEDBACK_REVIEW_TOKEN` en
+   Cloudflare y en GitHub Actions. Configurar otro secreto de Actions, `LLM_API_KEY`, para el proveedor.
+2. Configurar en GitHub Actions `FEEDBACK_API_URL` con el origen HTTPS del Hub, `LLM_API_URL` con la base HTTPS
+   compatible con OpenAI que termina en `/v1`, y `LLM_MODEL` con el identificador del modelo. Habilitar la creación
+   de PR por GitHub Actions en los ajustes del repositorio.
+3. El workflow **Revisar feedback de intenciones** toma casos a las 05:23 UTC o cuando se ejecuta manualmente.
+   GitHub toma la definición programada de la rama predeterminada del repositorio. El workflow toma el código de
+   `main` y los PR de revisión apuntan a esa rama.
+
+La cola agrupa correcciones por patrones de intención. En esta primera versión, el modelo revisa variantes de
+«pon música» tomadas de un vocabulario cerrado. El modelo recibe una frase sintética y solo puede proponer una
+variante de ese vocabulario. El workflow genera el caso de prueba y verifica la regresión antes de abrir un PR.
+Las correcciones que no se pueden proyectar quedan disponibles en la cola privada para revisión manual.

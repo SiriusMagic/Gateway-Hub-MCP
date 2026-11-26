@@ -80,7 +80,7 @@ class AssistantTest {
 
     @Test fun phrasesItKnows() {
         assertEquals(Action.PLAY_MUSIC, p("Reproduce música").action); assertNull(p("reproduce música")["query"])
-        assertEquals("bad bunny", p("pon música de Bad Bunny")["query"]); assertEquals("soda stereo", p("Pon Soda Stereo")["query"])
+        assertEquals("Bad Bunny", p("pon música de Bad Bunny")["query"]); assertEquals("Soda Stereo", p("Pon Soda Stereo")["query"])
         assertEquals(Action.PLAY_RECOMMENDED, p("Pon mis recomendaciones del día").action); assertEquals(Action.PLAY_RECOMMENDED, p("ponme el mix del día").action)
         listOf("pon pausa", "pon pausa a la música", "ponle pausa", "pausa la canción", "para la música", "detén la canción", "quita la música", "apaga la música")
             .forEach { assertEquals(it, "PAUSE", p(it)["key"]) }
@@ -94,7 +94,7 @@ class AssistantTest {
         assertEquals(Action.OPEN, p("pon una alarma").action)                                    // no time: open Reloj
         p("Pon un temporizador de cinco minutos").let { assertEquals(Action.TIMER, it.action); assertEquals(300, it.int("seconds")) }
         assertEquals(1800, p("avísame en media hora").int("seconds"))
-        p("Llama a Ana").let { assertEquals(Action.CALL, it.action); assertEquals("ana", it["who"]) }
+        p("Llama a Ana").let { assertEquals(Action.CALL, it.action); assertEquals("Ana", it["who"]) }
         assertEquals("099 123 4567", p("llama al 099 123 4567")["who"])
         p("Mándale un mensaje a Ana que llego tarde").let { assertEquals(Action.MESSAGE, it.action); assertEquals("ana", it["who"]); assertEquals("llego tarde", it["text"]) }
         assertEquals(Action.WEATHER, p("¿Qué tiempo hace?").action); assertEquals(Action.WEATHER, p("va a llover hoy").action)
@@ -131,7 +131,7 @@ class AssistantTest {
         assertEquals(Person("Ana Pérez", "1"), People.best(listOf(Person("Ana Pérez", "1"), Person("Ana María", "2")), "ana pérez"))
         assertEquals(Person("Mamá ❤", "3"), People.best(listOf(Person("Mamá ❤", "3")), "mi mama"))
         // Names as heard or typed: any order, sounds alike, and one person with two numbers is still one person.
-        val book = listOf(Person("Disled Jefe", "4"), Person("Disled Jefe", "5"), Person("Box Ramírez", "6"), Person("Yesica Mora", "7"), Person("Pedro Ruiz", "8"))
+        val book = listOf(Person("Disled Jefe", "4", "disled"), Person("Disled Jefe", "5", "disled"), Person("Box Ramírez", "6"), Person("Yesica Mora", "7"), Person("Pedro Ruiz", "8"))
         assertEquals("4", People.best(book, "disled jefe")?.number); assertEquals("4", People.best(book, "jefe disled")?.number)
         assertEquals("6", People.best(book, "vox")?.number); assertEquals("7", People.best(book, "jessica")?.number)
         assertEquals("4", People.best(book, "dizled")?.number); assertEquals(null, People.best(book, "carlos"))

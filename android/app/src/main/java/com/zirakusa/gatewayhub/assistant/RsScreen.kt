@@ -40,9 +40,9 @@ internal fun rsGroups(query: String): List<RsGroup> {
 }
 
 /**
- * «RS» (Regla de Sentimiento), its own page in the side menu, apart from MCP: every phrase Lucía's rules understand,
+ * Reconocimiento de intenciones, its own page in the side menu, apart from MCP: every phrase Lucía's rules understand,
  * what each does and whether she asks first, Lucía's own ones and then by app, with a search. It also says which
- * interpreter is on («Sentimientos» is the one that turns free speech into these rules).
+ * interpreter is on (the rules interpreter is the one that turns free speech into these rules).
  */
 @Composable internal fun RsScreen(interpreter: Interpreter, openApp: ((FamilyApp) -> Boolean)? = null) {
     val context = LocalContext.current

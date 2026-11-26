@@ -1,0 +1,8 @@
+{
+  "phrase": "Calcula dos más 2 y pon música en segundo plano New Americana con el volumen a 50 y el ecualizador activo",
+  "query": "New Americana",
+  "calculation": "4",
+  "volume": "50",
+  "equalizer": true,
+  "background": true
+}

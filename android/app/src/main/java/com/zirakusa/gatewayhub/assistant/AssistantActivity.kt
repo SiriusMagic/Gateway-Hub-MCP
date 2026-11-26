@@ -9,6 +9,11 @@ import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
 import android.os.Bundle
+import android.net.ConnectivityManager
+import android.net.Network
+import android.provider.ContactsContract
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.view.WindowManager
@@ -54,6 +59,24 @@ class AssistantActivity : ComponentActivity() {
     private val outgoingCall = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (::state.isInitialized) state.finishCallPermission(granted)
     }
+    private var aliasName: String? = null
+    private val feedbackNetwork = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) { if (::state.isInitialized) state.feedback?.retry() }
+    }
+    private val contactPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val alias = aliasName.also { aliasName = null } ?: return@registerForActivityResult
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val identity = ContactAliases.picked(this, uri)
+        val saved = identity != null && runCatching { state.feedback?.putAlias(alias, identity.toString()) }.isSuccess
+        state.contactNotice = getString(if (saved) R.string.intent_alias_saved else R.string.intent_alias_failed)
+        if (saved) {
+            state.savedAliases = state.feedback?.aliases().orEmpty()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+                contacts.launch(Manifest.permission.READ_CONTACTS)
+            }
+        }
+    }
+
     private val phone = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private val forWake = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
         if (r[Manifest.permission.RECORD_AUDIO] == true) setWake(true) else Toast.makeText(this, R.string.wake_needs_mic, Toast.LENGTH_LONG).show()
@@ -66,8 +89,21 @@ class AssistantActivity : ComponentActivity() {
         voice = Voice(this) { ready -> if (::state.isInitialized) state.offlineVoiceReady = ready }
         local = LocalAssistant(this, lifecycleScope)
         hands = AndroidHands(this)
-        state = AssistantState(Brain(hands), { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
+        state = AssistantState(Brain(hands).apply { stoneIo = Dispatchers.IO }, { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
+        state.executeOrders = { work -> lifecycleScope.launch { work() } }
         state.local = local
+        state.feedback = IntentFeedback(applicationContext, lifecycleScope).also {
+            state.shareFeedback = it.sharing
+            hands.contactAlias = it::alias
+        }
+        state.feedbackText = { Talk.text(it.reply, resources) }
+        state.chooseContact = { name ->
+            aliasName = name
+            runCatching {
+                contactPicker.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
+            }.onFailure { state.contactNotice = getString(R.string.intent_alias_failed) }
+        }
+        runCatching { getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(feedbackNetwork) }
         state.message = { getString(it) }
         state.offlineVoiceReady = voice.available
         // Music asked for but silent: Lucía says so instead of «Reproduciendo».
@@ -114,6 +150,7 @@ class AssistantActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); if (wantsListening(intent)) listen() }
     override fun onStart() {
         super.onStart(); WakeService.paused = true                                   // Lucía takes the microphone while open
+        state.feedback?.retry()
         if (resumeCount && state.tally != null) countOn(greet = false)
         resumeCount = false
     }
@@ -122,7 +159,9 @@ class AssistantActivity : ComponentActivity() {
         resumeCount = state.tallyListening
         local.leave(); stop(); countOff(); voice.quiet(); WakeService.paused = false; super.onStop()
     }
-    override fun onDestroy() { local.close(); ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
+    override fun onDestroy() {
+        runCatching { getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(feedbackNetwork) }
+        local.close(); ears.stop(); count.stop(); voice.close(); beeper?.release(); super.onDestroy() }
 
     private fun wantsListening(i: Intent?) = i?.action in setOf(LISTEN, Intent.ACTION_ASSIST, Intent.ACTION_VOICE_COMMAND)
 

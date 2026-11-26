@@ -60,6 +60,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
             Line(stringResource(R.string.only_charging), stringResource(R.string.only_charging_hint), state.onlyCharging, actions.setOnlyCharging)
         }
         com.zirakusa.gatewayhub.ArkaIconCard()
+        if (state.feedback != null) Card { FeedbackSettings(state) }
         Card {
             Text(stringResource(R.string.default_title), color = HubColors.Text, fontSize = 17.sp)
             Text(stringResource(if (state.isDefault) R.string.default_yes else R.string.default_hint), color = HubColors.Muted, fontSize = 14.sp)

@@ -4,6 +4,8 @@ import android.os.SystemClock
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.assistant.Action
 import com.zirakusa.gatewayhub.assistant.Command
+import com.zirakusa.gatewayhub.assistant.IntentEvidence
+import com.zirakusa.gatewayhub.assistant.IntentPlan
 import com.zirakusa.gatewayhub.assistant.Reply
 import com.zirakusa.gatewayhub.assistant.Say
 import com.zirakusa.gatewayhub.assistant.Turn
@@ -32,7 +34,7 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
     fun chat(assistant: LocalAssistant, heard: String, query: String, byVoice: Boolean) {
         val start = SystemClock.elapsedRealtime()
         assistant.work(onFailure = { complete(generated(heard, byVoice, Action.CHAT, start, message(it), false)) }) {
-            complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(query)))
+            complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(query)).also { it.modelSource = assistant.source("chat-v1") })
         }
     }
 
@@ -41,23 +43,24 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
      * first if it changes something), or, when nothing fits, a conversation.
      */
     fun interpret(assistant: LocalAssistant, heard: String, byVoice: Boolean, interpreter: com.zirakusa.gatewayhub.assistant.Interpreter,
-        understood: (String) -> Boolean, run: (List<String>) -> Unit) {
+        understood: (String) -> Boolean, run: (List<String>, com.zirakusa.gatewayhub.assistant.ModelSource) -> Boolean) {
         val start = SystemClock.elapsedRealtime()
         fun result(text: String, ok: Boolean = true) = generated(heard, byVoice, Action.PHONE_MCP, start, text, ok)
+            .also { it.modelSource = assistant.source("mcp-v1") }
         assistant.work(onFailure = { complete(generated(heard, byVoice, Action.CHAT, start, message(it), false)) }) {
             if (interpreter != com.zirakusa.gatewayhub.assistant.Interpreter.MCP) {
                 val orders = assistant.orders(heard, understood)
-                if (orders.isNotEmpty()) return@work run(orders)
+                if (orders.isNotEmpty() && run(orders, assistant.source("orders-v1"))) return@work
             }
             if (interpreter != com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS) {
                 val call = assistant.mcpPlan(heard)
                 if (call != null) {
-                    if (call.readOnly) complete(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }))
-                    else { reviewTurn = result(message(R.string.local_hub_review), false); assistant.review(call) }
+                    if (call.readOnly) complete(record(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }), call.plan))
+                    else { reviewTurn = record(result(message(R.string.local_hub_review), false), call.plan); assistant.review(call) }
                     return@work
                 }
             }
-            complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(heard)))
+            complete(generated(heard, byVoice, Action.CHAT, start, assistant.chat(heard)).also { it.modelSource = assistant.source("chat-v1") })
         }
     }
 
@@ -70,13 +73,15 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         }
         assistant.work(onFailure = { finish(message(it)) }) {
             val answer = assistant.askStone(query)
-            finish(answer ?: message(R.string.phone_mcp_no_tool), answer != null)
+            if (answer == null) finish(message(R.string.phone_mcp_no_tool))
+            else complete(record(generated(heard, byVoice, Action.PHONE_MCP, start, answer.first), answer.second))
         }
     }
 
     private fun runHub(assistant: LocalAssistant, heard: String, request: String, byVoice: Boolean) {
         val start = SystemClock.elapsedRealtime()
         fun result(text: String, ok: Boolean = false) = generated(heard, byVoice, Action.HUB, start, text, ok)
+            .also { if (assistant.models.hasModel) it.modelSource = assistant.source("hub-tools-v1") }
         fun fail(id: Int) = complete(result(message(id)))
         when {
             assistant.hub.link == null -> fail(R.string.local_hub_connect_first)
@@ -85,9 +90,9 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
                 val call = assistant.decide(request)
                 when {
                     call == null -> fail(R.string.local_hub_no_tool)
-                    call.readOnly -> complete(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }, true))
+                    call.readOnly -> complete(record(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }, true), call.plan))
                     else -> {
-                        reviewTurn = result(message(R.string.local_hub_review))
+                        reviewTurn = record(result(message(R.string.local_hub_review)), call.plan)
                         assistant.review(call)
                     }
                 }
@@ -99,10 +104,17 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         val turn = reviewTurn ?: return
         val call = assistant.dismiss() ?: return
         reviewTurn = null
-        fun finish(text: String, ok: Boolean = false) = complete(turn.copy(reply = Reply(Say.GENERATED, listOf(text)), ok = ok))
+        fun finish(text: String, ok: Boolean = false) = complete(turn.copy(reply = Reply(Say.GENERATED, listOf(text)), ok = ok).also { it.modelSource = turn.modelSource; it.evidence = turn.evidence })
         if (!confirmed) return finish(message(R.string.local_hub_cancelled))
         assistant.work(onFailure = { finish(message(it)) }, cancellable = false) {
             finish(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }, true)
+        }
+    }
+
+    private fun record(turn: Turn, plan: IntentPlan): Turn {
+        val step = plan.steps.last()
+        return turn.copy(command = step.command, app = step.app).also {
+            it.evidence = IntentEvidence(plan.copy(original = turn.heard), plan.steps.lastIndex)
         }
     }
 

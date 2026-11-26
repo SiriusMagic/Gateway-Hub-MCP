@@ -37,6 +37,7 @@ object Catalog {
 
     /** The app that does an action (null: the assistant itself answers). */
     fun appFor(a: Action): FamilyApp? = when (a) {
+        Action.CALCULATE -> byId("calculadora")
         Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA -> byId("stone")
         Action.ALARM, Action.TIMER -> byId("reloj")
         Action.CALL, Action.CALL_SPEAKER, Action.ANSWER, Action.HANG_UP -> byId("telefono")

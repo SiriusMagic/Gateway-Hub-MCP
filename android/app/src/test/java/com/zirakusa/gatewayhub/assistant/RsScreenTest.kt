@@ -41,8 +41,8 @@ class RsScreenTest {
 
     @Test fun rsPage() {
         compose.setContent { HubTheme { RsScreen(Interpreter.FEELINGS) } }
-        compose.onNodeWithText("Regla de Sentimiento").assertExists()
-        compose.onNodeWithText("Intérprete del modelo ahora: Sentimientos").assertExists()
+        compose.onNodeWithText("Reconocimiento de intenciones").assertExists()
+        compose.onNodeWithText("Intérprete del modelo ahora: Reconocimiento de intenciones").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/rs.png")
     }
 
@@ -59,8 +59,8 @@ class RsScreenTest {
     @Test fun sentimientosIsOneMoreAppInMcp() {
         var opened = 0
         compose.setContent { HubTheme { PhoneMcpScreen(null, {}) { opened++ } } }
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("${Examples.rules.size} reglas de sentimiento"))
-        compose.onNodeWithText("Sentimientos").assertExists()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("${Examples.rules.size} reglas de intención"))
+        compose.onNodeWithText("Reconocimiento de intenciones").assertExists()
         compose.onNodeWithText("Abrir").performClick(); assertEquals(1, opened)                // «Abrir» → RS
         compose.onNodeWithText("Herramientas").performClick()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Integración pendiente", substring = true))

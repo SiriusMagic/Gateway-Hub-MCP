@@ -66,6 +66,16 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         return BrainPage(state)
     }
     AssistantWorkspace(state, actions) { showMenu -> Talking(state, actions, showMenu) }
+    FeedbackDialogs(state)
+    state.proposal?.let { plan ->
+        AlertDialog(
+            onDismissRequest = { state.confirmPlan(false) },
+            title = { Text(stringResource(R.string.intent_plan_question)) },
+            text = { Text(plan.steps.joinToString("\n") { it.phrase }) },
+            confirmButton = { TextButton({ state.confirmPlan(true) }) { Text(stringResource(R.string.local_hub_confirm)) } },
+            dismissButton = { TextButton({ state.confirmPlan(false) }) { Text(stringResource(R.string.local_cancel)) } }
+        )
+    }
     state.local?.pending?.let { pending ->
         AlertDialog(
             onDismissRequest = { state.confirmHub(false) },
@@ -98,7 +108,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             }
         }
         val local = state.local
-        val busy = local?.busy == true
+        val busy = local?.busy == true || state.executing
         val showModelSetup = local?.models?.supported == true && !local.models.hasModel
         val showIntro = state.turns.isEmpty() || showModelSetup
         val introCount = if (showIntro) 1 else 0
@@ -114,16 +124,16 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
                 }
                 if (state.turns.isEmpty()) Examples(state, actions.makeDefault)
             }
-            items(state.turns) { t -> TurnBubbles(t) }
+            items(state.turns) { t -> TurnBubbles(t, state) }
             if (busy) item {
-                Text(local.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,
+                Text(local?.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,
                     modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(14.dp))
-                if (local.canStop) TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
+                if (local?.canStop == true) TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
             }
         }
         if (state.partial.isNotBlank()) Text(state.partial, Modifier.padding(horizontal = 20.dp), color = HubColors.Gold, fontSize = 15.sp)
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(state.typed, { state.typed = it.take(200) }, Modifier.weight(1f), shape = RoundedCornerShape(24.dp), singleLine = true, enabled = !busy && !state.listening,
+            OutlinedTextField(state.typed, { state.typed = it.take(400) }, Modifier.weight(1f), shape = RoundedCornerShape(24.dp), singleLine = true, enabled = !busy && !state.listening,
                 placeholder = { Text(stringResource(R.string.assistant_write)) },
                 trailingIcon = { if (state.typed.isNotBlank()) IconButton(state::sendTyped, enabled = !busy && !state.listening) { Icon(Icons.AutoMirrored.Filled.Send, stringResource(R.string.send), tint = HubColors.Gold) } })
             val listening = state.listening
@@ -137,7 +147,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         }
     }
 
-@Composable private fun TurnBubbles(t: Turn) = Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+@Composable private fun TurnBubbles(t: Turn, state: AssistantState) = Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
         Text((if (t.byVoice) "🎙 " else "") + t.heard, Modifier.widthIn(max = 280.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Gold)
             .padding(horizontal = 14.dp, vertical = 8.dp), color = HubColors.Background, fontSize = 15.sp)
@@ -145,7 +155,18 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
     val res = LocalResources.current
     Column(Modifier.widthIn(max = 300.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(horizontal = 14.dp, vertical = 8.dp)) {
         Text(Talk.text(t.reply, res), color = if (t.ok) HubColors.Text else HubColors.Bad, fontSize = 15.sp)
-        Text(listOfNotNull(Talk.label(t.command.action, res), t.app?.name, "${t.millis} ms").distinct().joinToString(" · "), color = HubColors.Muted, fontSize = 11.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(listOfNotNull(Talk.label(t.command.action, res), t.app?.name, "${t.millis} ms").distinct().joinToString(" · "),
+                modifier = Modifier.weight(1f, fill = false), color = HubColors.Muted, fontSize = 11.sp)
+            FeedbackButtons(t, state)
+        }
+        t.musicChoice?.takeIf { state.last === t }?.let { choice ->
+            if (choice.volumeBlocked) TextButton({ state.chooseMusic(t, 0) }) { Text(stringResource(R.string.intent_play_current_volume)) }
+            else choice.options.forEachIndexed { index, song ->
+                TextButton({ state.chooseMusic(t, index) }) { Text("${index + 1}. ${song.label}") }
+            }
+            TextButton({ state.chooseMusic(t, -1, cancel = true) }) { Text(stringResource(R.string.local_cancel)) }
+        }
     }
 }
 
