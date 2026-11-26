@@ -3,7 +3,7 @@ package com.zirakusa.gatewayhub.assistant
 /** Pull modifiers out of an explicit music order without normalizing the title sent to Stone. */
 internal object MusicOrder {
     private val prefix = Regex(
-        """^(?:(?:reproduce|reproducir|pon|ponme|coloca|colócame|colocame|toca|escuchar|quiero escuchar|play)(?: algo de| un poco de)?(?: la)? (?:m[uú]sica|canciones|una canci[oó]n|algo)(?: de(?=\s))?|m[uú]sica)(?=\s|$)""",
+        """^(?:(?:reproduce|reproducir|pon|ponme|coloca|colócame|colocame|toca|escuchar|quiero escuchar|play)(?: algo de| un poco de)?(?: la)? (?:m[uú]sica|canciones|(?:una )?canci[oó]n|algo)(?: de(?=\s))?|m[uú]sica)(?=\s|$)""",
         RegexOption.IGNORE_CASE
     )
     private val background = Regex(
