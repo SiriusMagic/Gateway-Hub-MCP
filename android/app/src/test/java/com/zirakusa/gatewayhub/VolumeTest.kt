@@ -10,6 +10,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /** An order with its volume («pon música al 30 por ciento»), and the volume by itself. */
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
 class VolumeTest {
     private fun p(text: String) = Parser.parse(text)
 

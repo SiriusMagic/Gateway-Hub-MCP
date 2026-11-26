@@ -32,10 +32,53 @@ open class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toS
     override fun torch(on: Boolean) = done.add("torch $on")
     override fun answerCall(): Boolean { if (!phoneAllowed) throw Hands.NoPhone(); done.add("answer"); return ringing }
     override fun endCall(): Boolean { if (!phoneAllowed) throw Hands.NoPhone(); done.add("hang up"); return ringing }
-    override fun playMusic(query: String?) = done.add("music ${query ?: "*"}")
-    override fun playRecommended() = done.add("recommended")
-    override fun media(key: MediaKey) = done.add("media $key")
-    override fun alarm(hour: Int, minute: Int) = done.add("alarm $hour:$minute")
+    override fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? {
+        if (app.id == "calculadora" && name == "calc_evaluate") {
+            val result = when (args.getString("expression")) {
+                "2+2" -> "4"
+                "8*88" -> "704"
+                "7*9*89-5" -> "5602"
+                "1.5/3" -> "0.5"
+                "2/0" -> throw Hands.ToolError("DIVISION_BY_ZERO", "No se puede dividir entre cero.")
+                else -> return null
+            }
+            return org.json.JSONObject().put("result", result)
+        }
+        if (app.id == "reloj" && name == "clock_alarm_create") {
+            val time = args.getString("time")
+            val (hour, minute) = time.split(':').map(String::toInt)
+            done += "alarm $hour:$minute"
+            return org.json.JSONObject().put("alarm", org.json.JSONObject().put("time", time)
+                .put("enabled", true).put("next_ring", "2026-11-27T$time:00Z"))
+        }
+        if (app.id != "stone") return null
+        fun confirmed(label: String) = org.json.JSONObject().put("status", "playing")
+            .put("track", org.json.JSONObject().put("id", "fixture").put("title", label))
+            .put("steps", org.json.JSONObject().put("play", org.json.JSONObject().put("code", "OK")))
+        return when (name) {
+            "player_play_collection" -> {
+                val response = confirmed("Fixture").put("segundoPlano", args.optBoolean("segundoPlano"))
+                if (args.has("volumen")) {
+                    val volume = args.getInt("volumen")
+                    setVolume(volume)
+                    response.getJSONObject("steps").put("volume", org.json.JSONObject().put("code", "OK").put("actual", volume))
+                }
+                done += if (args.optString("coleccion") == "diaria") "recommended" else "music *"
+                response
+            }
+            "player_pause", "player_play", "player_next", "player_previous", "player_seek" -> {
+                done += "media " + when (name) {
+                    "player_pause" -> "PAUSE"
+                    "player_play" -> "RESUME"
+                    "player_next" -> "NEXT"
+                    "player_previous" -> "PREVIOUS"
+                    else -> "RESTART"
+                }
+                org.json.JSONObject().put("ok", true)
+            }
+            else -> null
+        }
+    }
     override fun timer(seconds: Int) = done.add("timer $seconds")
     var outgoingAllowed = true
     override fun placeCall(number: String, speaker: Boolean): Boolean {
@@ -64,6 +107,7 @@ open class FakeHands(var installed: Set<String> = Catalog.apps.map { it.id }.toS
 }
 
 /** The assistant: Spanish words, times and durations, every phrase it knows, the brain with fake hands, and the graph. */
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
 class AssistantTest {
     private fun p(text: String) = Parser.parse(text)
 
@@ -189,14 +233,20 @@ class AssistantTest {
         assertEquals(Say.TORCH_ON, brain.handle("enciende la linterna").reply.say); assertTrue("torch true" in hands.done)
     }
 
-    /** Music that never started: the answer is corrected and the order is marked failed. */
-    @Test fun silentMusicIsCorrected() {
+    @Test fun reportsStoneFailureWithoutClaimingPlayback() {
+        val hands = object : FakeHands() {
+            override fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject {
+                done += name
+                throw Hands.ToolError("NO_PERMISSION", "")
+            }
+        }
         val said = mutableListOf<Say>()
-        val state = AssistantState(Brain(FakeHands()), { said += it.say })
-        state.send("reproduce música", byVoice = true); assertTrue(state.last!!.ok)
-        state.late(com.zirakusa.gatewayhub.assistant.Reply(Say.NOT_PLAYING, listOf("Stone")))
-        assertFalse(state.last!!.ok); assertEquals(Say.NOT_PLAYING, state.last!!.reply.say)
-        assertEquals(listOf(Say.PLAYING, Say.NOT_PLAYING), said)
+        val state = AssistantState(Brain(hands), { said += it.say })
+        state.send("reproduce música", byVoice = true)
+        assertFalse(state.last!!.ok)
+        assertEquals(listOf("player_play_collection"), hands.done)
+        assertEquals(listOf(Say.TOOL_RESULT), said)
+        assertTrue(state.last!!.reply.args.single().contains("misma firma"))
     }
 
     @Test fun theGraphLightsThePath() {

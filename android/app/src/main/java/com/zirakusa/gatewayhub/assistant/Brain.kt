@@ -17,12 +17,6 @@ data class Summary(val title: String, val lines: List<String>, val empty: String
 interface Hands {
     fun installed(app: FamilyApp): Boolean
     fun open(app: FamilyApp): Boolean
-    fun playMusic(query: String?): Boolean
-    fun cancelMusicRetry() {}
-    fun preferStoneTitleAction() = false
-    fun playRecommended(): Boolean
-    fun media(key: MediaKey): Boolean
-    fun alarm(hour: Int, minute: Int): Boolean
     fun timer(seconds: Int): Boolean
     fun dial(number: String): Boolean
     fun placeCall(number: String, speaker: Boolean): Boolean = false
@@ -66,7 +60,7 @@ enum class Say {
     OPENING, NOT_INSTALLED, PLAYING, PLAYING_QUERY, RECOMMENDED, MEDIA_DONE, ALARM_SET, TIMER_SET, CALLING, MESSAGING,
     NO_CONTACT, ASK_CALL_CONTACT, ASK_AMBIGUOUS_CONTACT, NEED_CONTACTS, TIME, DATE, SUMMARY, NOTHING_TODAY, NOT_UNDERSTOOD, UNKNOWN_APP, FAILED, COUNTING, VOLUME_SET,
     ANSWERED, HUNG_UP, NO_CALL, NEED_PHONE, NOTED, TORCH_ON, TORCH_OFF,
-    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, NOT_PLAYING, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
+    TOOL_RESULT, TOOL_OFF, TOOL_OLD, TOOL_ERROR, CONFIRM, CANCELLED, GENERATED, QUICK, CALCULATED, MATH_ERROR,
     WEB_OPENED, WEB_QUERY, WEB_UNAVAILABLE, CONFIRM_CALL, CONFIRM_SPEAKER_CALL, CALL_SPEAKER_MANUAL, CALL_STARTED, NEED_CALL_PERMISSION
 }
 
@@ -91,7 +85,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     internal var stoneIo: CoroutineDispatcher? = null
 
     internal suspend fun execute(heard: String, byVoice: Boolean, step: IntentStep): Turn =
-        if (step.command.action == Action.PLAY_MUSIC && !asking) music(heard, byVoice, step.command)
+        if (step.command.action in stonePlaybackActions && !asking) music(heard, byVoice, step.command)
         else handle(heard, byVoice, step.command)
 
     internal suspend fun music(heard: String, byVoice: Boolean, command: Command,
@@ -105,11 +99,17 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         }
     }
 
-    companion object { const val CONFIRM_MS = 60_000L }
+    companion object {
+        const val CONFIRM_MS = 60_000L
+        private val stonePlaybackActions = setOf(Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA)
+    }
     /** The rules first; what they don't know, said again in Lucía's own words ([Meaning], layer 2), before any model. */
     internal fun commandFor(heard: String): Command {
         val today = hands.now().toLocalDate()
         val c = Parser.parse(heard, today)
+        if (c.action == Action.TOOL && c["app"] == "stone" && c["tool"] == "player_play_song") {
+            MusicOrder.namedTitle(heard)?.let { return it }
+        }
         return if (c.action != Action.UNKNOWN) c else Meaning.understand(heard) { Parser.parse(it, today) } ?: c
     }
 
@@ -125,9 +125,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
         if (c.action == Action.CALL && (c["who"].isNullOrBlank() || byVoice && PhoneSpeech.missingName(c["who"].orEmpty()))) {
             return Turn(heard, byVoice, c, Catalog.byId("telefono"), Reply(Say.ASK_CALL_CONTACT), false, clock() - start)
         }
-        if (c.action == Action.PLAY_MUSIC) return runBlocking { StonePlayback(hands, null).run(c).let { result ->
-            Turn(heard, byVoice, c, Catalog.byId("stone"), result.reply, result.ok, clock() - start)
-        } }
+        if (c.action in stonePlaybackActions) return runBlocking { music(heard, byVoice, c) }
         val app = when (c.action) { Action.OPEN, Action.TOOL -> c["app"]?.let(Catalog::byId); else -> Catalog.appFor(c.action) }
         // The volume first, so music never starts too loud; then the order.
         val volume = if (c.action != Action.VOLUME) change(c)?.let { v -> v.takeIf { hands.setVolume(it) } } else null
@@ -144,14 +142,12 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     private fun act(c: Command, app: FamilyApp?): Pair<Reply, Boolean> {
         fun missing() = Reply(Say.NOT_INSTALLED, listOf(app!!.name)) to false
         fun done(ok: Boolean, r: Reply) = if (ok) r to true else Reply(Say.FAILED, listOf(app?.name.orEmpty())) to false
-        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL, Action.CALL_SPEAKER, Action.CALCULATE) && !hands.installed(app)) return missing()
+        if (app != null && c.action !in setOf(Action.WEATHER, Action.AGENDA, Action.COUNT, Action.ANSWER, Action.HANG_UP, Action.MEDIA, Action.CALL, Action.CALL_SPEAKER) && !hands.installed(app)) return missing()
         return when (c.action) {
             Action.OPEN -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
             Action.PHOTO, Action.SCAN, Action.SPEED -> done(hands.open(app!!), Reply(Say.OPENING, listOf(app.name)))
-            Action.PLAY_MUSIC -> error("Music must be executed by StonePlayback")
-            Action.PLAY_RECOMMENDED -> done(hands.playRecommended(), Reply(Say.RECOMMENDED))
-            Action.MEDIA -> done(hands.media(MediaKey.valueOf(c["key"]!!)), Reply(Say.MEDIA_DONE, listOf(c["key"]!!)))
-            Action.ALARM -> done(hands.alarm(c.int("hour")!!, c.int("minute")!!), Reply(Say.ALARM_SET, listOf(c["hour"]!!, c["minute"]!!)))
+            Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA -> error("Music must be executed by StonePlayback")
+            Action.ALARM -> alarm(c, app!!)
             Action.TIMER -> done(hands.timer(c.int("seconds")!!), Reply(Say.TIMER_SET, listOf(c["seconds"]!!)))
             Action.CALL_SPEAKER -> (if (hands.inCall()) Reply(Say.CALL_SPEAKER_MANUAL) else Reply(Say.NO_CALL)) to false
             Action.CALL, Action.MESSAGE -> reach(c, app!!)
@@ -183,8 +179,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
             Action.TOOL -> tool(c, app!!)
             Action.TIME -> hands.now().let { Reply(Say.TIME, listOf("${it.hour}", "${it.minute}")) to true }
             Action.DATE -> Reply(Say.DATE, listOf(hands.now().toLocalDate().toString())) to true
-            Action.CALCULATE -> c["calculation"]?.let { Reply(Say.CALCULATED, listOf(it)) to true }
-                ?: (Reply(Say.MATH_ERROR) to false)
+            Action.CALCULATE -> calculate(c, app!!)
             Action.WEB_SEARCH -> c["query"].orEmpty().let { query ->
                 when {
                     query.isBlank() -> Reply(Say.WEB_QUERY) to true
@@ -196,6 +191,38 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
                 ?: (Reply(Say.NOT_UNDERSTOOD) to false)
             Action.UNKNOWN, Action.HUB, Action.PHONE_MCP -> (c["app_name"]?.let { Reply(Say.UNKNOWN_APP, listOf(it)) } ?: Reply(Say.NOT_UNDERSTOOD)) to false
         }
+    }
+
+    private fun calculate(command: Command, app: FamilyApp): Pair<Reply, Boolean> {
+        val expression = command["expression"] ?: return Reply(Say.MATH_ERROR) to false
+        val result = try {
+            hands.tool(app, "calc_evaluate", org.json.JSONObject().put("expression", expression))?.optString("result")
+        } catch (_: Hands.ToolOff) {
+            return Reply(Say.TOOL_OFF) to false
+        } catch (error: Hands.ToolError) {
+            if (error.code == "DIVISION_BY_ZERO") return Reply(Say.MATH_ERROR) to false
+            return Reply(Say.TOOL_RESULT, listOf("Calculadora rechazó la expresión (${error.code}).")) to false
+        }
+        return if (result.isNullOrBlank()) Reply(Say.TOOL_OLD, listOf(app.name)) to false
+        else Reply(Say.CALCULATED, listOf(result)) to true
+    }
+
+    private fun alarm(command: Command, app: FamilyApp): Pair<Reply, Boolean> {
+        val hour = command.int("hour") ?: return Reply(Say.NOT_UNDERSTOOD) to false
+        val minute = command.int("minute") ?: return Reply(Say.NOT_UNDERSTOOD) to false
+        val time = "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+        val alarm = try {
+            hands.tool(app, "clock_alarm_create", org.json.JSONObject().put("time", time))?.optJSONObject("alarm")
+        } catch (_: Hands.ToolOff) {
+            return Reply(Say.TOOL_OFF) to false
+        } catch (error: Hands.ToolError) {
+            return Reply(Say.TOOL_RESULT, listOf("Reloj no pudo crear la alarma (${error.code}).")) to false
+        } catch (_: org.json.JSONException) {
+            null
+        }
+        return if (alarm?.optString("time") == time && alarm.optBoolean("enabled") && !alarm.isNull("next_ring")) {
+            Reply(Say.ALARM_SET, listOf(hour.toString(), minute.toString())) to true
+        } else Reply(Say.TOOL_RESULT, listOf("Reloj no confirmó la próxima activación de la alarma.")) to false
     }
 
     /** A tool waiting for the user's «sí» (it deletes, edits or takes a photo), and until when it waits. */

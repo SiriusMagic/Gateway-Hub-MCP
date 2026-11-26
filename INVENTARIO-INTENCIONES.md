@@ -19,6 +19,9 @@ El `schemaVersion` del catálogo describe su formato y `catalogVersion` identifi
 
 ## Piloto de Stone en una llamada
 
+El [estado de migración a MCP local](docs/intenciones/migracion-mcp-local.md) cruza los controles con la función
+compartida y la herramienta, incluida la parte pendiente de cada app.
+
 La intención de Arka `stone.player.play_by_title` invoca `player_play_by_title` en el proveedor firmado `content://com.zirakusa.stone.kotlin.preview.hublink`, método `tool`, JSON-RPC `tools/call`.
 
 ```kotlin
@@ -40,7 +43,7 @@ reproducirPorTitulo(
 
 Stone comprueba primero el reproductor y busca solo en títulos de audio. Prioriza el título exacto, permite una coincidencia parcial única y devuelve hasta 20 opciones con `total` si hay varias. Espera a que el motor informe el ID de la pista y reproducción activa. Puede devolver `playing` o `partial` con la pista confirmada, `ambiguous` con coincidencias, o `failed` con los códigos de `steps`. Un fallo de volumen detiene el inicio y permite preguntar si se acepta el volumen actual. Ejemplos de códigos: `TRACK_NOT_FOUND`, `INVALID_SELECTION`, `VOLUME_REJECTED`, `EQ_BATTERY_MODE`, `EQ_NOT_ACTIVE`, `PLAYBACK_UNCONFIRMED`.
 
-La rama base **Stone 1.7.30** (`versionCode 64`) admite operaciones separadas `library_search(query,kind,limit)`, `equalizer_set_enabled(enabled)`, `player_play_songs(songIds)` y `player_state()`. El piloto añade los cinco parámetros de la tabla. La versión que está en tu teléfono se verifica desde MCP o con la lista de herramientas del proveedor local. Arka usa la secuencia compatible si una instalación anterior responde explícitamente que desconoce la herramienta. Un fallo de transporte queda como resultado incierto, porque repetir podría iniciar la pista dos veces. Si Stone está cerrado, Arka reintenta únicamente estados explícitos anteriores a cualquier cambio.
+La rama base **Stone 1.7.30** (`versionCode 64`) admite `library_search`, `equalizer_set_enabled`, `player_play_songs` y `player_state`. El piloto requiere las herramientas locales `player_play_by_title` y `player_play_collection` para ejecutar esas órdenes completas. `tools/list` permite comprobar si la versión instalada las ofrece. Ante un fallo de transporte, Luna informa que la ejecución queda incierta. Cuando Stone indica que está cerrado o que el reproductor aún no está listo, Luna puede abrirlo y reintentar esa respuesta previa al cambio.
 
 La biblioteca y el MCP reutilizan el catálogo de canciones. Los botones y el servicio local pasan por `PlaybackViewModel.play`, `setEqualizerEnabled` y el mismo ajuste de volumen de `StonePlaybackService`. [Implementación en Stone](https://github.com/SiriusMagic/Stone/blob/codex/inventario-intenciones/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/PlayByTitle.kt) · [Cliente Arka](android/app/src/main/java/com/zirakusa/gatewayhub/assistant/StoneTitleAction.kt)
 
@@ -48,7 +51,7 @@ La biblioteca y el MCP reutilizan el catálogo de canciones. Los botones y el se
 
 | Frase | Acciones y decisiones |
 | --- | --- |
-| «Calcula dos más dos y pon música en segundo plano New Americana con el volumen a 50 y el ecualizador activo» | Calculadora local → reproducir por título en Stone. El cálculo se muestra aunque falle Stone. |
+| «Calcula dos más dos y pon música en segundo plano New Americana con el volumen a 50 y el ecualizador activo» | `calc_evaluate(expression="2+2")` → `player_play_by_title` por MCP local. Cada app devuelve su resultado. |
 | «Reanuda la música al 30 y para en 25 minutos» | Ajustar volumen y reanudar pista actual → programar temporizador de Stone. Preguntar qué reproducir si la cola está vacía. |
 | «Retrocede diez segundos y pausa» | Leer ID y posición de la pista → buscar posición relativa acotada → pausar. Revalidar ID antes de cambiar posición. Orden por adaptar. |
 | «Vuelve al inicio de esta canción y pon repetición individual» | Buscar posición cero conservando el ID → activar repetición de una pista. Enlace del reinicio estricto pendiente. |

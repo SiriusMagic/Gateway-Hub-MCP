@@ -333,20 +333,6 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     fun bumpTally(key: String, delta: Int) { tally?.let { it.bump(key, delta); tallyLines = it.lines } }
 
-    /**
-     * The last order turned out not to work after all (the music never started): its answer is corrected, it is marked
-     * failed on the map, and the correction is said.
-     */
-    fun late(reply: Reply) {
-        val t = turns.lastOrNull() ?: return
-        if (t.command.action == Action.PLAY_MUSIC && (t.command["query"] != null || t.command["equalizer"] != null)) return
-        if (t.command.action !in setOf(Action.PLAY_MUSIC, Action.PLAY_RECOMMENDED, Action.MEDIA)) return
-        turns = turns.dropLast(1) + t.copy(reply = reply.copy(volume = t.reply.volume), ok = false).also { it.evidence = t.evidence }
-        last?.let { feedback?.save(it, feedbackText(it)) }
-        pulse++
-        if (t.byVoice && voiceAnswers) speak(reply)
-    }
-
     fun sendTyped() { send(typed, byVoice = false); typed = "" }
     fun heard(text: String, final: Boolean) {
         partial = text

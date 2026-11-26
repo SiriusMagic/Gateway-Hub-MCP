@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
 class LocalOrdersTest {
     private val hands = FakeHands()
     private val brain = Brain(hands)
@@ -38,7 +39,6 @@ class LocalOrdersTest {
         assertEquals("new americana", turn.command["query"])
         assertEquals(Say.TOOL_RESULT, turn.reply.say)
         assertEquals(text, Hearing.pick("pon música al cinco por ciento", text))
-        state.late(Reply(Say.NOT_PLAYING, listOf("Stone")))
         assertEquals(listOf("5602"), state.turns.first().reply.args)
         assertEquals(null, state.last?.reply?.volume)
 

@@ -1,6 +1,5 @@
 package com.zirakusa.gatewayhub.assistant
 
-import kotlinx.coroutines.delay
 import org.json.JSONObject
 
 /** Compatibility with the signed single action implemented by Stone. A returned error must never cause replay. */
@@ -8,20 +7,23 @@ internal object StoneTitleAction {
     const val TOOL = "player_play_by_title"
 
     suspend fun run(
-        query: String, command: Command, selected: StonePlayback.Song?, skipVolume: Boolean,
-        call: suspend (String, JSONObject) -> JSONObject, open: () -> Boolean, returnToAssistant: () -> Unit,
+        command: Command, selected: StonePlayback.Song?, skipVolume: Boolean,
+        call: suspend (String, JSONObject) -> JSONObject, returnToAssistant: () -> Unit,
         observed: MutableMap<String, String>
-    ): StonePlayback.Result? {
-        val args = JSONObject().put("titulo", query).put("segundoPlano", command["background"] == "1")
+    ): StonePlayback.Result {
+        val query = command["query"]
+        val tool = if (query == null) "player_play_collection" else TOOL
+        val args = JSONObject().put("segundoPlano", command["background"] == "1")
+        if (query != null) args.put("titulo", query)
+        else args.put("coleccion", if (command.action == Action.PLAY_RECOMMENDED) "diaria" else "biblioteca")
         if (!skipVolume) args.put("volumen", command.int("volume"))
         command["equalizer"]?.let { args.put("ecualizador", it == "1") }
-        selected?.let { args.put("idPista", it.id) }
+        if (query != null) selected?.let { args.put("idPista", it.id) }
         val response = try {
-            callReady(call, args, open)
+            call(tool, args)
         } catch (error: Hands.ToolError) {
-            if (error.code == "UNKNOWN_TOOL") return null
             observed["prepare"] = error.code
-            return result("Stone no pudo confirmar la orden (${error.code}).")
+            return StonePlayback.Result(failure(error.code), false)
         }
         val steps = response.optJSONObject("steps") ?: return result("Stone devolvió una respuesta que no pude verificar.")
         steps.keys().forEach { key -> steps.optJSONObject(key)?.optString("code")?.let { observed[key] = it } }
@@ -46,6 +48,7 @@ internal object StoneTitleAction {
         } else {
             text += when (val reason = observed["search"] ?: observed["play"]) {
                 "TRACK_NOT_FOUND" -> "No encontré «$query» en tu biblioteca de Stone."
+                "EMPTY_LIBRARY" -> "La biblioteca de audio de Stone está vacía."
                 "INVALID_SELECTION" -> "La selección ya no coincide. Vuelve a pedir el título."
                 else -> "Stone no pudo confirmar la reproducción (${observed["play"] ?: reason ?: "UNKNOWN_RESULT"})."
             }
@@ -58,24 +61,20 @@ internal object StoneTitleAction {
             }
         }
         if (skipVolume) text += "Se mantuvo el volumen actual."
-        return result(text.joinToString(" "), confirmed && response.optString("status") == "playing", volume)
+        val ok = confirmed && response.optString("status") == "playing"
+        if (ok && query == null && command["equalizer"] == null && !skipVolume) {
+            val say = if (command.action == Action.PLAY_RECOMMENDED) Say.RECOMMENDED else Say.PLAYING
+            return StonePlayback.Result(Reply(say, volume = volume), true)
+        }
+        return result(text.joinToString(" "), ok, volume)
     }
 
-    private suspend fun callReady(
-        call: suspend (String, JSONObject) -> JSONObject, args: JSONObject, open: () -> Boolean
-    ): JSONObject {
-        suspend fun ready(): JSONObject? = try {
-            call(TOOL, args).takeUnless { it.optJSONObject("steps")?.optJSONObject("play")?.optString("code") == "PLAYER_NOT_READY" }
-        } catch (error: Hands.ToolError) {
-            if (error.code != "STONE_CLOSED") throw error
-            null
-        }
-        ready()?.let { return it }
-        if (open()) repeat(12) {
-            delay(250)
-            ready()?.let { return it }
-        }
-        throw Hands.ToolError("STONE_CLOSED", "")
+    fun failure(code: String): Reply = when (code) {
+        "MCP_LOCAL_DESACTIVADO" -> Reply(Say.TOOL_OFF)
+        "UNKNOWN_TOOL", "TOOL_UNAVAILABLE" -> Reply(Say.TOOL_RESULT, listOf("La versión de Stone instalada todavía no ofrece esta herramienta MCP."))
+        "NO_PERMISSION", "NOT_SAME_DEVELOPER" -> Reply(Say.TOOL_RESULT, listOf("Stone requiere que Luna tenga la misma firma para usar MCP local."))
+        "STONE_CLOSED", "PLAYER_NOT_READY" -> Reply(Say.TOOL_RESULT, listOf("Abre Stone y vuelve a pedir la orden."))
+        else -> Reply(Say.TOOL_RESULT, listOf("Stone no pudo confirmar la orden ($code)."))
     }
 
     private fun song(json: JSONObject?): StonePlayback.Song? {

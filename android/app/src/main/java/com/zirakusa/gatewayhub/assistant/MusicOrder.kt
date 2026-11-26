@@ -6,6 +6,10 @@ internal object MusicOrder {
         """^(?:(?:reproduce|reproducir|pon|ponme|coloca|colócame|colocame|toca|escuchar|quiero escuchar|play)(?: algo de| un poco de)?(?: la)? (?:m[uú]sica|canciones|una canci[oó]n|algo)(?: de(?=\s))?|m[uú]sica)(?=\s|$)""",
         RegexOption.IGNORE_CASE
     )
+    private val named = Regex(
+        """^(?:pon|ponme|reproduce|reproducir|toca|quiero escuchar) (?:la |una |esta )?(?:canci[oó]n|pista|tema)(?=\s)""",
+        RegexOption.IGNORE_CASE
+    )
     private val background = Regex(
         """(?<!\S)(?:en segundo plano|de fondo|en el fondo|sin abrir(?: la app| la aplicaci[oó]n| stone)?|sin salir de aqu[ií])(?=\s|$)""",
         RegexOption.IGNORE_CASE
@@ -22,10 +26,14 @@ internal object MusicOrder {
     )
     private val recommended = setOf("recomendada", "recomendado", "recomendaciones", "mix del dia", "mezcla del dia")
 
-    fun parse(raw: String): Command? {
+    fun parse(raw: String): Command? = parse(raw, prefix)
+
+    fun namedTitle(raw: String): Command? = parse(raw, named)?.takeIf { it["query"] != null }
+
+    private fun parse(raw: String, openingPattern: Regex): Command? {
         val clean = raw.trim().trim('¿', '¡', '?', '!', '.')
         val text = IntentRules.musicPrefix?.replaceFirst(clean, "pon ") ?: clean
-        val opening = prefix.find(text) ?: return null
+        val opening = openingPattern.find(text) ?: return null
         var rest = text.substring(opening.range.last + 1).trim()
         val slots = mutableMapOf<String, String>()
         background.find(rest)?.let {

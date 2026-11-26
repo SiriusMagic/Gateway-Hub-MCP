@@ -11,6 +11,22 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class StonePlaybackTest {
+    @Test fun playbackControlsUseOnlyTheirLocalToolsAndKeepRestartSeparate() {
+        val app = object : FakeHands() {
+            override fun tool(app: FamilyApp, name: String, args: JSONObject): JSONObject {
+                assertEquals("stone", app.id)
+                done += "$name $args"
+                return JSONObject().put("ok", true)
+            }
+        }
+        val state = AssistantState(Brain(app))
+        listOf("Pausa", "Reanuda", "Siguiente canción", "Canción anterior", "Vuelve al inicio de esta canción")
+            .forEach { state.send(it, true) }
+        assertEquals(listOf("player_pause {}", "player_play {}", "player_next {}", "player_previous {}",
+            "player_seek {\"positionSeconds\":0}"), app.done)
+        assertTrue(state.turns.all { it.ok && it.observed["channel"] == "mcp_local" })
+    }
+
     @Test fun calculatorAndStoneKeepTheOriginalPlan() {
         val stone = FakeStone()
         val state = AssistantState(Brain(stone))
@@ -23,7 +39,7 @@ class StonePlaybackTest {
         assertEquals(text, music.evidence?.plan?.original)
         assertNotEquals(calc.evidence?.id, music.evidence?.id)
         assertEquals(listOf("search", "volume", "equalizer", "play", "return"), music.evidence?.plan?.steps?.last()?.dependencies)
-        assertEquals(listOf("search New Americana", "volume 50", "eq true", "play 1", "state", "return"), stone.done)
+        assertEquals(listOf("title New Americana", "return"), stone.done)
         assertTrue(music.ok)
     }
 
@@ -41,7 +57,7 @@ class StonePlaybackTest {
     }
 
     @Test fun prefersOneSignedCallForTheWholeMusicAction() {
-        val stone = FakeStone().apply { nativeTitle = true }
+        val stone = FakeStone()
         val state = AssistantState(Brain(stone))
         state.send("Pon música en segundo plano New Americana con el volumen a 50 y el ecualizador activo", false)
         assertEquals(listOf("title New Americana", "return"), stone.done)
@@ -53,11 +69,12 @@ class StonePlaybackTest {
         assertTrue(state.last!!.ok)
     }
 
-    @Test fun fallsBackOnlyWhenTheToolIsUnknown() {
-        val stone = FakeStone().apply { nativeTitle = true; nativeError = "UNKNOWN_TOOL" }
+    @Test fun stopsWhenTheSignedToolIsUnavailableOrTheResultIsUncertain() {
+        val stone = FakeStone().apply { nativeError = "UNKNOWN_TOOL" }
         val state = AssistantState(Brain(stone))
         state.send("Pon música New Americana", false)
-        assertEquals(listOf("title New Americana", "search New Americana", "play 1", "state"), stone.done)
+        assertEquals(listOf("title New Americana"), stone.done)
+        assertFalse(state.last!!.ok)
         stone.done.clear()
         stone.nativeError = "MCP_RPC_ERROR"
         state.send("Pon música New Americana", false)
@@ -69,16 +86,16 @@ class StonePlaybackTest {
         val stone = FakeStone().apply { songs = listOf() }
         val state = AssistantState(Brain(stone))
         state.send("Pon música New Americana", false)
-        assertEquals(listOf("search New Americana"), stone.done)
+        assertEquals(listOf("title New Americana"), stone.done)
         assertTrue(state.last!!.reply.args.single().contains("No encontré"))
         stone.done.clear()
         stone.songs = listOf(song("1", "New Americana", "Artista A"), song("2", "New Americana", "Artista B"))
         state.send("Pon música New Americana con el volumen a 50", false)
-        assertEquals(listOf("search New Americana"), stone.done)
+        assertEquals(listOf("title New Americana"), stone.done)
         val prompt = state.last!!
         state.chooseMusic(prompt, 1)
         state.chooseMusic(prompt, 1)
-        assertEquals(listOf("search New Americana", "state", "volume 50", "play 2", "state"), stone.done)
+        assertEquals(listOf("title New Americana", "title New Americana"), stone.done)
         assertTrue(state.last!!.ok)
     }
 
@@ -86,7 +103,7 @@ class StonePlaybackTest {
         val stone = FakeStone().apply { closed = true; eqMissing = true }
         val state = AssistantState(Brain(stone).apply { stoneIo = Dispatchers.Unconfined })
         state.send("Pon música en segundo plano New Americana con el ecualizador activo", false)
-        assertEquals(listOf("search New Americana", "open stone", "search New Americana", "eq true", "play 1", "state", "return"), stone.done)
+        assertEquals(listOf("title New Americana", "open stone", "title New Americana", "return"), stone.done)
         assertFalse(state.last!!.ok)
         assertTrue(state.last!!.reply.args.single().contains("UNKNOWN_TOOL"))
     }
@@ -95,9 +112,9 @@ class StonePlaybackTest {
         val stone = FakeStone().apply { volumeAllowed = false }
         val state = AssistantState(Brain(stone))
         state.send("Pon música New Americana con el volumen a 50 y el ecualizador activo", false)
-        assertEquals(listOf("search New Americana", "volume denied"), stone.done)
+        assertEquals(listOf("title New Americana"), stone.done)
         state.send("sí", false)
-        assertEquals(listOf("search New Americana", "volume denied", "state", "eq true", "play 1", "state"), stone.done)
+        assertEquals(listOf("title New Americana", "title New Americana"), stone.done)
         assertTrue(state.last!!.reply.args.single().contains("volumen actual"))
     }
 
@@ -119,55 +136,41 @@ class StonePlaybackTest {
     }
 
     private class FakeStone : FakeHands() {
-        var nativeTitle = false
         var nativeError: String? = null
         var nativeArgs: JSONObject? = null
-        override fun preferStoneTitleAction() = nativeTitle
-
         var closed = false
         var eqMissing = false
         var volumeAllowed = true
         var songs = listOf(song("1", "New Americana"))
-        var current: String? = null
 
         override fun open(app: FamilyApp): Boolean { closed = false; return super.open(app) }
         override fun comeBack() { done += "return" }
-        override fun setVolume(percent: Int): Boolean {
-            if (volumeAllowed) return super.setVolume(percent)
-            done += "volume denied"
-            return false
-        }
 
-        override fun tool(app: FamilyApp, name: String, args: JSONObject): JSONObject? = when (name) {
-            "player_play_by_title" -> {
-                done += "title ${args.getString("titulo")}"
-                nativeError?.let { throw Hands.ToolError(it, "") }
-                nativeArgs = args
-                JSONObject().put("track", songs.first()).put("status", "playing")
-                    .put("segundoPlano", args.optBoolean("segundoPlano")).put("steps", JSONObject()
-                        .put("play", JSONObject().put("code", "OK"))
-                        .put("volume", JSONObject().put("code", "OK").put("actual", 53)))
+        override fun tool(app: FamilyApp, name: String, args: JSONObject): JSONObject? {
+            if (name != "player_play_by_title") return super.tool(app, name, args)
+            done += "title ${args.getString("titulo")}"
+            if (closed) throw Hands.ToolError("STONE_CLOSED", "")
+            nativeError?.let { throw Hands.ToolError(it, "") }
+            nativeArgs = args
+            val steps = JSONObject()
+            val response = JSONObject().put("steps", steps).put("segundoPlano", args.optBoolean("segundoPlano"))
+            val track = if (args.has("idPista")) songs.find { it.getString("id") == args.getString("idPista") }
+                else songs.singleOrNull()
+            if (track == null) {
+                val code = if (songs.isEmpty()) "TRACK_NOT_FOUND" else "AMBIGUOUS_TITLE"
+                steps.put("search", JSONObject().put("code", code))
+                return response.put("status", if (songs.isEmpty()) "failed" else "ambiguous").put("matches", JSONArray(songs))
             }
-            "library_search" -> {
-                done += "search ${args.getString("query")}"
-                if (closed) throw Hands.ToolError("STONE_CLOSED", "")
-                JSONObject().put("results", JSONArray(songs)).put("total", songs.size)
+            if (args.has("volumen")) {
+                if (!volumeAllowed) {
+                    steps.put("volume", JSONObject().put("code", "VOLUME_REJECTED"))
+                    return response.put("status", "failed").put("selected", track)
+                }
+                steps.put("volume", JSONObject().put("code", "OK").put("actual", 53))
             }
-            "equalizer_set_enabled" -> {
-                done += "eq ${args.getBoolean("enabled")}"
-                if (eqMissing) throw Hands.ToolError("UNKNOWN_TOOL", "")
-                JSONObject().put("ok", true)
-            }
-            "player_play_songs" -> {
-                current = args.getString("songIds")
-                done += "play $current"
-                JSONObject().put("ok", true)
-            }
-            "player_state" -> {
-                done += "state"
-                JSONObject().put("playing", current != null).put("songId", current)
-            }
-            else -> null
+            if (args.has("ecualizador")) steps.put("equalizer", JSONObject().put("code", if (eqMissing) "UNKNOWN_TOOL" else "OK"))
+            steps.put("play", JSONObject().put("code", "OK"))
+            return response.put("status", if (eqMissing) "partial" else "playing").put("track", track)
         }
     }
 

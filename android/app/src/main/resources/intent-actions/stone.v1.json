@@ -1,12 +1,13 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "1.0.0",
+  "catalogVersion": "1.1.0",
   "app": {
     "id": "stone",
     "package": "com.zirakusa.stone.kotlin.preview",
     "baseCommit": "cf2f0951b469294c87d2108a71aa5440f1ddf498",
     "baseVersion": "1.7.30",
-    "baseVersionCode": 64
+    "baseVersionCode": 64,
+    "mcpLocalPilotCommit": "abfec965093626774de9b80ad3062f72d2322257"
   },
   "actions": [
     {
@@ -590,7 +591,7 @@
         "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
-      "luna": "directa",
+      "luna": "mcp_local_migrada",
       "firma": "sin argumentos → reproducción activa",
       "requisitos": "Pista actual/cola, Android media session o host",
       "ejemplosEs": [
@@ -645,7 +646,7 @@
         "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
-      "luna": "directa",
+      "luna": "mcp_local_migrada",
       "firma": "sin argumentos → reproducción en pausa",
       "requisitos": "Sesión activa",
       "ejemplosEs": [
@@ -700,7 +701,7 @@
         "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
-      "luna": "directa",
+      "luna": "mcp_local_migrada",
       "firma": "sin argumentos → siguiente de cola",
       "requisitos": "Cola con siguiente; devuelve estado real si se necesita confirmar",
       "ejemplosEs": [
@@ -750,7 +751,7 @@
         "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
-      "luna": "mcp",
+      "luna": "mcp_local_migrada",
       "firma": "sin argumentos → efecto del control Anterior",
       "requisitos": "Cola/reproductor preparado",
       "ejemplosEs": [
@@ -789,8 +790,8 @@
       "id": "stone.player.previous_track",
       "area": "Reproducción y cola",
       "tipo": "cambio",
-      "luna": "adaptacion",
-      "descripcion": "Intención de salto estricto de pista; requiere adaptar el motor para seekToPreviousMediaItem o resolver índice anterior bajo la cola real",
+      "luna": "mcp_local_migrada",
+      "descripcion": "La orden anterior cambia de pista mediante seekToPreviousMediaItem.",
       "firma": "sin argumentos → pista previa o NO_PREVIOUS_TRACK",
       "requisitos": "Cola con anterior",
       "ejemplosEs": [
@@ -809,14 +810,16 @@
           "revision": "cf2f0951b469294c87d2108a71aa5440f1ddf498"
         }
       ],
-      "invocable": false
+      "invocable": false,
+      "aliasDe": "stone.player.previous",
+      "herramienta": "player_previous"
     },
     {
       "id": "stone.player.restart_current",
       "area": "Reproducción y cola",
       "tipo": "cambio",
-      "luna": "adaptacion",
-      "descripcion": "Reiniciar en la misma pista usando seek(0); barra de progreso permite hacerlo; RESTART de Arka cae hoy en tecla anterior",
+      "luna": "mcp_local_migrada",
+      "descripcion": "Vuelve al inicio de la pista activa con PlaybackViewModel.seek(0).",
       "firma": "positionSeconds=0 → misma pista, posición cero",
       "requisitos": "Pista preparada",
       "ejemplosEs": [
@@ -840,7 +843,12 @@
           "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ],
-      "invocable": false
+      "invocable": false,
+      "aliasDe": "stone.player.seek",
+      "herramienta": "player_seek",
+      "argumentosFijos": {
+        "positionSeconds": 0
+      }
     },
     {
       "id": "stone.player.seek_relative",
@@ -934,7 +942,7 @@
         "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
-      "luna": "mcp",
+      "luna": "mcp_local_migrada",
       "firma": "positionSeconds → posición solicitada",
       "requisitos": "Pista preparada; restricciones de la fuente",
       "ejemplosEs": [
@@ -1056,7 +1064,7 @@
         "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
-      "luna": "piloto",
+      "luna": "mcp_local_migrada",
       "firma": "titulo,volumen?,ecualizador?,segundoPlano?,idPista? → pista confirmada, coincidencias o fallo por etapa",
       "requisitos": "Versión que anuncia la herramienta local; misma firma, permiso local, biblioteca y motor listos",
       "ejemplosEs": [
@@ -1116,6 +1124,33 @@
         "ambiguous",
         "failed"
       ]
+    },
+    {
+      "id": "stone.player.play_collection",
+      "area": "Reproducción",
+      "tipo": "cambio",
+      "luna": "mcp_local_migrada",
+      "descripcion": "Mezcla de biblioteca de audio o recomendaciones del día. Comparte VoicePlay y PlaybackViewModel.play con las entradas de Stone.",
+      "firma": "coleccion, volumen?, ecualizador?, segundoPlano? → status, track, steps",
+      "herramienta": "player_play_collection",
+      "requisitos": "MCP local, misma firma y reproductor disponible.",
+      "ejemplosEs": [
+        "Pon música",
+        "Pon las recomendaciones del día"
+      ],
+      "ambiguedad": "Si se indicó un título, usar player_play_by_title.",
+      "controles": [
+        {
+          "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/StoneApp.kt",
+          "linea": 135,
+          "revision": "abfec965093626774de9b80ad3062f72d2322257"
+        }
+      ],
+      "fuente": {
+        "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/PlayByTitle.kt",
+        "linea": 31,
+        "revision": "abfec965093626774de9b80ad3062f72d2322257"
+      }
     },
     {
       "id": "stone.player.queue",

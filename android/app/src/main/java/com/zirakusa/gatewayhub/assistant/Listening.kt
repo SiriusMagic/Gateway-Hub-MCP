@@ -137,7 +137,7 @@ object Hearing {
         PhoneSpeech.preferredCall(byList, l, byFree, f, contacts)?.let { return it }
         if (byList.action == Action.UNKNOWN && byFree.action != Action.UNKNOWN) return f
         if (byFree.action == Action.WEB_SEARCH && byList.action == Action.WEB_SEARCH && !byFree["query"].isNullOrBlank()) return f
-        if (byFree["calculation"] != null && byList["calculation"] == null &&
+        if (byFree["expression"] != null && byList["expression"] == null &&
             (byList.action == Action.VOLUME || byList.action == byFree.action)) return f
         // A family app's tool or a note with free words (a task, a city, a name): the free recognizer has them, when it heard
         // the same order.

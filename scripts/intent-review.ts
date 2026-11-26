@@ -38,7 +38,7 @@ export function fixture(sample: Sample) {
     (sample.titled ? " Canción del Faro" : "") + (sample.volume ? " con el volumen a 50" : "") +
     (sample.equalizer ? (sample.volume ? " y el ecualizador activo" : " con el ecualizador activo") : "");
   return { phrase: (sample.compound ? "Calcula dos más 2 y " : "") + music,
-    query: sample.titled ? "Canción del Faro" : null, calculation: sample.compound ? "4" : null,
+    query: sample.titled ? "Canción del Faro" : null, expression: sample.compound ? "2+2" : null,
     volume: sample.volume ? "50" : null, equalizer: sample.equalizer, background: sample.background };
 }
 

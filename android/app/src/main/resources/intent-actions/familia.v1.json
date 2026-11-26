@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "1.0.0",
+  "catalogVersion": "1.1.0",
   "apps": [
     {
       "id": "redes",
@@ -1247,7 +1247,7 @@
             "expression"
           ],
           "esquemaAutoritativo": "tools/list",
-          "luna": "regla_arka_documentada",
+          "luna": "mcp_local_migrada",
           "fuente": {
             "archivo": "android/app/src/main/java/com/zirakusa/calculadora/mcp/CalcTools.kt",
             "linea": 44,
@@ -1261,7 +1261,8 @@
           "ejemplosEs": [
             "Calcula dos más dos"
           ],
-          "ambiguedad": "Arka calcula expresiones simples localmente; fórmula completa usa el motor. Aclarar unidad o precedencia cuando falte."
+          "ambiguedad": "Arka calcula expresiones simples localmente; fórmula completa usa el motor. Aclarar unidad o precedencia cuando falte.",
+          "funcionCompartida": "Calculator.evaluate"
         },
         {
           "id": "calculadora.calc_add",
@@ -6272,7 +6273,7 @@
             "label"
           ],
           "esquemaAutoritativo": "tools/list",
-          "luna": "mcp_sujeto_a_disponibilidad",
+          "luna": "mcp_local_migrada",
           "fuente": {
             "archivo": "android/app/src/main/java/com/zirakusa/reloj/mcp/ClockTools.kt",
             "linea": 48,
@@ -6282,7 +6283,8 @@
             "archivo": "android/app/src/main/java/com/zirakusa/reloj/mcp/ClockTools.kt",
             "linea": 73,
             "revision": "f507ef22168a878bd7486a363652f672e6b4dfe7"
-          }
+          },
+          "funcionCompartida": "AlarmStore.save / AlarmScheduler.sync"
         },
         {
           "id": "reloj.clock_alarm_enable",

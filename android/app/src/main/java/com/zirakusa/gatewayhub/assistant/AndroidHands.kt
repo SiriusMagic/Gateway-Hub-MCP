@@ -1,7 +1,6 @@
 package com.zirakusa.gatewayhub.assistant
 
 import android.Manifest
-import android.app.SearchManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -11,16 +10,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.AlarmClock
 import android.provider.ContactsContract
-import android.provider.MediaStore
-import android.view.KeyEvent
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 
-/**
- * The assistant's hands on Android. It speaks to the family apps with Android's standard orders (the same any assistant
- * uses: «poner alarma», «reproducir», «marcar») plus the family's own (FAMILIA.md §10), and falls back to opening the
- * app when an older version doesn't know the order yet. It places outgoing calls after Lucía has asked for confirmation.
- */
+/** Android integrations for the signed family MCP provider and system actions still awaiting migration. */
 class AndroidHands(context: Context) : Hands {
     private val app = context.applicationContext
     private val pm = app.packageManager
@@ -44,54 +37,6 @@ class AndroidHands(context: Context) : Hands {
         val launch = inside ?: pkg(app)?.let(pm::getLaunchIntentForPackage) ?: return false
         return try { this.app.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true } catch (_: ActivityNotFoundException) { false }
     }
-
-    private val stone get() = Catalog.byId("stone")
-
-    /** Android's «play from search»: an empty query means «anything», which Stone plays shuffled. */
-    /** Called when music was asked for but nothing sounds a few seconds later (see [PlayCheck]). */
-    var onSilent: () -> Unit = {}
-    private val main = android.os.Handler(android.os.Looper.getMainLooper())
-    private val check = PlayCheck(playing = { audio?.isMusicActive == true }, press = { button(KeyEvent.KEYCODE_MEDIA_PLAY) },
-        later = { ms, run -> main.postDelayed(run, ms) }, silent = { onSilent() })
-
-    override fun preferStoneTitleAction() = true
-
-    override fun cancelMusicRetry() = check.cancel()
-
-    override fun playMusic(query: String?): Boolean {
-        if (query != null) return false // A named song is resolved through the signed Stone channel.
-        val play = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).putExtra(SearchManager.QUERY, "")
-            .putExtra(MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/*")
-        // An older Stone does not know the order: it is opened, and PlayCheck presses «play» once it is up.
-        val ok = start(play, stone, fallback = false) || open(stone)
-        if (ok) check.start()
-        return ok
-    }
-
-    override fun playRecommended(): Boolean {
-        if (!start(Intent(PLAY_RECOMMENDED), stone, fallback = false)) return playMusic(null)
-        check.start(); return true
-    }
-
-    /** A media button, for whatever player has the music. */
-    private fun button(code: Int): Boolean {
-        val a = audio ?: return false
-        a.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, code)); a.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, code))
-        return true
-    }
-
-    override fun media(key: MediaKey): Boolean {
-        val code = when (key) { MediaKey.PAUSE -> KeyEvent.KEYCODE_MEDIA_PAUSE; MediaKey.RESUME -> KeyEvent.KEYCODE_MEDIA_PLAY
-            MediaKey.NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT; MediaKey.PREVIOUS -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
-            // Players go back to the start of the song on «previous» once a few seconds have played.
-            MediaKey.RESTART -> KeyEvent.KEYCODE_MEDIA_PREVIOUS }
-        if (!button(code)) return false
-        if (key == MediaKey.PAUSE) check.cancel() else check.start()
-        return true
-    }
-
-    override fun alarm(hour: Int, minute: Int) = start(Intent(AlarmClock.ACTION_SET_ALARM).putExtra(AlarmClock.EXTRA_HOUR, hour)
-        .putExtra(AlarmClock.EXTRA_MINUTES, minute).putExtra(AlarmClock.EXTRA_SKIP_UI, true), Catalog.byId("reloj"))
 
     override fun timer(seconds: Int) = start(Intent(AlarmClock.ACTION_SET_TIMER).putExtra(AlarmClock.EXTRA_LENGTH, seconds)
         .putExtra(AlarmClock.EXTRA_SKIP_UI, true), Catalog.byId("reloj"))
@@ -275,7 +220,6 @@ class AndroidHands(context: Context) : Hands {
     }
 
     companion object {
-        const val PLAY_RECOMMENDED = "com.zirakusa.family.action.PLAY_RECOMMENDED"
         const val CAPTURE = "com.zirakusa.family.action.CAPTURE"
     }
 }

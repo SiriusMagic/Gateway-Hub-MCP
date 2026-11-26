@@ -60,7 +60,6 @@ object Talk {
             Say.TOOL_RESULT, Say.GENERATED -> a[0]
             Say.CONFIRM -> a[0] + " " + res.getString(R.string.say_confirm_hint)
             Say.CANCELLED -> res.getString(R.string.say_cancelled)
-            Say.NOT_PLAYING -> res.getString(R.string.say_not_playing, a[0])
             Say.TOOL_OFF -> res.getString(R.string.say_tool_off, a[0])
             Say.TOOL_OLD -> res.getString(R.string.say_tool_old, a[0])
             Say.TOOL_ERROR -> res.getString(R.string.say_tool_error, a[0], a[1])

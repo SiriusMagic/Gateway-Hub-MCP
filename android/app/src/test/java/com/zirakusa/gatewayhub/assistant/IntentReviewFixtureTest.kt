@@ -20,10 +20,10 @@ class IntentReviewFixtureTest {
             val phrase = expected.getString("phrase")
             val plan = IntentPlan.validated(phrase, Intents.split(phrase, brain::commandFor), brain::commandFor)
             val steps = plan?.steps.orEmpty()
-            val calc = expected.string("calculation")
+            val calc = expected.string("expression")
             assertEquals(label, if (calc != null) listOf(Action.CALCULATE, Action.PLAY_MUSIC) else listOf(Action.PLAY_MUSIC),
                 steps.map { it.command.action })
-            assertEquals(label, calc, steps.first().command["calculation"])
+            assertEquals(label, calc, steps.first().command["expression"])
             val music = steps.last().command
             assertEquals(label, expected.string("query"), music["query"])
             assertEquals(label, expected.string("volume"), music["volume"])

@@ -1,8 +1,5 @@
 package com.zirakusa.gatewayhub.assistant
 
-import java.math.BigDecimal
-import java.math.MathContext
-
 /** Phrases Lucía can answer without waiting for a model or calling another app. */
 internal object QuickOrders {
     private val greeting = Regex("^(?:hola(?: (?:luc[ií]a|c[oó]mo (?:est[aá]s|listas)|qu[eé] tal))?|c[oó]mo est[aá]s|qu[eé] tal)$", RegexOption.IGNORE_CASE)
@@ -14,6 +11,7 @@ internal object QuickOrders {
     /** Only numbers and operations («dos más dos», «8 por 3»): a calculation without «calcula». */
     private val bare = Regex("^[0-9.]+(?: ?(?:mas|menos|por|entre|multiplicado por|dividido (?:por|entre)|[+*/x-]) ?[0-9.]+)+$")
     private val number = Regex("[+-]?(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)")
+    private val expression = Regex("${number.pattern}(?:[+*/-]${number.pattern})+")
     private val spelling = mapOf("multiplicado por" to "*", "dividido entre" to "/", "dividido por" to "/",
         "por" to "*", "entre" to "/", "mas" to "+", "menos" to "-", "x" to "*")
 
@@ -76,31 +74,7 @@ internal object QuickOrders {
         expr = expr.replace(Regex("(?<=\\d)x(?=[+\\-]?[0-9])"), "*")
         if (Regex("[0-9.] +[0-9.]").containsMatchIn(expr)) return null
 
-        // Evaluate multiplication and division before adding each term to the total.
-        return try {
-            val parts = expr.replace(" ", "")
-            val first = number.matchAt(parts, 0) ?: return null
-            var term = first.value.toBigDecimal()
-            var sum = BigDecimal.ZERO
-            var index = first.range.last + 1
-            while (index < parts.length) {
-                val op = parts[index]
-                val match = number.matchAt(parts, index + 1) ?: return null
-                val value = match.value.toBigDecimal()
-                when (op) {
-                    '*' -> term *= value
-                    '/' -> term = term.divide(value, MathContext.DECIMAL128)
-                    '+', '-' -> {
-                        sum += term
-                        term = if (op == '+') value else value.negate()
-                    }
-                    else -> return null
-                }
-                index = match.range.last + 1
-            }
-            mapOf("expression" to parts, "calculation" to (sum + term).stripTrailingZeros().toPlainString())
-        } catch (_: ArithmeticException) {
-            mapOf("math_error" to "division_by_zero")
-        }
+        val parts = expr.replace(" ", "")
+        return if (expression.matches(parts)) mapOf("expression" to parts) else null
     }
 }

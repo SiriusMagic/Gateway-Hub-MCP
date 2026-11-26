@@ -107,8 +107,6 @@ class AssistantActivity : ComponentActivity() {
         runCatching { getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(feedbackNetwork) }
         state.message = { getString(it) }
         state.offlineVoiceReady = voice.available
-        // Music asked for but silent: Lucía says so instead of «Reproduciendo».
-        hands.onSilent = { runOnUiThread { state.late(Reply(Say.NOT_PLAYING, listOf("Stone"))) } }
         state.onTurn = { t ->
             if (t.command.action == Action.COUNT) { stop(); countOn(greet = true) }
             if (t.byVoice && !state.voiceAnswers && (t.reply.asksToCall || t.reply.asksCallName)) {

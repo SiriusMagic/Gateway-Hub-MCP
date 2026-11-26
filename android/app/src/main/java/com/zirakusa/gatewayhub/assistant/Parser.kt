@@ -59,6 +59,7 @@ object Parser {
         // «la música / la canción / el tema / esto» after it.
         val what = "(?: (?:a |en )?(?:la |el |esta |este )?(?:musica|cancion|tema|reproduccion|audio|esto|eso))?"
         when {
+            Regex("^(?:vuelve|regresa) al (?:inicio|principio)(?: de (?:la|esta) cancion)?$").matches(t) -> return media(MediaKey.RESTART)
             Regex("^(?:pausa|pausar|pausala|pon(?:le)? pausa|ponle pausa|haz pausa|para|parala|pararla|deten|detenla|detener|detente|stop|silencio|quita|quitala|apaga|apagala|calla|callate)$what$").matches(t) -> return media(MediaKey.PAUSE)
             Regex("^(?:reinicia|reiniciala|reiniciar|repite|repitela|vuelve a empezar|empieza de nuevo|desde el principio|otra vez|de nuevo|pon de nuevo|vuelve a poner desde el principio)$what(?: desde el principio| de nuevo| otra vez)?$").matches(t) -> return media(MediaKey.RESTART)
             Regex("^(?:siguiente|la siguiente|el siguiente|salta|saltala|pasa|pasala|cambia|cambiala|otra|otro|adelanta)(?: (?:a la |al |la |el |de )?(?:siguiente )?(?:cancion|tema|musica))?(?: siguiente)?$").matches(t) -> return media(MediaKey.NEXT)

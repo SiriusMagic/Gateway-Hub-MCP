@@ -15,6 +15,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
 class SpokenPlanTest {
     private val people = listOf(Person("Kusa", "0991234567"), Person("Luis Mora", "0991112233"))
     private val hands = object : FakeHands() {

@@ -53,11 +53,12 @@ gateway-hub-mcp/
 
 ## Reconocimiento de intenciones y feedback
 
-Arka conserva la frase y valida el plan antes de ejecutar las órdenes conocidas. Calculadora resuelve operaciones
-simples en el teléfono. Stone usa MCP local para buscar por título, resolver una coincidencia y aplicar volumen y
-ecualizador antes de reproducir. La búsqueda por título necesita una versión de Stone con `library_search` y
-`player_play_songs`, acceso MCP local permitido y la firma de la familia. Si Stone aún no abrió su reproductor, Arka
-lo abre y reintenta las consultas de lectura. Android controla si puede traer Arka al frente.
+Arka conserva la frase y valida el plan antes de ejecutar las órdenes conocidas. Para las acciones migradas llama
+directamente a MCP local. Calculadora recibe la expresión mediante `calc_evaluate`; Reloj crea la alarma mediante
+`clock_alarm_create`. Stone ejecuta `player_play_by_title` para buscar, aplicar ajustes y confirmar la pista en una
+sola llamada y `player_play_collection` para sus mezclas. Estas órdenes requieren la versión de Stone con las
+herramientas, MCP local permitido y la firma de la familia. El
+[inventario de migración](docs/intenciones/migracion-mcp-local.md) enumera operaciones y controles pendientes.
 
 Los votos y correcciones quedan en el teléfono en almacenamiento cifrado. Para sincronizarlos, se activa
 **Compartir feedback con mi Hub** en los ajustes del asistente y se configura la sesión de propietario. Esa sesión
