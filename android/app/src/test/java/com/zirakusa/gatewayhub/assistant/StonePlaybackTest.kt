@@ -11,6 +11,25 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class StonePlaybackTest {
+    @Test fun codeModeSendsTitleAndSettingsOnceWithoutUsingTheLocalProvider() {
+        val stone = FakeStone().apply { closed = true; nativeTitle = true }
+        val sent = mutableListOf<JSONObject>()
+        val brain = Brain(stone).apply {
+            val remote: suspend (JSONObject) -> JSONObject = { args ->
+                sent += args
+                JSONObject("""{"status":"playing","steps":{"play":{"code":"OK"}},"track":{"id":"1","title":"Alone","artist":"Artista"}}""")
+            }
+            stoneCodeMode = { remote }
+        }
+        val state = AssistantState(brain)
+        state.send("Reproduce la canción Alone con el volumen a 50", false)
+        assertEquals("Alone", sent.single().getString("titulo"))
+        assertEquals(50, sent.single().getInt("volumen"))
+        assertTrue(stone.done.isEmpty())
+        assertTrue(state.last!!.ok)
+        assertTrue(state.last!!.reply.args.single().contains("Suena «Alone · Artista»"))
+    }
+
     @Test fun calculatorAndStoneKeepTheOriginalPlan() {
         val stone = FakeStone()
         val state = AssistantState(Brain(stone))

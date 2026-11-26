@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.zirakusa.gatewayhub.R
+import com.zirakusa.gatewayhub.BuildConfig
 import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.assistant.local.PhoneMcpApp
 import com.zirakusa.gatewayhub.assistant.local.PhoneMcpStatus
@@ -50,6 +51,7 @@ import kotlinx.coroutines.launch
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     var localOn by remember { mutableStateOf(prefs.localMcp) }
+    var codeModeOn by remember { mutableStateOf(prefs.stoneCodeMode) }
     var switched by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val phone = local?.phoneMcp
@@ -58,6 +60,14 @@ import kotlinx.coroutines.launch
             PhoneMcpControls(inventory.orEmpty().any { it.remote == true }, { on ->
                 scope.launch { switched = phone?.setRemoteAll(on); refresh++ }
             }, localOn, { prefs.localMcp = it; localOn = it; refresh++ }, connectExternal, switched)
+        }
+        if (BuildConfig.BUILD_TYPE == "phoneTest") item {
+            HubCard {
+                Toggle(R.string.stone_code_mode, R.string.stone_code_mode_hint, codeModeOn) {
+                    prefs.stoneCodeMode = it
+                    codeModeOn = it
+                }
+            }
         }
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

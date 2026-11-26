@@ -1,5 +1,7 @@
 package com.zirakusa.gatewayhub.assistant
 
+import org.json.JSONObject
+
 import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
@@ -89,6 +91,7 @@ data class Turn(val heard: String, val byVoice: Boolean, val command: Command, v
 /** Understands and acts. Pure apart from its [Hands]. */
 class Brain(private val hands: Hands, private val clock: () -> Long = System::currentTimeMillis) {
     internal var stoneIo: CoroutineDispatcher? = null
+    internal var stoneCodeMode: (() -> (suspend (JSONObject) -> JSONObject)?)? = null
 
     internal suspend fun execute(heard: String, byVoice: Boolean, step: IntentStep): Turn =
         if (step.command.action == Action.PLAY_MUSIC && !asking) music(heard, byVoice, step.command)
@@ -97,7 +100,7 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     internal suspend fun music(heard: String, byVoice: Boolean, command: Command,
         selected: StonePlayback.Song? = null, skipVolume: Boolean = false): Turn {
         val start = clock()
-        val stone = StonePlayback(hands, stoneIo)
+        val stone = StonePlayback(hands, stoneIo, stoneCodeMode?.invoke())
         val result = stone.run(command, selected, skipVolume)
         return Turn(heard, byVoice, command, Catalog.byId("stone"), result.reply, result.ok, clock() - start).also {
             it.observed = stone.stages.toMap()

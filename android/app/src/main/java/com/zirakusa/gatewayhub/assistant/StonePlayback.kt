@@ -7,7 +7,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 /** Executes the music action once. Only reads may be retried. */
-internal class StonePlayback(private val hands: Hands, private val io: CoroutineDispatcher?) {
+internal class StonePlayback(private val hands: Hands, private val io: CoroutineDispatcher?,
+    private val codeMode: (suspend (JSONObject) -> JSONObject)? = null) {
     data class Song(val id: String, val title: String, val artist: String, val album: String) {
         val label get() = listOf(title, artist, album).filter(String::isNotBlank).joinToString(" · ")
     }
@@ -16,9 +17,15 @@ internal class StonePlayback(private val hands: Hands, private val io: Coroutine
     val stages = linkedMapOf<String, String>()
 
     suspend fun run(command: Command, selected: Song? = null, skipVolume: Boolean = false): Result {
+        val query = command["query"]
+        if (query != null && codeMode != null) {
+            hands.cancelMusicRetry()
+            stages["channel"] = "cloudflare_code_mode"
+            return StoneTitleAction.run(query, command, selected, skipVolume, { _, args -> codeMode(args) },
+                { false }, {}, stages, remote = true) ?: fail("El Hub de prueba no admite la reproducción por título.")
+        }
         if (!hands.installed(app)) return Result(Reply(Say.NOT_INSTALLED, listOf(app.name)), false)
         hands.cancelMusicRetry()
-        val query = command["query"]
         if (query != null && hands.preferStoneTitleAction()) {
             StoneTitleAction.run(query, command, selected, skipVolume, ::call, { hands.open(app) },
                 { returnToArka(command) }, stages)?.let { return it }

@@ -10,6 +10,8 @@ import { createRouter } from "./router.ts";
 import { modules } from "./modules/index.ts";
 import { handleAdmin } from "./admin/actions.ts";
 import { handleAdminApi } from "./admin/api.ts";
+import { codeModeStone, type RunStoneCode } from "./codemode/stone.ts";
+import { ToolError } from "./modules/types.ts";
 
 export const VERSION = "0.0.3";
 const MAX_BODY = 1 << 20;
@@ -39,7 +41,8 @@ function rejected(store: ServeStore, caller: string, missing: boolean) {
   console.warn(JSON.stringify({ event: "auth_rejected", caller, missing })); // never the token itself
 }
 
-export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch): Promise<Response> {
+export async function serve(request: Request, env: HubEnv, store: ServeStore, fetcher: typeof fetch = fetch,
+  runStoneCode?: RunStoneCode): Promise<Response> {
   const url = new URL(request.url);
   const caller = request.headers.get("CF-Connecting-IP") || "local";
   if (store.requests.hit(caller)) {
@@ -95,6 +98,20 @@ export async function serve(request: Request, env: HubEnv, store: ServeStore, fe
       rejected(store, caller, !bearer);
       return new Response(JSON.stringify({ error: { code: "UNAUTHORIZED", message: "Token del propietario incorrecto." } }),
         { status: 401, headers: { "Content-Type": "application/json", "WWW-Authenticate": "Bearer", ...SECURITY } });
+    }
+    if (url.pathname === "/api/admin/code-mode/stone") {
+      if (!runStoneCode) return json(503, { error: { code: "CODE_MODE_DISABLED", message: "Este Hub no tiene habilitado Code Mode." } });
+      if (request.method !== "POST") return json(405, { error: { code: "METHOD_NOT_ALLOWED" } }, { Allow: "POST" });
+      try {
+        const start = Date.now();
+        const result = await codeModeStone(request, ctx, runStoneCode);
+        return json(200, result, { "Server-Timing": `code-mode;dur=${Date.now() - start}` });
+      } catch (error) {
+        const known = error instanceof ToolError;
+        return json(known && error.code === "INVALID_PARAM" ? 400 : known && error.code === "NOT_LINKED" ? 409 : 502,
+          { error: { code: known ? error.code : "CODE_MODE_FAILED",
+            message: known ? error.message : "Code Mode no pudo completar la solicitud." } });
+      }
     }
     return handleAdminApi(request, url, { store, ctx, modules, security: SECURITY, version: VERSION });
   }

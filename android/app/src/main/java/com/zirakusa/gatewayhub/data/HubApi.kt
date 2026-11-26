@@ -33,6 +33,9 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     /** Read-only: the hub asks each remote app whether it is linked and online. */
     suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 
+    internal suspend fun playStoneWithCodeMode(args: JSONObject): JSONObject =
+        JSONObject(call("POST", "/code-mode/stone", args))
+
     private suspend fun call(method: String, path: String, body: JSONObject? = null): String = withContext(Dispatchers.IO) {
         val (status, text) = try { transport.send(method, "$base/api/admin$path", token, body?.toString()) }
             catch (e: Exception) { throw HubException("NETWORK", "No se pudo conectar con el hub. Revisa la dirección y tu conexión.") }

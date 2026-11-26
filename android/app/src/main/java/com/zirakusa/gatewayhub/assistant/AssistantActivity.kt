@@ -27,7 +27,11 @@ import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.MainActivity
+import com.zirakusa.gatewayhub.BuildConfig
 import com.zirakusa.gatewayhub.R
+import com.zirakusa.gatewayhub.data.HubApi
+import com.zirakusa.gatewayhub.data.HubException
+import com.zirakusa.gatewayhub.data.KeystoreSessionStore
 import com.zirakusa.gatewayhub.ui.HubTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -89,7 +93,22 @@ class AssistantActivity : ComponentActivity() {
         voice = Voice(this) { ready -> if (::state.isInitialized) state.offlineVoiceReady = ready }
         local = LocalAssistant(this, lifecycleScope)
         hands = AndroidHands(this)
-        state = AssistantState(Brain(hands).apply { stoneIo = Dispatchers.IO }, { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
+        val brain = Brain(hands).apply { stoneIo = Dispatchers.IO }
+        if (BuildConfig.BUILD_TYPE == "phoneTest") {
+            val session = KeystoreSessionStore(this)
+            val play: suspend (org.json.JSONObject) -> org.json.JSONObject = { args ->
+                val (url, token) = session.load() ?: throw Hands.ToolError("HUB_NOT_CONNECTED", "Conecta el Hub de prueba desde Crear token en la pantalla MCP.")
+                try {
+                    HubApi(url, token).playStoneWithCodeMode(args)
+                } catch (error: HubException) {
+                    throw Hands.ToolError(error.code, error.message.orEmpty())
+                } catch (_: org.json.JSONException) {
+                    throw Hands.ToolError("HUB_BAD_RESPONSE", "El Hub devolvió una respuesta que no pude leer.")
+                }
+            }
+            brain.stoneCodeMode = { play.takeIf { prefs.stoneCodeMode } }
+        }
+        state = AssistantState(brain, { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
         state.executeOrders = { work -> lifecycleScope.launch { work() } }
         state.local = local
         state.speechModels = SpeechModels(this, lifecycleScope)

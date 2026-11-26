@@ -5,6 +5,8 @@ import type { Agent, CallStat, HubAdminStore, HubEnv, HubStoreApi, MetricsSummar
 import { serve } from "./serve.ts";
 import { SqlFeedbackQueue } from "./feedback/queue.ts";
 import { Limiter } from "./auth.ts";
+import { stoneExecutor } from "./codemode/worker.ts";
+import type { RunStoneCode } from "./codemode/stone.ts";
 
 type Row = Record<string, string | number>;
 const toNote = (r: Row): Note => ({ id: String(r.id), title: String(r.title), body: String(r.body),
@@ -14,16 +16,20 @@ const toAgent = (r: Row): Agent => ({ id: String(r.id), name: String(r.name), to
   expiresAt: Number(r.expires_at), created: Number(r.created), lastUsed: Number(r.last_used) });
 const like = (q: string) => "%" + q.replace(/[\\%_]/g, (c) => "\\" + c) + "%";
 
-export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubAdminStore {
+type StoreEnv = HubEnv & { CODE_LOADER?: WorkerLoader };
+
+export class HubStore extends DurableObject<StoreEnv> implements HubStoreApi, HubAdminStore {
   requests = new Limiter(120);   // per caller and minute
   failures = new Limiter(20);    // wrong tokens per caller and minute
   private sql: SqlStorage;
   readonly feedback: SqlFeedbackQueue;
+  private readonly stoneCode?: RunStoneCode;
 
-  constructor(ctx: DurableObjectState, env: HubEnv) {
+  constructor(ctx: DurableObjectState, env: StoreEnv) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
     this.feedback = new SqlFeedbackQueue(this.sql);
+    this.stoneCode = env.CODE_LOADER && stoneExecutor(env.CODE_LOADER);
     this.sql.exec(`CREATE TABLE IF NOT EXISTS notes(id TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL,
       created INTEGER NOT NULL, updated INTEGER NOT NULL)`);
     this.sql.exec("CREATE TABLE IF NOT EXISTS config(key TEXT PRIMARY KEY, value TEXT NOT NULL)");
@@ -35,7 +41,7 @@ export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubA
     this.sql.exec("CREATE INDEX IF NOT EXISTS calls_at ON calls(at)");
   }
 
-  fetch(request: Request): Promise<Response> { return serve(request, this.env, this); }
+  fetch(request: Request): Promise<Response> { return serve(request, this.env, this, fetch, this.stoneCode); }
 
   async getConfig(key: string) {
     const rows = this.sql.exec("SELECT value FROM config WHERE key = ?", key).toArray() as Row[];

@@ -1,0 +1,4 @@
+<resources>
+    <string name="stone_code_mode">Cloudflare Code Mode · Stone</string>
+    <string name="stone_code_mode_hint">Envía los títulos que pidas al Hub conectado. Requiere internet y un enlace de Stone activo en el Hub de prueba.</string>
+</resources>

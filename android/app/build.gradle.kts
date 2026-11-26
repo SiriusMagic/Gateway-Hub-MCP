@@ -55,14 +55,14 @@ android {
         create("phoneTest") {
             initWith(getByName("preview"))
             applicationIdSuffix = ".prueba"
-            versionNameSuffix = "-prueba.2"
+            versionNameSuffix = "-prueba.3"
             matchingFallbacks += "release"
         }
     }
 }
 androidComponents {
     onVariants(selector().withBuildType("phoneTest")) { variant ->
-        variant.outputs.forEach { it.versionCode.set(47) }
+        variant.outputs.forEach { it.versionCode.set(48) }
     }
 }
 dependencies {

@@ -3,6 +3,11 @@ name = "stone-hub"
 main = "src/index.ts"
 compatibility_date = "2025-09-01"
 
+[[rules]]
+type = "Text"
+globs = ["**/*.codemode.js"]
+fallthrough = false
+
 [vars]
 # Only links of this relay are accepted for the music module (no other host is ever fetched).
 STONE_RELAY_HOST = "stone-relay.sarangoadonis52.workers.dev"
@@ -14,3 +19,16 @@ class_name = "HubStore"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["HubStore"]
+
+[env.code-preview]
+name = "stone-hub-code-preview"
+
+[env.code-preview.vars]
+STONE_RELAY_HOST = "stone-relay.sarangoadonis52.workers.dev"
+
+[[env.code-preview.durable_objects.bindings]]
+name = "HUB"
+class_name = "HubStore"
+
+[[env.code-preview.worker_loaders]]
+binding = "CODE_LOADER"

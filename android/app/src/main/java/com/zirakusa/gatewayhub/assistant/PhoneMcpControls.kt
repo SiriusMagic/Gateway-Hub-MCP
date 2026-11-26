@@ -36,7 +36,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
     }
 }
 
-@Composable private fun Toggle(title: Int, hint: Int, on: Boolean, change: (Boolean) -> Unit) {
+@Composable internal fun Toggle(title: Int, hint: Int, on: Boolean, change: (Boolean) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(title), color = HubColors.Text, fontSize = 16.sp)

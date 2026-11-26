@@ -7,6 +7,7 @@ import androidx.core.content.edit
 class Prefs(context: Context) {
     private val p = context.applicationContext.getSharedPreferences("assistant", Context.MODE_PRIVATE)
     var wake: Boolean get() = p.getBoolean("wake", false); set(v) = p.edit { putBoolean("wake", v) }
+    var stoneCodeMode: Boolean get() = p.getBoolean("stone_code_mode", false); set(v) = p.edit { putBoolean("stone_code_mode", v) }
     var name: WakeName get() = WakeName.from(p.getString("name", null)); set(v) = p.edit { putString("name", v.name) }
     var onlyCharging: Boolean get() = p.getBoolean("charging", false); set(v) = p.edit { putBoolean("charging", v) }
     var mode: AnswerMode get() = AnswerMode.from(p.getString("mode", null)); set(v) = p.edit { putString("mode", v.name) }
