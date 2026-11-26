@@ -1,12 +1,14 @@
 package com.zirakusa.gatewayhub.assistant
 
+import com.zirakusa.gatewayhub.assistant.local.McpArguments
+import com.zirakusa.gatewayhub.assistant.local.McpSelection
 import java.util.UUID
 
 internal data class ModelSource(val model: String, val template: String)
 
 internal data class IntentStep(val phrase: String, val command: Command) {
     val app get() = when (command.action) {
-        Action.OPEN, Action.TOOL -> command["app"]?.let { id -> Catalog.apps.firstOrNull { it.id == id } }
+        Action.OPEN, Action.TOOL, Action.PHONE_MCP -> command["app"]?.let { id -> Catalog.apps.firstOrNull { it.id == id } }
         else -> Catalog.appFor(command.action)
     }
 
@@ -28,12 +30,40 @@ internal data class IntentPlan(
     companion object {
         const val VERSION = "2"
         // Limit fallback to verbatim arguments. Other model-assisted actions still have their own tool review.
-        private val originalSlots = setOf("who", "query", "text", "title")
+        private val originalSlots = setOf("who", "query", "text", "title", "name", "newname")
+        private fun preserves(source: String, value: String): Boolean {
+            val target = Words.normalize(value)
+            return target.isEmpty() || " $target " in " ${Words.normalize(source)} "
+        }
+
+        /** Tool discovery supplies the supported action and schema. A previous read can supply an identifier. */
+        fun supportsTool(original: String, selection: McpSelection, previousReads: List<String>): Boolean {
+            if (!McpArguments.valid(selection.tool.schema, selection.arguments)) return false
+            return selection.arguments.keys().asSequence().all { key ->
+                val value = selection.arguments.opt(key) ?: return@all false
+                when {
+                    key.lowercase() in originalSlots && value is String -> preserves(original, value)
+                    key.endsWith("Id") || key.endsWith("Ids") -> when (value) {
+                        is String -> value.split(',').all { id ->
+                            id.isNotBlank() && (preserves(original, id.trim()) || previousReads.any { preserves(it, id.trim()) })
+                        }
+                        is Number -> preserves(original, value.toString()) || previousReads.any { preserves(it, value.toString()) }
+                        else -> false
+                    }
+                    else -> true
+                }
+            }
+        }
+
+        fun forTools(original: String, action: Action, source: ModelSource, steps: List<Pair<String?, McpSelection>>): IntentPlan =
+            IntentPlan(original, steps.map { (app, selection) ->
+                val parameters = mapOf("tool" to selection.tool.name, "arguments" to selection.arguments.toString())
+                IntentStep(original, Command(action, if (app == null) parameters else parameters + ("app" to app)))
+            }, source)
 
         fun validated(original: String, orders: List<String>, parse: (String) -> Command, source: ModelSource? = null): IntentPlan? {
             if (orders.isEmpty()) return null
             val steps = orders.map { IntentStep(it, parse(it)) }
-            val normalized = " ${Words.normalize(original)} "
             if (steps.any { (phrase, command) ->
                 command.action == Action.UNKNOWN ||
                     command["volume"]?.let { it.toIntOrNull() !in 0..100 } == true ||
@@ -41,8 +71,7 @@ internal data class IntentPlan(
                     command["equalizer"] !in setOf(null, "0", "1") ||
                     command.action == Action.PLAY_MUSIC && MusicOrder.parse(phrase)?.let { it != command } == true ||
                     source != null && (command.action == Action.TOOL || command.action in setOf(Action.ANSWER, Action.HANG_UP) ||
-                        command.slots.any { (key, value) -> key in originalSlots && value.isNotBlank() &&
-                            " ${Words.normalize(value)} " !in normalized })
+                        command.slots.any { (key, value) -> key in originalSlots && !preserves(original, value) })
             }) return null
             return IntentPlan(original, steps, source)
         }

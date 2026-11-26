@@ -45,6 +45,23 @@ class PlannerTest {
         assertEquals(Planner.MAX_STEPS, many.steps.size)
     }
 
+    @Test fun validatesNamesAndResolvedIdsBeforeExecutingModelTools() {
+        val query = "Pon música Canción del Faro"
+        fun toolWithText(tool: McpTool, field: String) = tool.copy(schema = JSONObject()
+            .put("type", "object").put("properties", JSONObject().put(field, JSONObject().put("type", "string"))))
+        val searchTool = toolWithText(search, "query")
+        val playTool = toolWithText(play, "songIds")
+        assertTrue(IntentPlan.supportsTool(query, sel(searchTool, JSONObject().put("query", "Canción del Faro")), emptyList()))
+        assertFalse(IntentPlan.supportsTool(query, sel(searchTool, JSONObject().put("query", "Otro título")), emptyList()))
+        val selected = sel(playTool, JSONObject().put("songIds", "a2"))
+        assertFalse(IntentPlan.supportsTool(query, selected, emptyList()))
+        assertTrue(IntentPlan.supportsTool(query, selected, listOf("""{"id":"a2","title":"Canción del Faro"}""")))
+        val plan = IntentPlan.forTools(query, Action.PHONE_MCP, ModelSource("model", "prompt-v1"), listOf("stone" to selected))
+        assertEquals(query, plan.original)
+        assertEquals("stone", plan.steps.single().app?.id)
+        assertEquals("prompt-v1", plan.source?.template)
+    }
+
     @Test fun theGrammarOnlyNamesRealTools() {
         val g = ToolGrammar.forTools(listOf("stone.library_search", "bad name\"", "notas.notes_list"))
         assertTrue(g.startsWith("root ::= \"{}\" | ")); assertTrue(g.contains("\"\\\"stone.library_search\\\"\""))

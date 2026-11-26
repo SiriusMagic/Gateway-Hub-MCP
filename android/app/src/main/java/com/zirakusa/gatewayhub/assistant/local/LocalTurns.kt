@@ -4,6 +4,8 @@ import android.os.SystemClock
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.assistant.Action
 import com.zirakusa.gatewayhub.assistant.Command
+import com.zirakusa.gatewayhub.assistant.IntentEvidence
+import com.zirakusa.gatewayhub.assistant.IntentPlan
 import com.zirakusa.gatewayhub.assistant.Reply
 import com.zirakusa.gatewayhub.assistant.Say
 import com.zirakusa.gatewayhub.assistant.Turn
@@ -53,8 +55,8 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
             if (interpreter != com.zirakusa.gatewayhub.assistant.Interpreter.FEELINGS) {
                 val call = assistant.mcpPlan(heard)
                 if (call != null) {
-                    if (call.readOnly) complete(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }))
-                    else { reviewTurn = result(message(R.string.local_hub_review), false); assistant.review(call) }
+                    if (call.readOnly) complete(record(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }), call.plan))
+                    else { reviewTurn = record(result(message(R.string.local_hub_review), false), call.plan); assistant.review(call) }
                     return@work
                 }
             }
@@ -71,8 +73,8 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         }
         assistant.work(onFailure = { finish(message(it)) }) {
             val answer = assistant.askStone(query)
-            complete(generated(heard, byVoice, Action.PHONE_MCP, start, answer ?: message(R.string.phone_mcp_no_tool), answer != null)
-                .also { it.modelSource = assistant.source("stone-tools-v1") })
+            if (answer == null) finish(message(R.string.phone_mcp_no_tool))
+            else complete(record(generated(heard, byVoice, Action.PHONE_MCP, start, answer.first), answer.second))
         }
     }
 
@@ -88,9 +90,9 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
                 val call = assistant.decide(request)
                 when {
                     call == null -> fail(R.string.local_hub_no_tool)
-                    call.readOnly -> complete(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }, true))
+                    call.readOnly -> complete(record(result(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }, true), call.plan))
                     else -> {
-                        reviewTurn = result(message(R.string.local_hub_review))
+                        reviewTurn = record(result(message(R.string.local_hub_review)), call.plan)
                         assistant.review(call)
                     }
                 }
@@ -102,10 +104,17 @@ internal class LocalTurns(private val message: (Int) -> String, private val comp
         val turn = reviewTurn ?: return
         val call = assistant.dismiss() ?: return
         reviewTurn = null
-        fun finish(text: String, ok: Boolean = false) = complete(turn.copy(reply = Reply(Say.GENERATED, listOf(text)), ok = ok).also { it.modelSource = turn.modelSource })
+        fun finish(text: String, ok: Boolean = false) = complete(turn.copy(reply = Reply(Say.GENERATED, listOf(text)), ok = ok).also { it.modelSource = turn.modelSource; it.evidence = turn.evidence })
         if (!confirmed) return finish(message(R.string.local_hub_cancelled))
         assistant.work(onFailure = { finish(message(it)) }, cancellable = false) {
             finish(assistant.execute(call).ifBlank { message(R.string.local_hub_done) }, true)
+        }
+    }
+
+    private fun record(turn: Turn, plan: IntentPlan): Turn {
+        val step = plan.steps.last()
+        return turn.copy(command = step.command, app = step.app).also {
+            it.evidence = IntentEvidence(plan.copy(original = turn.heard), plan.steps.lastIndex)
         }
     }
 

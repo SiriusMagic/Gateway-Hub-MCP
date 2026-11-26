@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import com.zirakusa.gatewayhub.R
+import com.zirakusa.gatewayhub.assistant.Action
+import com.zirakusa.gatewayhub.assistant.IntentPlan
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -101,7 +103,8 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     internal suspend fun decide(query: String): Pending? {
         val client = HubMcp(hub.link ?: throw McpFailure.Authorization())
         val selection = choose(query, client.discoverOrFail()) ?: return null
-        return Pending(selection.tool.title, selection.arguments.toString(2), selection.tool.readOnly) {
+        return Pending(selection.tool.title, selection.arguments.toString(2), selection.tool.readOnly,
+            IntentPlan.forTools(query, Action.HUB, source("hub-tools-v1"), listOf(null to selection))) {
             client.call(selection.tool, selection.arguments)
         }
     }
@@ -122,22 +125,28 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
             com.zirakusa.gatewayhub.assistant.Speech.say(named.getValue(s.tool.name).tool.name, r, today, s.arguments)
         val outcome = Planner({ done -> choose(query, listed, done) }, { s -> phoneMcp.callFamily(named.getValue(s.tool.name), s.arguments) },
             { s -> named[s.tool.name]?.tool?.readOnly == true }).plan()
+        fun evidence(selections: List<McpSelection>) = IntentPlan.forTools(query, Action.PHONE_MCP, source("mcp-v1"),
+            selections.map { selection -> named.getValue(selection.tool.name).key to selection })
         return when (outcome) {
             Planner.Outcome.Nothing -> null
-            is Planner.Outcome.Read -> outcome.steps.last().let { (s, r) -> Pending(s.tool.title, s.arguments.toString(2), true) { say(s, r) } }
+            is Planner.Outcome.Read -> outcome.steps.last().let { (s, r) ->
+                Pending(s.tool.title, s.arguments.toString(2), true, evidence(outcome.steps.map { it.first })) { say(s, r) }
+            }
             is Planner.Outcome.Confirm -> outcome.change.let { s ->
-                Pending(s.tool.title, s.arguments.toString(2), false) { say(s, phoneMcp.callFamily(named.getValue(s.tool.name), s.arguments)) }
+                Pending(s.tool.title, s.arguments.toString(2), false, evidence(outcome.before.map { it.first } + s)) {
+                    say(s, phoneMcp.callFamily(named.getValue(s.tool.name), s.arguments))
+                }
             }
         }
     }
 
-    internal suspend fun askStone(query: String): String? {
+    internal suspend fun askStone(query: String): Pair<String, IntentPlan>? {
         val app = phoneMcp.stone()
         if (app.status != PhoneMcpStatus.READY) throw PhoneMcpError(app.status)
         val selection = choose(query, app.tools) ?: return null
         val answer = StoneRequests.answer(selection.tool.name, phoneMcp.call(app, selection), this.app.resources)
         history = (history + ChatMessage("user", query) + ChatMessage("assistant", answer)).takeLast(8)
-        return answer
+        return answer to IntentPlan.forTools(query, Action.PHONE_MCP, source("stone-tools-v1"), listOf("stone" to selection))
     }
 
     private suspend fun choose(query: String, tools: List<McpTool>, done: List<String> = emptyList()): McpSelection? {
@@ -151,7 +160,7 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
             candidates.joinToString("\n", transform = McpTool::describe)
         val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true,
             grammar = ToolGrammar.forTools(candidates.map { it.name }))
-        return McpSelection.parse(answer, candidates)
+        return McpSelection.parse(answer, candidates)?.takeIf { IntentPlan.supportsTool(query, it, done) }
     }
 
     internal fun review(call: Pending) { pending = call }
@@ -199,7 +208,13 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     }
 
     /** A tool call chosen by the model: shown on a card (title, arguments) before it runs, unless it only reads. */
-    class Pending internal constructor(val title: String, val arguments: String, val readOnly: Boolean, internal val run: suspend () -> String)
+    class Pending internal constructor(
+        val title: String,
+        val arguments: String,
+        val readOnly: Boolean,
+        internal val plan: IntentPlan,
+        internal val run: suspend () -> String
+    )
 }
 
 /** The model's {"ordenes":[…]}: only short orders the rules understand, at most five. Pure. */
