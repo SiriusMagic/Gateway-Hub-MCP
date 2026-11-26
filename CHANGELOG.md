@@ -11,7 +11,7 @@
   primer paso que cambia algo espera tu «sí» en la tarjeta, como siempre. Si repite el mismo paso, se detiene.
 - **Respuestas del modelo con gramática**: el modelo local solo puede escribir JSON válido con el nombre de una
   herramienta que existe (o las órdenes de Lucía). Se acabaron las herramientas inventadas y el JSON roto.
-- 118 pruebas Android y 31 del hub.
+- 118 pruebas Android (y 1 que necesita un hub real) y 31 del hub. Gramáticas comprobadas con el analizador de llama.cpp.
 
 # Arka 0.2.1: la música por MCP
 
