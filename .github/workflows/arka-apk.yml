@@ -1,0 +1,63 @@
+name: APK de Arka
+on:
+  push:
+    branches: [codex/arka-apk]
+    paths:
+      - '.github/workflows/arka-apk.yml'
+      - 'android/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FAMILY_CERT_SHA256: 34b88716ba31a8ca170624c1c009c11dd23e182148731f0889c98404b34182d4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Comprobar la clave de firma de la familia
+        env:
+          DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          if [[ -z "$DEBUG_KEYSTORE_B64" ]]; then
+            echo "::error::Falta el secreto DEBUG_KEYSTORE_B64 en GitHub Actions."
+            exit 1
+          fi
+          umask 077
+          mkdir -p ~/.android
+          printf '%s' "$DEBUG_KEYSTORE_B64" | base64 --decode > ~/.android/debug.keystore
+          fingerprint=$(keytool -exportcert -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | sha256sum | cut -d' ' -f1)
+          if [[ "$fingerprint" != "$FAMILY_CERT_SHA256" ]]; then
+            echo "::error::El certificado de firma no coincide con el que usa Tienda."
+            exit 1
+          fi
+      - name: Instalar herramientas de Android
+        shell: bash
+        run: |
+          sdkmanager 'platforms;android-36' 'build-tools;35.0.0' 'ndk;29.0.13113456' 'cmake;3.31.6'
+      - name: Compilar y verificar el APK
+        working-directory: android
+        shell: bash
+        run: |
+          ./gradlew :app:assemblePreview
+          apk=app/build/outputs/apk/preview/app-preview.apk
+          tools="$ANDROID_HOME/build-tools/35.0.0"
+          signature=$("$tools/apksigner" verify --print-certs "$apk")
+          grep -Fxq "Signer #1 certificate SHA-256 digest: $FAMILY_CERT_SHA256" <<< "$signature"
+          package=$("$tools/aapt" dump badging "$apk" | sed -n '1p')
+          [[ "$package" == "package: name='com.zirakusa.gatewayhub' "* ]]
+          version=$(sed -n 's/.*versionName = "\([0-9.]*\)".*/\1/p' app/build.gradle.kts)
+          test -n "$version"
+          mkdir -p dist
+          cp "$apk" "dist/Arka-$version.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Arka-APK
+          path: android/dist/*.apk
+          if-no-files-found: error

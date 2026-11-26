@@ -1,3 +1,10 @@
+# Arka 0.3.1
+
+- **Reconocimiento de intenciones** con órdenes compuestas y resultados por acción.
+- **Stone** busca por título y puede aplicar volumen y ecualizador en una llamada local si la versión de Stone la admite.
+- **Nuevo chat y copiar respuesta** desde la conversación.
+- **Modelos locales** con acceso directo al selector de archivos GGUF.
+
 # Arka 0.3.0: Lucía en tres capas (reflejos, significado y plan)
 
 - **Capa 2, entiende por el significado (al instante, sin modelo ni internet)**: si las reglas no conocen la frase, Lucía
