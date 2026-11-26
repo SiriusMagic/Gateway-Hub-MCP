@@ -1,7 +1,7 @@
 <resources>
     <string name="assistant_menu">Abrir menú</string>
     <string name="assistant_chat_tab">Chat</string>
-    <string name="assistant_restart_chat">Reiniciar chat</string>
+    <string name="assistant_new_chat">Nuevo chat</string>
     <string name="assistant_copy_reply">Copiar respuesta</string>
     <string name="assistant_choose_model">Elegir modelo</string>
     <string name="assistant_advanced">Avanzado</string>

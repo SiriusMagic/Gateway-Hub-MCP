@@ -92,7 +92,7 @@ class AssistantScreenshotsTest {
         }
     }
 
-    @Test fun restartChatClearsTheConversationAndCancelsThePendingCall() {
+    @Test fun newChatClearsTheConversationAndCancelsThePendingCall() {
         val hands = FakeHands()
         val state = AssistantState(Brain(hands))
         compose.setContent { HubTheme { AssistantScreen(state) } }
@@ -101,7 +101,7 @@ class AssistantScreenshotsTest {
             assertEquals(true, state.askingToCall)
             state.typed = "Borrador"
         }
-        compose.onNodeWithContentDescription("Reiniciar chat").performClick()
+        compose.onNodeWithContentDescription("Nuevo chat").performClick()
         compose.onNodeWithText("Reproduce música").assertExists()
         compose.onNodeWithText("llama a Ana").assertDoesNotExist()
         compose.runOnIdle {

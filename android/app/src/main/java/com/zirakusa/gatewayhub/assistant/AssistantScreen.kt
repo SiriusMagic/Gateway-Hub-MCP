@@ -30,7 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -115,7 +115,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
                 },
                 enabled = state.canRestartChat
             ) {
-                Icon(Icons.Default.Refresh, stringResource(R.string.assistant_restart_chat),
+                Icon(Icons.Outlined.Edit, stringResource(R.string.assistant_new_chat),
                     tint = if (state.canRestartChat) HubColors.Text else HubColors.Muted.copy(alpha = 0.45f))
             }
             IconButton({ actions.setVoice(!state.voiceAnswers) }) {
