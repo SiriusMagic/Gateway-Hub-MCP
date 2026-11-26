@@ -105,7 +105,9 @@ class AssistantTest {
         assertEquals("network_speed_test", p("haz una prueba de velocidad")["tool"])
         assertEquals("camara", p("Abre la cámara")["app"]); assertEquals("video", p("abre stone video")["app"]); assertEquals("filem", p("muéstrame mis archivos")["app"])
         assertEquals("calculadora", p("calculadora")["app"])
-        assertEquals(Action.UNKNOWN, p("abre spotify").action); assertEquals("spotify", p("abre spotify")["app_name"])
+        p("abre Spotify").let { assertEquals(Action.OPEN, it.action); assertEquals("spotify", it["app"]) }
+        assertEquals("stone", p("abre Stone")["app"])
+        p("abre una app desconocida").let { assertEquals(Action.UNKNOWN, it.action) }
         assertEquals(Action.UNKNOWN, p("cuéntame un chiste").action); assertEquals(Action.UNKNOWN, p("   ").action)
     }
 
@@ -143,6 +145,14 @@ class AssistantTest {
         val missing = brain.handle("reproduce música")
         assertEquals(Say.NOT_INSTALLED, missing.reply.say); assertFalse(missing.ok)
         assertEquals(Say.NOT_UNDERSTOOD, brain.handle("cuéntame un chiste").reply.say)
+    }
+
+    @Test fun opensStoneAndSpotifyWithoutAnMcpConnection() {
+        val hands = FakeHands(installed = setOf("stone", "spotify"))
+        val brain = Brain(hands)
+        assertTrue(brain.handle("abre Stone").ok)
+        assertTrue(brain.handle("abre Spotify", byVoice = true).ok)
+        assertEquals(listOf("open stone", "open spotify"), hands.done)
     }
 
     @Test fun answersAndEndsCallsByVoice() {

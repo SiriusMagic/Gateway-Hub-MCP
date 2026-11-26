@@ -52,6 +52,12 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
         }
+        create("phoneTest") {
+            initWith(getByName("preview"))
+            applicationIdSuffix = ".prueba"
+            versionNameSuffix = "-prueba"
+            matchingFallbacks += "release"
+        }
     }
 }
 dependencies {

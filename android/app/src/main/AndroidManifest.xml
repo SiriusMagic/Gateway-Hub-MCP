@@ -43,6 +43,7 @@
         <intent><action android:name="android.intent.action.DIAL" /></intent>
         <intent><action android:name="android.intent.action.SENDTO" /><data android:scheme="smsto" /></intent>
         <package android:name="com.zirakusa.stone" />
+        <package android:name="com.spotify.music" />
         <package android:name="com.zirakusa.stone.kotlin.preview" />
         <package android:name="com.zirakusa.stone.video" />
         <package android:name="app.luma.gallery" />

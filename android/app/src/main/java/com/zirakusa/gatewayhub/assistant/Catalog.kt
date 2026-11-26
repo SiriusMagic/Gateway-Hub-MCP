@@ -51,11 +51,13 @@ object Catalog {
         else -> null
     }
 
-    fun byId(id: String) = apps.first { it.id == id }
+    private val launchableApps = apps + FamilyApp("spotify", "Spotify", listOf("com.spotify.music"), listOf("spotify"))
+
+    fun byId(id: String) = launchableApps.first { it.id == id }
     /** The app whose own icon a package is (Teléfono, not the Contactos screen inside it). */
     fun byPackage(pkg: String) = apps.firstOrNull { pkg in it.packages && it.activity == null } ?: apps.firstOrNull { pkg in it.packages }
 
     /** The app named in a phrase: the longest alias that appears as whole words («stone video» before «stone»). */
-    fun find(text: String): FamilyApp? = apps.flatMap { a -> a.aliases.map { it to a } }.sortedByDescending { it.first.length }
+    fun find(text: String): FamilyApp? = launchableApps.flatMap { a -> a.aliases.map { it to a } }.sortedByDescending { it.first.length }
         .firstOrNull { (alias, _) -> Regex("(^| )${Regex.escape(alias)}( |$)").containsMatchIn(text) }?.second
 }
