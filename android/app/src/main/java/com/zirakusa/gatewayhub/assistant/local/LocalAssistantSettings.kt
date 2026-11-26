@@ -68,7 +68,6 @@ import com.zirakusa.gatewayhub.ui.HubColors
     val pick = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(models::link)
     }
-    Text(stringResource(R.string.local_link_hint), color = HubColors.Muted)
     TextButton({ runCatching { pick.launch(arrayOf("application/octet-stream", "*/*")) } }, enabled = canChange) {
         Text(stringResource(R.string.local_link))
     }
