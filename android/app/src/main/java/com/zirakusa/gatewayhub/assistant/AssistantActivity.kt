@@ -92,6 +92,7 @@ class AssistantActivity : ComponentActivity() {
         state = AssistantState(Brain(hands).apply { stoneIo = Dispatchers.IO }, { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
         state.executeOrders = { work -> lifecycleScope.launch { work() } }
         state.local = local
+        state.speechModels = SpeechModels(this, lifecycleScope)
         state.feedback = IntentFeedback(applicationContext, lifecycleScope).also {
             state.shareFeedback = it.sharing
             hands.contactAlias = it::alias
@@ -128,7 +129,9 @@ class AssistantActivity : ComponentActivity() {
         }
         ears = VoskEars(this, heard = { text, final -> runOnUiThread { if (state.listening) state.heard(text, final) } },
             level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } },
-            conversational = { state.modeNow() != AnswerMode.RULES })
+            conversational = { state.modeNow() != AnswerMode.RULES },
+            decoding = { runOnUiThread { if (state.listening) state.whisperDecoding = true } },
+            compared = { result -> runOnUiThread { if (state.listening) state.dictationComparison = result } })
         Vosk.model(this) { m -> runOnUiThread { state.modelReady = m != null } }   // warm up while the screen opens
         if (savedInstanceState?.getBoolean(SHOW_WAKE_PANEL) == true) state.openWakePanel()
         setContent {
@@ -207,14 +210,18 @@ class AssistantActivity : ComponentActivity() {
 
     private fun startRecording(confirmCall: Boolean) {
         state.partial = ""
+        if (!confirmCall && !state.askingCallName) state.dictationComparison = null
         state.listening = true
-        ears.start(confirmCall, contactName = state.askingCallName)
+        val models = state.speechModels
+        ears.start(confirmCall, contactName = state.askingCallName,
+            whisper = models?.current(), mode = models?.selected ?: DictationMode.VOSK)
     }
 
     private fun stop() {
         callPrompt = null
         ears.stop()
         state.listening = false
+        state.whisperDecoding = false
         state.level = 0f
     }
 

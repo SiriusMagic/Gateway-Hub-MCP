@@ -8,6 +8,7 @@ import com.zirakusa.gatewayhub.assistant.FamilyApp
 import com.zirakusa.gatewayhub.assistant.Edge
 import com.zirakusa.gatewayhub.assistant.Graph
 import com.zirakusa.gatewayhub.assistant.Hands
+import com.zirakusa.gatewayhub.assistant.Hearing
 import com.zirakusa.gatewayhub.assistant.MediaKey
 import com.zirakusa.gatewayhub.assistant.Parser
 import com.zirakusa.gatewayhub.assistant.People
@@ -153,6 +154,11 @@ class AssistantTest {
         assertTrue(brain.handle("abre Stone").ok)
         assertTrue(brain.handle("abre Spotify", byVoice = true).ok)
         assertEquals(listOf("open stone", "open spotify"), hands.done)
+    }
+
+    @Test fun whisperRetainsTitlesAndNeedsAgreementForImmediateCallControls() {
+        assertEquals("Pon música New Americana", Hearing.dictated("pon música", "Pon música New Americana", emptyList()))
+        assertEquals("llama a Kuri", Hearing.dictated("llama a Kuri", "cuelga", emptyList()))
     }
 
     @Test fun answersAndEndsCallsByVoice() {

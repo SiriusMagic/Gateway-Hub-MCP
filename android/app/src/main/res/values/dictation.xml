@@ -1,0 +1,12 @@
+<resources>
+    <string name="dictation_model">Whisper Base multilingüe · descarga de 60 MB · funciona sin conexión</string>
+    <string name="dictation_vosk">Vosk</string>
+    <string name="dictation_whisper">Whisper</string>
+    <string name="dictation_compare">Comparar ambos</string>
+    <string name="dictation_compare_hint">Compara el mismo audio. Luna ejecuta una vez, con el texto de Vosk.</string>
+    <string name="dictation_download">Descargar Whisper</string>
+    <string name="dictation_processing">Transcribiendo con Whisper…</string>
+    <string name="dictation_empty">Sin texto</string>
+    <string name="dictation_vosk_result">Vosk · %1$s</string>
+    <string name="dictation_whisper_result">Whisper (+%2$d ms) · %1$s</string>
+</resources>

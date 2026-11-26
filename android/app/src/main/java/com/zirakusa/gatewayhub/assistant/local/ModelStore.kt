@@ -1,6 +1,7 @@
 package com.zirakusa.gatewayhub.assistant.local
 
 import android.content.Context
+import com.zirakusa.gatewayhub.assistant.WhisperBase
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -47,6 +48,16 @@ class ModelStore(private val context: Context) {
         transfer(model.url, file, model.size, model.sha256, onProgress)
         return file
     }
+
+    private val whisperTarget get() = File(File(directory, "voice"), WhisperBase.fileName)
+
+    internal fun whisperFile(): File? = whisperTarget.takeIf { it.isFile && it.length() == WhisperBase.bytes }
+
+    internal suspend fun downloadWhisper(onProgress: suspend (Float) -> Unit) {
+        transfer(WhisperBase.url, whisperTarget, WhisperBase.bytes, WhisperBase.digest, onProgress)
+    }
+
+    internal fun deleteWhisper(): Boolean = whisperTarget.let { !it.exists() || it.delete() }
 
     internal fun repositoryFile(uri: android.net.Uri): File? {
         if (uri.scheme != "file") return null

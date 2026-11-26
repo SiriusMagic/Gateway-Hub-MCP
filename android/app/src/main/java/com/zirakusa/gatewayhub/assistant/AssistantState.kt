@@ -47,6 +47,9 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var turns by mutableStateOf(emptyList<Turn>()); private set
     var typed by mutableStateOf("")
     var listening by mutableStateOf(false)
+    internal var whisperDecoding by mutableStateOf(false)
+    internal var dictationComparison by mutableStateOf<DictationComparison?>(null)
+    internal var speechModels: SpeechModels? = null
     var partial by mutableStateOf("")
     internal var wakePanel by mutableStateOf(false)
     internal var wakeRequest by mutableStateOf("")
@@ -58,6 +61,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         beforeWake = last
         wakeRequest = ""
         partial = ""
+        dictationComparison = null
         brainOpen = false
         wakePanel = true
     }
@@ -94,6 +98,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     internal fun restartChat() {
         if (executing || local?.busy == true) return
+        dictationComparison = null
         brain.cancelQuestion()
         localTurns.clearReview()
         local?.clearConversation()
@@ -347,6 +352,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         partial = text
         if (final) {
             listening = false
+            whisperDecoding = false
             partial = ""
             send(text, byVoice = true)
         }

@@ -90,7 +90,11 @@ import com.zirakusa.gatewayhub.ui.HubColors
                     Text(state.name.shown, color = HubColors.Text, fontSize = 19.sp)
                     if (state.listening || busy) {
                         Text(
-                            stringResource(if (state.listening) R.string.wake_panel_listening else R.string.local_working),
+                            stringResource(when {
+                                state.whisperDecoding -> R.string.dictation_processing
+                                state.listening -> R.string.wake_panel_listening
+                                else -> R.string.local_working
+                            }),
                             Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = HubColors.Gold, fontSize = 13.sp
                         )
                     }
@@ -98,6 +102,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
                 IconButton(dismiss) { Icon(Icons.Default.Close, stringResource(R.string.wake_panel_close), tint = HubColors.Muted) }
             }
             if (request.isNotBlank()) Text(request, Modifier.padding(horizontal = 8.dp), color = HubColors.Text, maxLines = 4)
+            state.dictationComparison?.let { DictationResult(it, Modifier.padding(horizontal = 8.dp)) }
             state.wakeReply?.let {
                 Text(Talk.text(it.reply, LocalResources.current), Modifier.padding(horizontal = 8.dp),
                     color = if (it.ok) HubColors.Text else HubColors.Bad, maxLines = 4)

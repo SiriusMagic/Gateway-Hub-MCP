@@ -161,6 +161,8 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             }
         }
         if (state.partial.isNotBlank()) Text(state.partial, Modifier.padding(horizontal = 20.dp), color = HubColors.Gold, fontSize = 15.sp)
+        if (state.whisperDecoding) Text(stringResource(R.string.dictation_processing), Modifier.padding(horizontal = 20.dp), color = HubColors.Gold)
+        state.dictationComparison?.let { DictationResult(it, Modifier.padding(horizontal = 20.dp)) }
         Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(state.typed, { state.typed = it.take(400) }, Modifier.weight(1f), shape = RoundedCornerShape(24.dp), singleLine = true, enabled = !busy && !state.listening,
                 placeholder = { Text(stringResource(R.string.assistant_write)) },

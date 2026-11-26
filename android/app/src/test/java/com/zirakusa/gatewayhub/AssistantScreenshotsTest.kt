@@ -15,6 +15,7 @@ import com.zirakusa.gatewayhub.assistant.AssistantPage
 import com.zirakusa.gatewayhub.assistant.AssistantScreen
 import com.zirakusa.gatewayhub.assistant.AssistantState
 import com.zirakusa.gatewayhub.assistant.Brain
+import com.zirakusa.gatewayhub.assistant.DictationComparison
 import com.zirakusa.gatewayhub.assistant.WakeName
 import com.zirakusa.gatewayhub.ui.HubTheme
 import org.junit.Assert.assertEquals
@@ -106,9 +107,15 @@ class AssistantScreenshotsTest {
         compose.onNodeWithText("qué tiempo").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-wake.png")
 
-        compose.runOnIdle { state.heard("qué tiempo hace", final = true) }
+        compose.runOnIdle { state.whisperDecoding = true }
+        compose.onNodeWithText("Transcribiendo con Whisper…").assertExists()
+        compose.runOnIdle {
+            state.dictationComparison = DictationComparison("qué tiempo hace", "¿Qué tiempo hace?", 150L)
+            state.heard("qué tiempo hace", final = true)
+        }
         compose.onNodeWithText("qué tiempo hace").assertExists()
         compose.onNodeWithText("Escuchando…").assertDoesNotExist()
+        compose.onNodeWithText("Whisper (+150 ms) · ¿Qué tiempo hace?").assertExists()
         val input = compose.onNodeWithText("Escribe tu petición…")
         input.performClick()
         input.performTextInput("pon una alarma a las 7")
