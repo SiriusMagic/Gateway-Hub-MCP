@@ -93,9 +93,16 @@ class Brain(private val hands: Hands, private val clock: () -> Long = System::cu
     internal var stoneIo: CoroutineDispatcher? = null
     internal var stoneCodeMode: (() -> (suspend (JSONObject) -> JSONObject)?)? = null
 
-    internal suspend fun execute(heard: String, byVoice: Boolean, step: IntentStep): Turn =
-        if (step.command.action == Action.PLAY_MUSIC && !asking) music(heard, byVoice, step.command)
-        else handle(heard, byVoice, step.command)
+    internal suspend fun execute(heard: String, byVoice: Boolean, step: IntentStep): Turn {
+        val command = step.command
+        if (!asking && stoneCodeMode?.invoke() != null && command.action == Action.TOOL && command["tool"] == "player_play_song") {
+            MusicOrder.parse(step.phrase, namedSongOnly = true)?.takeIf { it["query"] != null }?.let {
+                return music(heard, byVoice, it)
+            }
+        }
+        return if (command.action == Action.PLAY_MUSIC && !asking) music(heard, byVoice, command)
+        else handle(heard, byVoice, command)
+    }
 
     internal suspend fun music(heard: String, byVoice: Boolean, command: Command,
         selected: StonePlayback.Song? = null, skipVolume: Boolean = false): Turn {

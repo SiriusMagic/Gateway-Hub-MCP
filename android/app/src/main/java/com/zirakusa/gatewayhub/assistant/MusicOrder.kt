@@ -3,9 +3,10 @@ package com.zirakusa.gatewayhub.assistant
 /** Pull modifiers out of an explicit music order without normalizing the title sent to Stone. */
 internal object MusicOrder {
     private val prefix = Regex(
-        """^(?:(?:reproduce|reproducir|pon|ponme|coloca|colócame|colocame|toca|escuchar|quiero escuchar|play)(?: algo de| un poco de)?(?: la)? (?:m[uú]sica|canciones|(?:una )?canci[oó]n|algo)(?: de(?=\s))?|m[uú]sica)(?=\s|$)""",
+        """^(?:(?:reproduce|reproducir|pon|ponme|coloca|colócame|colocame|toca|escuchar|quiero escuchar|play)(?: algo de| un poco de)?(?: la)? (?:m[uú]sica|canciones|una canci[oó]n|algo)(?: de(?=\s))?|m[uú]sica)(?=\s|$)""",
         RegexOption.IGNORE_CASE
     )
+    private val namedSong = Regex("""^(?:reproduce|reproducir|pon|ponme|toca|quiero escuchar) la canci[oó]n(?=\s)""", RegexOption.IGNORE_CASE)
     private val background = Regex(
         """(?<!\S)(?:en segundo plano|de fondo|en el fondo|sin abrir(?: la app| la aplicaci[oó]n| stone)?|sin salir de aqu[ií])(?=\s|$)""",
         RegexOption.IGNORE_CASE
@@ -22,10 +23,10 @@ internal object MusicOrder {
     )
     private val recommended = setOf("recomendada", "recomendado", "recomendaciones", "mix del dia", "mezcla del dia")
 
-    fun parse(raw: String): Command? {
+    fun parse(raw: String, namedSongOnly: Boolean = false): Command? {
         val clean = raw.trim().trim('¿', '¡', '?', '!', '.')
         val text = IntentRules.musicPrefix?.replaceFirst(clean, "pon ") ?: clean
-        val opening = prefix.find(text) ?: return null
+        val opening = (if (namedSongOnly) namedSong else prefix).find(text) ?: return null
         var rest = text.substring(opening.range.last + 1).trim()
         val slots = mutableMapOf<String, String>()
         background.find(rest)?.let {
