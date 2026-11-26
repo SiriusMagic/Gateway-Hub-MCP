@@ -1,5 +1,6 @@
 package com.zirakusa.gatewayhub
 
+import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -75,6 +76,20 @@ class AssistantScreenshotsTest {
         compose.onNodeWithText(context.getString(R.string.assistant_chat_tab)).performClick()
         compose.onNodeWithText("Reproduce música").assertExists()
         assertEquals(1, state.turns.size)
+    }
+
+    @Test fun copiesTheDisplayedReplyToTheClipboard() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val state = AssistantState(Brain(FakeHands()))
+        compose.setContent { HubTheme { AssistantScreen(state) } }
+        compose.onNodeWithText("Reproduce música").performClick()
+        val expected = context.getString(R.string.say_playing)
+        compose.onNodeWithText(expected).assertExists()
+        compose.onNodeWithContentDescription("Copiar respuesta").performClick()
+        compose.runOnIdle {
+            val clip = context.getSystemService(ClipboardManager::class.java).primaryClip
+            assertEquals(expected, clip?.getItemAt(0)?.text?.toString())
+        }
     }
 
     @Test fun restartChatClearsTheConversationAndCancelsThePendingCall() {

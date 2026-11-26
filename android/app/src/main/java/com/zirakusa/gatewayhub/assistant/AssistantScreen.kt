@@ -1,5 +1,7 @@
 package com.zirakusa.gatewayhub.assistant
 
+import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
@@ -44,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.ui.HubColors
+import com.zirakusa.gatewayhub.ui.copySecret
 
 /** What the screen asks of the phone. */
 class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, val makeDefault: () -> Unit = {},
@@ -164,20 +169,31 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
         Text((if (t.byVoice) "🎙 " else "") + t.heard, Modifier.widthIn(max = 280.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Gold)
             .padding(horizontal = 14.dp, vertical = 8.dp), color = HubColors.Background, fontSize = 15.sp)
     }
+    val context = LocalContext.current
     val res = LocalResources.current
-    Column(Modifier.widthIn(max = 300.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(horizontal = 14.dp, vertical = 8.dp)) {
-        Text(Talk.text(t.reply, res), color = if (t.ok) HubColors.Text else HubColors.Bad, fontSize = 15.sp)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(listOfNotNull(Talk.label(t.command.action, res), t.app?.name, "${t.millis} ms").distinct().joinToString(" · "),
-                modifier = Modifier.weight(1f, fill = false), color = HubColors.Muted, fontSize = 11.sp)
-            FeedbackButtons(t, state)
-        }
-        t.musicChoice?.takeIf { state.last === t }?.let { choice ->
-            if (choice.volumeBlocked) TextButton({ state.chooseMusic(t, 0) }) { Text(stringResource(R.string.intent_play_current_volume)) }
-            else choice.options.forEachIndexed { index, song ->
-                TextButton({ state.chooseMusic(t, index) }) { Text("${index + 1}. ${song.label}") }
+    val reply = Talk.text(t.reply, res)
+    val copyLabel = stringResource(R.string.assistant_copy_reply)
+    Row {
+        Column(Modifier.weight(1f, fill = false).widthIn(max = 300.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(horizontal = 14.dp, vertical = 8.dp)) {
+            Text(reply, color = if (t.ok) HubColors.Text else HubColors.Bad, fontSize = 15.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(listOfNotNull(Talk.label(t.command.action, res), t.app?.name, "${t.millis} ms").distinct().joinToString(" · "),
+                    modifier = Modifier.weight(1f, fill = false), color = HubColors.Muted, fontSize = 11.sp)
+                FeedbackButtons(t, state)
             }
-            TextButton({ state.chooseMusic(t, -1, cancel = true) }) { Text(stringResource(R.string.local_cancel)) }
+            t.musicChoice?.takeIf { state.last === t }?.let { choice ->
+                if (choice.volumeBlocked) TextButton({ state.chooseMusic(t, 0) }) { Text(stringResource(R.string.intent_play_current_volume)) }
+                else choice.options.forEachIndexed { index, song ->
+                    TextButton({ state.chooseMusic(t, index) }) { Text("${index + 1}. ${song.label}") }
+                }
+                TextButton({ state.chooseMusic(t, -1, cancel = true) }) { Text(stringResource(R.string.local_cancel)) }
+            }
+        }
+        IconButton(onClick = {
+            copySecret(context, copyLabel, reply)
+            if (Build.VERSION.SDK_INT < 33) Toast.makeText(context, R.string.copied, Toast.LENGTH_SHORT).show()
+        }) {
+            Icon(Icons.Default.ContentCopy, copyLabel, Modifier.size(18.dp), tint = HubColors.Muted)
         }
     }
 }
