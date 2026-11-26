@@ -1,7 +1,7 @@
 package com.zirakusa.gatewayhub.assistant
 
 /**
- * Lucía's «sentimientos»: one example of everything she understands, each a phrase the rules already know (tested in
+ * Intent recognition: one example of everything she understands, each a phrase the rules already know (tested in
  * IntentsTest). A local model reads them to turn free speech into her own orders; it never calls a tool itself. Pure.
  */
 object Examples {

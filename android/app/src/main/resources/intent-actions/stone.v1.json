@@ -130,7 +130,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 82,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Navegación y biblioteca",
       "luna": "mcp",
@@ -154,7 +154,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 82,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -231,7 +231,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 96,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Navegación y biblioteca",
       "luna": "mcp",
@@ -245,7 +245,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 96,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -342,7 +342,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 103,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Navegación y biblioteca",
       "luna": "mcp",
@@ -366,7 +366,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 103,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -483,7 +483,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 424,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -587,7 +587,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 32,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "directa",
@@ -626,7 +626,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 32,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -642,7 +642,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 35,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "directa",
@@ -681,7 +681,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 35,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -697,7 +697,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 38,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "directa",
@@ -731,7 +731,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 326,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -747,7 +747,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 39,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -781,7 +781,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 325,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -801,7 +801,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 325,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
@@ -832,12 +832,12 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 430,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 40,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ],
       "invocable": false
@@ -863,12 +863,12 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 584,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 40,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ],
       "invocable": false
@@ -885,7 +885,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 31,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -904,12 +904,12 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 244,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 31,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -931,7 +931,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 40,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -960,7 +960,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 40,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -982,7 +982,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 57,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -1006,12 +1006,12 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 273,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 57,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1053,7 +1053,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/PlayByTitle.kt",
         "linea": 18,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "piloto",
@@ -1067,17 +1067,17 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/PlayByTitle.kt",
           "linea": 18,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
           "linea": 62,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 273,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ],
       "version": "capacidad anunciada por tools/list",
@@ -1354,7 +1354,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 62,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -1373,7 +1373,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 62,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1487,7 +1487,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 44,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -1506,12 +1506,12 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 431,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 44,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1533,7 +1533,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 50,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "directa",
@@ -1572,7 +1572,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 50,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1604,7 +1604,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 66,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -1633,7 +1633,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 66,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1655,7 +1655,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 75,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Reproducción y cola",
       "luna": "mcp",
@@ -1669,12 +1669,12 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 521,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 75,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1729,7 +1729,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StonePlaybackService.kt",
           "linea": 419,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/data/library/notifications/NewFilesNotifier.kt",
@@ -1755,7 +1755,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 107,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Listas, letras y metadatos",
       "luna": "mcp",
@@ -1774,7 +1774,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 107,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1837,7 +1837,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 112,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Listas, letras y metadatos",
       "luna": "mcp",
@@ -1861,7 +1861,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 112,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -1888,7 +1888,7 @@
       "fuente": {
         "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
         "linea": 118,
-        "revision": "codex/inventario-intenciones"
+        "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
       },
       "area": "Listas, letras y metadatos",
       "luna": "mcp",
@@ -1912,7 +1912,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneActions.kt",
           "linea": 118,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -2045,7 +2045,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
           "linea": 122,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -2086,7 +2086,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
           "linea": 123,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         }
       ]
     },
@@ -2489,7 +2489,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 437,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
@@ -2581,7 +2581,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/control/PlaybackViewModel.kt",
           "linea": 485,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",
@@ -3250,7 +3250,7 @@
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt",
           "linea": 128,
-          "revision": "codex/inventario-intenciones"
+          "revision": "cc06bf2afd5289e3f3d411411647b74084c97ab4"
         },
         {
           "archivo": "android-native/app/src/main/java/com/zirakusa/stone/nativeapp/automation/actions/StoneMediaActions.kt",

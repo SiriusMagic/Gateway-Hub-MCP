@@ -934,7 +934,7 @@
 <details>
 <summary>playback/StonePlaybackService.kt (1)</summary>
 
-- `val openApp = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java),` · stone.navigation.open_notification. [StonePlaybackService.kt:419](https://github.com/SiriusMagic/Stone/blob/codex/inventario-intenciones/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StonePlaybackService.kt#L419)
+- `val openApp = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java),` · stone.navigation.open_notification. [StonePlaybackService.kt:419](https://github.com/SiriusMagic/Stone/blob/cc06bf2afd5289e3f3d411411647b74084c97ab4/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/playback/StonePlaybackService.kt#L419)
 
 </details>
 
@@ -955,10 +955,10 @@
 <details>
 <summary>ui/AutomationBridge.kt (4)</summary>
 
-- `val writeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->` · Por cruzar. [AutomationBridge.kt:144](https://github.com/SiriusMagic/Stone/blob/codex/inventario-intenciones/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L144)
-- `AlertDialog(onDismissRequest = { StoneAutomation.answer(request, false) },` · Por cruzar. [AutomationBridge.kt:155](https://github.com/SiriusMagic/Stone/blob/codex/inventario-intenciones/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L155)
-- `confirmButton = { TextButton(onClick = { StoneAutomation.answer(request, true) }) {` · Por cruzar. [AutomationBridge.kt:158](https://github.com/SiriusMagic/Stone/blob/codex/inventario-intenciones/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L158)
-- `dismissButton = { TextButton(onClick = { StoneAutomation.answer(request, false) }) {` · Por cruzar. [AutomationBridge.kt:160](https://github.com/SiriusMagic/Stone/blob/codex/inventario-intenciones/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L160)
+- `val writeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->` · Por cruzar. [AutomationBridge.kt:144](https://github.com/SiriusMagic/Stone/blob/cc06bf2afd5289e3f3d411411647b74084c97ab4/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L144)
+- `AlertDialog(onDismissRequest = { StoneAutomation.answer(request, false) },` · Por cruzar. [AutomationBridge.kt:155](https://github.com/SiriusMagic/Stone/blob/cc06bf2afd5289e3f3d411411647b74084c97ab4/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L155)
+- `confirmButton = { TextButton(onClick = { StoneAutomation.answer(request, true) }) {` · Por cruzar. [AutomationBridge.kt:158](https://github.com/SiriusMagic/Stone/blob/cc06bf2afd5289e3f3d411411647b74084c97ab4/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L158)
+- `dismissButton = { TextButton(onClick = { StoneAutomation.answer(request, false) }) {` · Por cruzar. [AutomationBridge.kt:160](https://github.com/SiriusMagic/Stone/blob/cc06bf2afd5289e3f3d411411647b74084c97ab4/android-native/app/src/main/java/com/zirakusa/stone/nativeapp/ui/AutomationBridge.kt#L160)
 
 </details>
 
