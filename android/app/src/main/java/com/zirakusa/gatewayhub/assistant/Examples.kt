@@ -178,11 +178,6 @@ object Examples {
         else -> null
     }
 
-    /** Every example, as «frase» lines for a model, the closest to [query] first (by shared words), at most [max]. */
-    fun closest(query: String, max: Int = 40): List<String> {
-        val words = Words.normalize(query).split(' ').filter { it.length > 2 }.toSet()
-        fun score(p: String) = Words.normalize(p).split(' ').count { it in words || words.any { w -> it.length > 3 && w.startsWith(it.take(4)) } }
-        val all = actions + tools.values
-        return all.sortedByDescending(::score).take(max)
-    }
+    /** The examples most alike [query] ([Meaning.rank]): the model reads only these, so it answers sooner. */
+    fun closest(query: String, max: Int = 40): List<String> = Meaning.rank(query, actions + tools.values, max)
 }

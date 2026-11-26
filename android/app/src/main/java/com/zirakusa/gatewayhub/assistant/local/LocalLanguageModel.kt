@@ -22,7 +22,8 @@ internal object NativeLlama {
 
     external fun load(path: String): Long
     external fun unload(model: Long)
-    external fun begin(model: Long, prompt: ByteArray, threads: Int, limit: Int, deterministic: Boolean): Long
+    /** [grammar]: GBNF the answer must follow (null: free text). */
+    external fun begin(model: Long, prompt: ByteArray, threads: Int, limit: Int, deterministic: Boolean, grammar: String?): Long
     external fun prefill(session: Long): Boolean
     external fun next(session: Long): ByteArray?
     external fun end(session: Long)
@@ -39,6 +40,7 @@ class LocalLanguageModel {
         file: File,
         messages: List<ChatMessage>,
         deterministic: Boolean = false,
+        grammar: String? = null,
         onText: suspend (String) -> Unit = {}
     ): String = withContext(Dispatchers.IO) {
         mutex.withLock {
@@ -51,7 +53,7 @@ class LocalLanguageModel {
             }
             ensureActive()
             val session = NativeLlama.begin(weights, prompt(template, messages).toByteArray(),
-                Runtime.getRuntime().availableProcessors().coerceIn(1, 4), if (deterministic) 512 else 320, deterministic)
+                Runtime.getRuntime().availableProcessors().coerceIn(1, 4), if (deterministic) 512 else 320, deterministic, grammar)
             check(session != 0L)
             try {
                 do { ensureActive() } while (NativeLlama.prefill(session))

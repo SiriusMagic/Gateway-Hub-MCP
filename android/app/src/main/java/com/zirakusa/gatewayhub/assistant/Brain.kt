@@ -80,7 +80,12 @@ data class Turn(val heard: String, val byVoice: Boolean, val command: Command, v
 /** Understands and acts. Pure apart from its [Hands]. */
 class Brain(private val hands: Hands, private val clock: () -> Long = System::currentTimeMillis) {
     companion object { const val CONFIRM_MS = 60_000L }
-    internal fun commandFor(heard: String) = Parser.parse(heard, hands.now().toLocalDate())
+    /** The rules first; what they don't know, said again in Lucía's own words ([Meaning], layer 2), before any model. */
+    internal fun commandFor(heard: String): Command {
+        val today = hands.now().toLocalDate()
+        val c = Parser.parse(heard, today)
+        return if (c.action != Action.UNKNOWN) c else Meaning.understand(heard) { Parser.parse(it, today) } ?: c
+    }
 
     fun handle(heard: String, byVoice: Boolean = false, c: Command = commandFor(heard)): Turn {
         val start = clock()

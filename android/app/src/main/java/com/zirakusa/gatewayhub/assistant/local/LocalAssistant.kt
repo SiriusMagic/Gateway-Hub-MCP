@@ -88,7 +88,8 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
             "Devuelve solo JSON: {\"ordenes\":[\"...\"]}. Si no pide ninguna de estas acciones (por ejemplo, solo conversa), " +
             "devuelve {\"ordenes\":[]}. No inventes acciones que no estén aquí.\nEjemplos:\n" +
             examples.joinToString("\n") { "- $it" }
-        val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true)
+        val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true,
+            grammar = ToolGrammar.orders)
         return OrderReply.parse(answer, understood)
     }
 
@@ -101,8 +102,9 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     }
 
     /**
-     * The «MCP» interpreter: the model picks one tool of the family apps on this phone (asked through each app's hub link,
-     * no internet) and its arguments. Null when none fits. What only reads runs at once; the rest waits for the card.
+     * The «MCP» interpreter (layer 3): the model plans with the tools of the family apps on this phone (asked through each
+     * app's hub link, no internet), in up to [Planner.MAX_STEPS] steps, seeing each answer. Null when none fits. What only
+     * reads runs at once; a change waits for the card.
      */
     internal suspend fun mcpPlan(query: String): Pending? {
         val tools = phoneMcp.allTools()
@@ -110,11 +112,17 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         // One name per app and tool (Stone and Stone Video share tool names): «video.player_state».
         val named = tools.associateBy { t -> "${t.key}.${t.tool.name}" }
         val listed = named.map { (name, t) -> t.tool.copy(name = name, title = "${t.app.label}: ${t.tool.title}") }
-        val selection = choose(query, listed) ?: return null
-        val target = named[selection.tool.name] ?: return null
-        return Pending(selection.tool.title, selection.arguments.toString(2), target.tool.readOnly) {
-            val result = phoneMcp.callFamily(target, selection.arguments)
-            com.zirakusa.gatewayhub.assistant.Speech.say(target.tool.name, result, java.time.LocalDate.now(), selection.arguments)
+        val today = java.time.LocalDate.now()
+        fun say(s: McpSelection, r: org.json.JSONObject) =
+            com.zirakusa.gatewayhub.assistant.Speech.say(named.getValue(s.tool.name).tool.name, r, today, s.arguments)
+        val outcome = Planner({ done -> choose(query, listed, done) }, { s -> phoneMcp.callFamily(named.getValue(s.tool.name), s.arguments) },
+            { s -> named[s.tool.name]?.tool?.readOnly == true }).plan()
+        return when (outcome) {
+            Planner.Outcome.Nothing -> null
+            is Planner.Outcome.Read -> outcome.steps.last().let { (s, r) -> Pending(s.tool.title, s.arguments.toString(2), true) { say(s, r) } }
+            is Planner.Outcome.Confirm -> outcome.change.let { s ->
+                Pending(s.tool.title, s.arguments.toString(2), false) { say(s, phoneMcp.callFamily(named.getValue(s.tool.name), s.arguments)) }
+            }
         }
     }
 
@@ -127,14 +135,17 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
         return answer
     }
 
-    private suspend fun choose(query: String, tools: List<McpTool>): McpSelection? {
+    private suspend fun choose(query: String, tools: List<McpTool>, done: List<String> = emptyList()): McpSelection? {
         val candidates = McpSelection.candidates(query, tools)
         if (candidates.isEmpty()) return null
         val instruction = "Selecciona una herramienta que coincida con la petición en español. " +
             "Devuelve exclusivamente JSON con las claves tool (nombre exacto) y arguments (objeto). " +
             "Si ninguna herramienta coincide o faltan datos obligatorios, devuelve {}. No inventes identificadores.\n" +
+            (if (done.isEmpty()) "" else "Ya hiciste estos pasos (herramienta, argumentos → respuesta). Usa sus identificadores " +
+                "para el paso siguiente; si la petición ya está resuelta, devuelve {}:\n" + done.joinToString("\n") + "\n") +
             candidates.joinToString("\n", transform = McpTool::describe)
-        val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true)
+        val answer = generate(listOf(ChatMessage("system", instruction), ChatMessage("user", query)), deterministic = true,
+            grammar = ToolGrammar.forTools(candidates.map { it.name }))
         return McpSelection.parse(answer, candidates)
     }
 
@@ -166,10 +177,10 @@ class LocalAssistant(context: Context, private val scope: CoroutineScope) {
     }
 
     private suspend fun generate(
-        messages: List<ChatMessage>, deterministic: Boolean = false, onText: suspend (String) -> Unit = {}
+        messages: List<ChatMessage>, deterministic: Boolean = false, grammar: String? = null, onText: suspend (String) -> Unit = {}
     ): String {
         val (template, file) = models.current() ?: throw UnsupportedOperationException()
-        return engine.generate(template, file, messages, deterministic) { withContext(Dispatchers.Main.immediate) { onText(it) } }
+        return engine.generate(template, file, messages, deterministic, grammar) { withContext(Dispatchers.Main.immediate) { onText(it) } }
     }
 
     private suspend fun HubMcp.discoverOrFail() = try {

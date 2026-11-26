@@ -27,6 +27,9 @@ gateway-hub-mcp/
 │       ├── ui/             # HubViewModel (único dueño del estado) y pantallas
 │       ├── assistant/local/PhoneMcp.kt  # El Modo MCP de la familia: canal con firma de cada app (link, connect, disconnect, status, tool)
 │       │                   # y PhoneMcpControls (Activar MCP, Permitir MCP local, Crear token)
+│       ├── assistant/Meaning.kt  # Capa 2: la frase dicha de otra manera → palabras de Lucía; ejemplos por parecido
+│       ├── assistant/local/Planner.kt  # Capa 3: el modelo encadena hasta 3 herramientas (lee al momento, cambia con «sí»)
+│       ├── assistant/local/ToolGrammar.kt  # Gramáticas GBNF: el modelo solo escribe JSON con herramientas reales
 │       └── assistant/      # Asistente: Words y Parser (español → orden, puros), Catalog (apps de la familia),
 │                           # Brain (decide y actúa por Hands), Graph (árbol entrada → app → acción), BrainPage (mapa en Ajustes), Skills, StoneSkills, FamilySkills y MoreSkills (herramientas MCP de cada app como frases: las reglas de sentimiento, RS) y Speech (sus respuestas en español), AndroidHands (intents),
 │                           # Vosk/VoskEars (voz sin internet, modelo en assets/model-es), Listening (palabra

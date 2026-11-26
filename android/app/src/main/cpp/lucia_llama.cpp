@@ -53,7 +53,7 @@ Java_com_zirakusa_gatewayhub_assistant_local_NativeLlama_unload(JNIEnv *, jobjec
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_zirakusa_gatewayhub_assistant_local_NativeLlama_begin(
-        JNIEnv * env, jobject, jlong model, jbyteArray input, jint threads, jint limit, jboolean deterministic) {
+        JNIEnv * env, jobject, jlong model, jbyteArray input, jint threads, jint limit, jboolean deterministic, jstring grammar) {
     auto * weights = reinterpret_cast<Model *>(model)->weights;
     auto session = std::make_unique<Session>();
     session->vocab = llama_model_get_vocab(weights);
@@ -79,6 +79,13 @@ Java_com_zirakusa_gatewayhub_assistant_local_NativeLlama_begin(
     if (!session->context) return 0;
 
     session->sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());
+    // A GBNF grammar (Lucía's tool choice): the model can only write JSON with a real tool's name. Invalid → none.
+    if (grammar != nullptr) {
+        const char * text = env->GetStringUTFChars(grammar, nullptr);
+        auto * constrained = llama_sampler_init_grammar(session->vocab, text, "root");
+        env->ReleaseStringUTFChars(grammar, text);
+        if (constrained) llama_sampler_chain_add(session->sampler, constrained);
+    }
     if (deterministic) {
         llama_sampler_chain_add(session->sampler, llama_sampler_init_greedy());
     } else {

@@ -1,3 +1,18 @@
+# Arka 0.3.0: Lucía en tres capas (reflejos, significado y plan)
+
+- **Capa 2, entiende por el significado (al instante, sin modelo ni internet)**: si las reglas no conocen la frase, Lucía
+  la dice de nuevo con sus propias palabras y vuelve a intentarlo. Ya entiende «quiero escuchar alone», «¿me puedes poner
+  la canción que se llama alone?», «hazme sonar despacito», «me gustaría oír música de Soda Stereo», «despiértame a las
+  6», «avísame en 10 minutos», «telefonea a Luis», «lánzame la cámara» o «¿me puedes decir qué hora es?».
+- **El modelo lee solo los ejemplos más parecidos** (por letras y palabras, no solo palabras iguales): menos texto que
+  leer, respuesta antes y más acertada.
+- **Capa 3, el modelo planifica con las herramientas**: en el intérprete MCP, hasta 3 pasos seguidos viendo lo que
+  respondió cada uno (por ejemplo, buscar en Stone y luego reproducir lo encontrado). Lo que solo lee va al momento; el
+  primer paso que cambia algo espera tu «sí» en la tarjeta, como siempre. Si repite el mismo paso, se detiene.
+- **Respuestas del modelo con gramática**: el modelo local solo puede escribir JSON válido con el nombre de una
+  herramienta que existe (o las órdenes de Lucía). Se acabaron las herramientas inventadas y el JSON roto.
+- 118 pruebas Android y 31 del hub.
+
 # Arka 0.2.1: la música por MCP
 
 - **«Reproduce música alone», «pon música de Soda Stereo», «quiero escuchar …»**: Lucía busca en tu biblioteca con las
