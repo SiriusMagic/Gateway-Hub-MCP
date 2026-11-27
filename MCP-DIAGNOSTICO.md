@@ -41,7 +41,7 @@ la redirección con **Activar MCP** apagado. La app sirve la credencial de Arka 
 administrando en Arka. Algunas versiones intermedias ya eliminaron preferencias antiguas y sus valores
 no se pueden recuperar a partir de esas instalaciones.
 
-El diagnóstico de Luna muestra por separado la última transcripción, la intención de Stone con sus argumentos,
+El diagnóstico de Luna muestra por separado la última transcripción, la última intención con sus argumentos cuando usa la herramienta de Stone,
 el resultado de MCP y los fallos recientes. El detalle con texto está disponible en la sesión. Se conserva
 el último fallo con metadatos y se le puede adjuntar un comentario privado en el teléfono.
 

@@ -45,8 +45,6 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     internal var dictationComparison by mutableStateOf<DictationComparison?>(null)
     internal var lastTranscript by mutableStateOf<String?>(null)
        private set
-    internal var lastMcpTurn by mutableStateOf<Turn?>(null)
-       private set
     internal var diagnostics: McpDiagnostics? = null
     internal var executingStone by mutableStateOf(false)
         private set
@@ -198,10 +196,7 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     private fun complete(turn: Turn, speakIt: Boolean) {
         turns = (turns + turn).takeLast(MAX)
-        turn.mcp?.let {
-            lastMcpTurn = turn
-            diagnostics?.record(it)
-        }
+        turn.mcp?.let { diagnostics?.record(it) }
         if (turn.reply.asksCallName) callNameUntil = System.currentTimeMillis() + Brain.CONFIRM_MS
         pulse++
         if (speakIt && turn.byVoice && voiceAnswers) speak(turn.reply)

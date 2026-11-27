@@ -130,6 +130,13 @@ class AllToolsTest {
         val apps = Apps(); val turn = Brain(apps).handle("reproducir música Despacito")
         assertEquals("Reproduciendo «Despacito».", turn.reply.args[0]); assertTrue(turn.ok)
         assertEquals(listOf("stone player_play_by_title {\"titulo\":\"Despacito\"}"), apps.asked)
+
+        val byArtist = Apps()
+        val result = Brain(byArtist).handle("pon música de Soda Stereo")
+        assertTrue(result.ok)
+        assertTrue(byArtist.asked.first().startsWith("stone library_search"))
+        assertTrue(byArtist.asked.last().startsWith("stone player_play_songs"))
+
     }
 
     /** Apps answering on the phone, as their link channels do; [asked] keeps every call. */

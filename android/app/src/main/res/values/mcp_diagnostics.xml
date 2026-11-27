@@ -6,7 +6,9 @@
     <string name="mcp_probe_local">MCP local</string>
     <string name="mcp_probe_hub">Por Hub</string>
     <string name="mcp_transcript">Última transcripción</string>
-    <string name="mcp_intent">Última intención de Stone</string>
+    <string name="mcp_intent">Última intención</string>
+    <string name="mcp_intent_unknown">Intención sin resolver</string>
+    <string name="mcp_no_call_record">Esta acción no tiene una traza MCP.</string>
     <string name="mcp_result">Resultado MCP</string>
     <string name="mcp_last_failure">Último fallo</string>
     <string name="mcp_connect_hub">Configurar Hub</string>

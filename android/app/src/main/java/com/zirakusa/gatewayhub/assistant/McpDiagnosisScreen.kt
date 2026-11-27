@@ -88,16 +88,21 @@ import org.json.JSONObject
                 }
             }
         }
-        state.lastMcpTurn?.let { turn ->
+        state.last?.let { turn ->
             item {
                 HubCard {
                     Text(stringResource(R.string.mcp_intent))
                     Text(turn.heard)
-                    turn.mcp?.let {
-                        Text(it.tool, color = HubColors.Muted)
-                        Text(JSONObject(it.arguments).toString(2), color = HubColors.Muted)
-                        TraceLine(it, stringResource(R.string.mcp_result))
-                        it.response?.let { response -> Text(response, color = HubColors.Muted) }
+                    val trace = turn.mcp
+                    if (trace == null) {
+                        Text(if (turn.command.action == Action.UNKNOWN) stringResource(R.string.mcp_intent_unknown)
+                            else turn.command.action.name, color = HubColors.Muted)
+                        Text(stringResource(R.string.mcp_no_call_record), color = HubColors.Muted)
+                    } else {
+                        Text(trace.tool, color = HubColors.Muted)
+                        Text(JSONObject(trace.arguments).toString(2), color = HubColors.Muted)
+                        TraceLine(trace, stringResource(R.string.mcp_result))
+                        trace.response?.let { response -> Text(response, color = HubColors.Muted) }
                     }
                 }
             }

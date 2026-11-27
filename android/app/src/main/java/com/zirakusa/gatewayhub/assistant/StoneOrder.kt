@@ -19,7 +19,8 @@ internal object StoneOrder {
     const val PLAY = "player_play_by_title"
     const val PROBE = "player_state"
 
-    fun matches(command: Command) = command.action == Action.PLAY_MUSIC && !command["query"].isNullOrBlank()
+    fun matches(command: Command) = command.action == Action.PLAY_MUSIC &&
+        !command["query"].isNullOrBlank() && command["artist_search"] != "1"
 
     private val choice = Regex("""^(?:opci[oó]n|n[uú]mero|elige|pon la opci[oó]n) (.+)$""", RegexOption.IGNORE_CASE)
 

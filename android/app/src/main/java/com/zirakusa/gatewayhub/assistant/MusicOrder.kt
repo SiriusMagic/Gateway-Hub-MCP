@@ -64,7 +64,10 @@ internal object MusicOrder {
         }
         rest = rest.trim(' ', ',')
         if (Words.normalize(rest) in recommended) return null
-        if (rest.isNotBlank()) slots["query"] = rest
+        if (rest.isNotBlank()) {
+            slots["query"] = rest
+            if (opening.value.endsWith(" de", ignoreCase = true)) slots["artist_search"] = "1"
+        }
         return Command(Action.PLAY_MUSIC, slots)
     }
 }
