@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <permission android:name="com.zirakusa.gatewayhub.permission.LINK" tools:node="remove" />
+    <permission android:name="com.zirakusa.family.permission.SUMMARY" tools:node="remove" />
+    <permission android:name="com.zirakusa.family.permission.ACT" tools:node="remove" />
+    <application android:label="Arka Prueba" tools:replace="android:label">
+        <activity-alias android:name=".Home">
+            <meta-data android:name="android.app.shortcuts" tools:node="remove" />
+        </activity-alias>
+        <activity-alias android:name=".HomeOrbitas">
+            <meta-data android:name="android.app.shortcuts" tools:node="remove" />
+        </activity-alias>
+    </application>
+</manifest>

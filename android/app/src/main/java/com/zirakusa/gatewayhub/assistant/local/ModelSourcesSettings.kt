@@ -48,10 +48,25 @@ import kotlinx.coroutines.launch
     }
     if (directory.busy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
     directory.message?.let { Text(stringResource(it), color = HubColors.Bad) }
-    HuggingFaceSettings(models)
+    RepositoryModelPicker(
+        canDownload = canChange && !models.downloads.active,
+        accepts = { name, size -> standaloneGguf(name) && LinkedModel.accepts(name, size) },
+        emptyMessage = R.string.local_hf_empty,
+        download = { models.download(it) },
+    )
+    models.downloads.repository?.let { model ->
+        Text(model.name, color = HubColors.Text)
+        LinearProgressIndicator(progress = { models.downloads.progress }, modifier = Modifier.fillMaxWidth())
+        TextButton(models.downloads::cancel) { Text(stringResource(R.string.local_cancel)) }
+    }
 }
 
-@Composable private fun HuggingFaceSettings(models: LocalModels) {
+@Composable internal fun RepositoryModelPicker(
+    canDownload: Boolean,
+    accepts: (String, Long) -> Boolean,
+    emptyMessage: Int,
+    download: (RepositoryModel) -> Unit,
+) {
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -73,8 +88,8 @@ import kotlinx.coroutines.launch
                 results = emptyList()
                 scope.launch {
                     try {
-                        results = HuggingFaceModels.files(repository)
-                        if (results.isEmpty()) error = R.string.local_hf_empty
+                        results = HuggingFaceModels.files(repository, accepts)
+                        if (results.isEmpty()) error = emptyMessage
                     } catch (cancelled: CancellationException) {
                         throw cancelled
                     } catch (_: Exception) {
@@ -92,14 +107,9 @@ import kotlinx.coroutines.launch
         for (model in results) {
             val size = "%.2f GB".format(java.util.Locale.forLanguageTag("es"), model.size / 1_000_000_000.0)
             Text(stringResource(R.string.local_model_size, model.name, size), color = HubColors.Text)
-            TextButton({ models.download(model) }, enabled = !models.downloads.active) {
+            TextButton({ download(model) }, enabled = canDownload) {
                 Text(stringResource(R.string.local_download))
             }
         }
-    }
-    models.downloads.repository?.let { model ->
-        Text(model.name, color = HubColors.Text)
-        LinearProgressIndicator(progress = { models.downloads.progress }, modifier = Modifier.fillMaxWidth())
-        TextButton(models.downloads::cancel) { Text(stringResource(R.string.local_cancel)) }
     }
 }

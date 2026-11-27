@@ -1,12 +1,15 @@
 package com.zirakusa.gatewayhub
 
 import android.content.Context
+import android.content.ClipboardManager
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.zirakusa.gatewayhub.assistant.AssistantActions
 import com.zirakusa.gatewayhub.assistant.AssistantPage
@@ -54,6 +57,21 @@ class AssistantScreenshotsTest {
         compose.waitForIdle()
         compose.onNodeWithText("Hecho").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/assistant-map.png")
+    }
+
+    @Test fun copyAnOrderByHoldingItAndCopyAReplyWithTheButton() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val state = AssistantState(Brain(FakeHands()))
+        state.send("calcula dos más dos", byVoice = false)
+        compose.setContent { HubTheme { AssistantScreen(state) } }
+        compose.onNodeWithText("calcula dos más dos").performTouchInput { longClick() }
+        compose.onNodeWithText("Copiar").performClick()
+        val clipboard = context.getSystemService(ClipboardManager::class.java)
+        assertEquals("calcula dos más dos", clipboard.primaryClip?.getItemAt(0)?.text?.toString())
+        compose.onNodeWithContentDescription("Copiar respuesta").performClick()
+        val expected = com.zirakusa.gatewayhub.assistant.Talk.text(requireNotNull(state.last).reply, context.resources)
+        assertEquals(expected, clipboard.primaryClip?.getItemAt(0)?.text?.toString())
+        compose.onNodeWithContentDescription("Guardar chat").assertExists()
     }
 
     @Test fun mcpOpensFromTheDrawerWithoutConnectingAndKeepsTheConversation() {

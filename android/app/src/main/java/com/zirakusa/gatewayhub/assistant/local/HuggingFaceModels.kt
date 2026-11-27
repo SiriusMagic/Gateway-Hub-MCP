@@ -41,16 +41,21 @@ internal object HuggingFaceModels {
 
     internal fun url(path: String, query: String? = null): URL = URI("https", HOST, path, query, null).toURL()
 
-    suspend fun files(repository: String): List<RepositoryModel> = withContext(Dispatchers.IO) {
+    suspend fun files(repository: String, accepts: (String, Long) -> Boolean = ::conversationFile): List<RepositoryModel> =
+        withContext(Dispatchers.IO) {
         require(repoPath.matches(repository))
         val metadata = JSONObject(read(url("/api/models/$repository")))
         if (metadata.optBoolean("private") || metadata.opt("gated") in listOf("auto", "manual", true)) throw IOException()
         val revision = metadata.optString("sha")
         require(commit.matches(revision))
-        parseFiles(repository, revision, JSONArray(read(url("/api/models/$repository/tree/$revision", "recursive=true"))))
+        parseFiles(repository, revision, JSONArray(read(url("/api/models/$repository/tree/$revision", "recursive=true"))), accepts)
     }
 
-    internal fun parseFiles(repo: String, revision: String, tree: JSONArray): List<RepositoryModel> = buildList {
+    private fun conversationFile(name: String, size: Long) = standaloneGguf(name) && LinkedModel.accepts(name, size)
+
+    internal fun parseFiles(
+        repo: String, revision: String, tree: JSONArray, accepts: (String, Long) -> Boolean = ::conversationFile
+    ): List<RepositoryModel> = buildList {
         for (index in 0 until tree.length()) {
             val entry = tree.optJSONObject(index) ?: continue
             if (entry.optString("type") != "file") continue
@@ -60,7 +65,7 @@ internal object HuggingFaceModels {
             val lfs = entry.optJSONObject("lfs") ?: continue
             val sha = lfs.optString("oid")
             val size = lfs.optLong("size")
-            if (standaloneGguf(name) && LinkedModel.accepts(name, size) && digest.matches(sha)) {
+            if (accepts(name, size) && digest.matches(sha)) {
                 add(RepositoryModel(repo, revision, path, size, sha))
             }
         }

@@ -23,6 +23,9 @@ android {
         (project.findProperty("llamaSourceDir") as String?)?.let { dir ->
             externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_LLAMA_CPP=$dir" } }
         }
+        (project.findProperty("whisperSourceDir") as String?)?.let { dir ->
+            externalNativeBuild { cmake { arguments += "-DFETCHCONTENT_SOURCE_DIR_WHISPER_CPP=$dir" } }
+        }
         val hubUrl = (project.findProperty("gatewayHubUrl") as String?).orEmpty().trimEnd('/')
         buildConfigField("String", "DEFAULT_HUB_URL", "\"$hubUrl\"")
         // 64-bit ARM only, like Luma and Notas: the local model (llama.cpp) only exists there, and 32-bit Vosk added ~4 MB.
@@ -52,6 +55,17 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
         }
+        create("phoneTest") {
+            initWith(getByName("preview"))
+            applicationIdSuffix = ".prueba"
+            versionNameSuffix = "-prueba.5"
+            matchingFallbacks += "release"
+        }
+    }
+}
+androidComponents {
+    onVariants(selector().withBuildType("phoneTest")) { variant ->
+        variant.outputs.forEach { it.versionCode.set(50) }
     }
 }
 dependencies {

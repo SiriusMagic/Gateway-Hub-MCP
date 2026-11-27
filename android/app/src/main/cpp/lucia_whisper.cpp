@@ -27,6 +27,24 @@ bool cancelled(void * data) {
 }
 }
 
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_zirakusa_gatewayhub_assistant_NativeWhisper_canLoad(JNIEnv * env, jobject, jstring path) {
+    const char * filename = env->GetStringUTFChars(path, nullptr);
+    if (!filename) return JNI_FALSE;
+    auto params = whisper_context_default_params();
+    params.use_gpu = false;
+    bool valid = false;
+    try {
+        std::unique_ptr<whisper_context, decltype(&whisper_free)> context(
+            whisper_init_from_file_with_params_no_state(filename, params), whisper_free);
+        valid = context && whisper_is_multilingual(context.get());
+    } catch (...) {
+        valid = false;
+    }
+    env->ReleaseStringUTFChars(path, filename);
+    return valid ? JNI_TRUE : JNI_FALSE;
+}
+
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_zirakusa_gatewayhub_assistant_NativeWhisper_recognize(
         JNIEnv * env, jobject, jstring path, jshortArray samples, jint length, jint threads, jobject stop) {

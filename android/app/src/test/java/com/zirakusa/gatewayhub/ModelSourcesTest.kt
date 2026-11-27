@@ -6,6 +6,7 @@ import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.DocumentsContract
 import com.zirakusa.gatewayhub.assistant.local.HuggingFaceModels
+import com.zirakusa.gatewayhub.assistant.local.acceptsVoiceModel
 import com.zirakusa.gatewayhub.assistant.local.scanModelFolder
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.shadows.ShadowContentResolver
@@ -76,5 +77,18 @@ class ModelSourcesTest {
         assertEquals("https://huggingface.co/org/model/resolve/$revision/quant/My%20model.Q4.gguf", item.url.toString())
         assertTrue(standaloneGguf("model.GGUF"))
         assertFalse(standaloneGguf("mmproj.gguf"))
+    }
+    @Test fun speechRepositoryUsesBinWithoutChangingTheConversationCatalog() {
+        val sha = "b".repeat(64)
+        val revision = "a".repeat(40)
+        fun file(path: String, size: Long) = JSONObject().put("type", "file").put("path", path)
+            .put("lfs", JSONObject().put("oid", sha).put("size", size))
+        val tree = JSONArray(listOf(file("quant/Spanish.BIN", 206_820_789), file("talk.gguf", 500_000_000),
+            file("../bad.bin", 200_000_000), file("tiny.bin", 31), file("oversize.bin", 2_000_000_000)))
+        val voice = HuggingFaceModels.parseFiles("org/model", revision, tree,
+            ::acceptsVoiceModel)
+        assertEquals("Spanish.BIN", voice.single().name)
+        assertEquals(sha, voice.single().sha256)
+        assertEquals("talk.gguf", HuggingFaceModels.parseFiles("org/model", revision, tree).single().name)
     }
 }

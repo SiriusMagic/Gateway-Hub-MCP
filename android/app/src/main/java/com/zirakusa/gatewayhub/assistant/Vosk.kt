@@ -177,7 +177,7 @@ internal class VoskEars(private val context: Context, private val heard: (String
             val samples = recording.engines.map { engine ->
                 val began = SystemClock.elapsedRealtime()
                 val text = engine.transcriber.transcribe(pcm, sampleCount, recording.cancelled)
-                VoiceSample(engine.model, text, endpointDelay + SystemClock.elapsedRealtime() - began)
+                VoiceSample(engine.label, text, endpointDelay + SystemClock.elapsedRealtime() - began)
             }
             DictationComparison(vosk, samples, recording.mode == DictationMode.COMPARE)
         } else null

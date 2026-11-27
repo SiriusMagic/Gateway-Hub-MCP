@@ -3,13 +3,26 @@ package com.zirakusa.gatewayhub.assistant
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal data class VoiceSample(val model: WhisperModel, val text: String?, val endToTextMs: Long)
+internal data class VoiceSample(val label: String, val text: String?, val endToTextMs: Long)
 internal data class DictationComparison(val vosk: String, val samples: List<VoiceSample>, val comparison: Boolean)
 
 internal object NativeWhisper {
     init { System.loadLibrary("lucia_whisper") }
 
+    external fun canLoad(path: String): Boolean
+
     external fun recognize(path: String, samples: ShortArray, length: Int, threads: Int, cancelled: AtomicBoolean): ByteArray?
+}
+
+internal fun compatibleWhisper(file: File): Boolean {
+    if (!VoiceModelFile.hasLayout(file)) return false
+    return try {
+        NativeWhisper.canLoad(file.absolutePath)
+    } catch (_: LinkageError) {
+        false
+    } catch (_: RuntimeException) {
+        false
+    }
 }
 
 internal fun interface UtteranceTranscriber {

@@ -60,6 +60,7 @@ voz, con revisión fijada y verificación SHA-256. Se conserva la opción de Vos
 | --- | --- | ---: |
 | Whisper Base (predeterminada entre Whisper) | Base Q5_1 | 59 707 625 bytes |
 | Whisper Small (opcional) | Small Q3_K | 113 846 889 bytes |
+| Whisper Small Q6 (opcional) | Small Q6_K | 206 820 789 bytes |
 
 Small tiene 1,91 veces el tamaño del archivo de Base. Se verificaron su integridad, carga y transcripción
 con whisper.cpp en Linux. Para comparar en Android, instala las dos variantes, elige **Comparar ambos** y
@@ -71,6 +72,17 @@ causada por ejecutar el otro modelo. Si se elige cada variante por separado, el 
 Para comprobar títulos en tu teléfono, prueba «Pon New Americana al cincuenta por ciento», «Reproduce Alone»
 y «Reproduce Esta cobardía». Compara el título transcrito y el que llegó en `titulo`, y revisa el tiempo de
 cada variante en **Diagnóstico MCP**.
+
+En **Ajustes › Voz**, **Importar Whisper (.bin)** copia un archivo elegido en Archivos. **Añadir desde
+Hugging Face** lista archivos de voz de un repositorio público. La descarga comprueba tamaño y SHA-256.
+La app comprueba el formato GGML multilingüe y la carga con whisper.cpp antes de ofrecer un modelo propio.
+La selección de voz se guarda para el siguiente inicio. Small Q6 ocupa 1,82 veces el archivo de Small Q3.
+
+Mantén pulsado un mensaje del chat para copiarlo. Las respuestas también tienen un botón **Copiar respuesta**.
+**Guardar chat** exporta una copia en texto UTF-8 mediante el selector de archivos de Android.
+
+Para compilar Arka Prueba, ejecuta `./gradlew :app:assemblePhoneTest` desde `android/`. El APK queda en
+`android/app/build/outputs/apk/phoneTest/`. Para actualizar la edición de prueba se requiere su misma firma.
 
 ## Ramas de la familia
 

@@ -1,0 +1,8 @@
+<resources>
+    <string name="chat_copy">Copiar</string>
+    <string name="chat_copy_reply">Copiar respuesta</string>
+    <string name="chat_save">Guardar chat</string>
+    <string name="chat_saved">Chat guardado</string>
+    <string name="chat_save_failed">No se pudo guardar el chat</string>
+    <string name="chat_you">Tú</string>
+</resources>

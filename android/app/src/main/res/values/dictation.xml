@@ -3,10 +3,14 @@
     <string name="dictation_vosk">Vosk</string>
     <string name="dictation_whisper">Whisper Base</string>
     <string name="dictation_small">Whisper Small</string>
+    <string name="dictation_small_q6">Whisper Small Q6</string>
+    <string name="dictation_import">Importar Whisper (.bin)</string>
+    <string name="dictation_invalid_file">El archivo debe ser un modelo Whisper multilingüe en formato GGML (.bin) compatible.</string>
+    <string name="dictation_hf_empty">El repositorio no contiene archivos de voz .bin disponibles.</string>
     <string name="dictation_delete">Eliminar %1$s</string>
 
     <string name="dictation_compare">Comparar ambos</string>
-    <string name="dictation_compare_hint">Compara el mismo audio con ambos Whisper instalados. Luna ejecuta una vez usando Base, con respaldo de Vosk.</string>
+    <string name="dictation_compare_hint">Compara el mismo audio con Whisper Base y Small Q3 instalados. Luna ejecuta una vez usando Base, con respaldo de Vosk.</string>
     <string name="dictation_download">Descargar %1$s (%2$d MB)</string>
     <string name="dictation_processing">Transcribiendo con Whisper…</string>
     <string name="dictation_empty">Sin texto</string>

@@ -92,6 +92,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
                 Text(if (h.total == 0) stringResource(R.string.assistant_hint) else pluralStringResource(R.plurals.assistant_health, h.total, h.total, h.understood, h.done, h.averageMs),
                     color = HubColors.Muted, fontSize = 12.sp)
             }
+            SaveChatButton(state)
             IconButton({ actions.setVoice(!state.voiceAnswers) }) {
                 Icon(if (state.voiceAnswers) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
                     stringResource(if (state.voiceAnswers) R.string.voice_on else R.string.voice_off), tint = HubColors.Muted)
@@ -139,14 +140,21 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
 
 @Composable private fun TurnBubbles(t: Turn) = Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-        Text((if (t.byVoice) "🎙 " else "") + t.heard, Modifier.widthIn(max = 280.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Gold)
-            .padding(horizontal = 14.dp, vertical = 8.dp), color = HubColors.Background, fontSize = 15.sp)
+        CopyableMessage(t.heard, Modifier.widthIn(max = 280.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Gold)) {
+            Text((if (t.byVoice) "🎙 " else "") + t.heard, Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                color = HubColors.Background, fontSize = 15.sp)
+        }
     }
     val res = LocalResources.current
-    Column(Modifier.widthIn(max = 300.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(horizontal = 14.dp, vertical = 8.dp)) {
-        Text(Talk.text(t.reply, res), color = if (t.ok) HubColors.Text else HubColors.Bad, fontSize = 15.sp)
-        Text(listOfNotNull(Talk.label(t.command.action, res), t.app?.name, "${t.millis} ms").distinct().joinToString(" · "), color = HubColors.Muted, fontSize = 11.sp)
+    val reply = Talk.text(t.reply, res)
+    CopyableMessage(reply, Modifier.widthIn(max = 300.dp).clip(RoundedCornerShape(18.dp)).background(HubColors.Card)) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+            Text(reply, color = if (t.ok) HubColors.Text else HubColors.Bad, fontSize = 15.sp)
+            Text(listOfNotNull(Talk.label(t.command.action, res), t.app?.name, "${t.millis} ms").distinct().joinToString(" · "),
+                color = HubColors.Muted, fontSize = 11.sp)
+        }
     }
+    CopyReplyButton(reply)
 }
 
 /** Before the first order: a few things to try (tap one to send it). */
