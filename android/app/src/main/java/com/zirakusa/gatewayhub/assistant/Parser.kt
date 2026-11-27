@@ -15,27 +15,35 @@ object Parser {
     private val behind = Regex("[,\\s]+(?:en segundo plano|de fondo|en el fondo|sin abrir(?: la app| la aplicacion| la aplicación| stone)?|sin salir de aqui|sin salir de aquí)[.!]*$", RegexOption.IGNORE_CASE)
 
     fun parse(raw: String, today: java.time.LocalDate = java.time.LocalDate.now()): Command {
+        val recognized = basic(raw, today)
+        if (recognized.action in setOf(Action.PLAY_MUSIC, Action.UNKNOWN) ||
+            recognized.action == Action.TOOL && recognized["tool"] == "player_play_song") {
+            MusicOrder.parse(raw)?.let { return it }
+        }
+        return recognized
+    }
+
+    private fun basic(raw: String, today: java.time.LocalDate): Command {
         behind.find(raw)?.let { m ->
-            val c = parse(raw.removeRange(m.range), today)
+            val c = basic(raw.removeRange(m.range), today)
             return if (c.action == Action.UNKNOWN) c else c.copy(slots = c.slots + ("background" to "1"))
         }
         QuickOrders.parse(raw)?.let { return it }
-        this.today = today
         val t = Words.normalize(raw)
         if (t.isEmpty()) return Command(Action.UNKNOWN)
         // «Brillo al 40 por ciento» is the screen's, not the volume.
-        if (Regex("(^| )brillo( |$)").containsMatchIn(t)) return one(t)
+        if (Regex("(^| )brillo( |$)").containsMatchIn(t)) return one(t, today)
         // «El 15 por ciento de 200» is a calculation (calc_percent), not the volume.
-        if (Regex("\\d (?:por ciento|porciento|%) de \\d").containsMatchIn(t)) return one(t)
+        if (Regex("\\d (?:por ciento|porciento|%) de \\d").containsMatchIn(t)) return one(t, today)
         val (volume, rest) = Volume.take(t)
-        if (volume == null) return one(t)
+        if (volume == null) return one(t, today)
         val slot = when (volume) { is Volume.Change.To -> "volume" to "${volume.percent}"; is Volume.Change.Step -> "volume_step" to if (volume.up) "up" else "down" }
-        val c = if (rest.isEmpty()) Command(Action.UNKNOWN) else one(rest)
+        val c = if (rest.isEmpty()) Command(Action.UNKNOWN) else one(rest, today)
         if (rest.isEmpty() || c.action == Action.VOLUME) return Command(Action.VOLUME, mapOf(slot))
         return if (c.action == Action.UNKNOWN) c else c.copy(slots = c.slots + slot)
     }
 
-    private fun one(t: String): Command {
+    private fun one(t: String, today: java.time.LocalDate): Command {
         // Media buttons: short orders, for whatever is playing.
         // «pon pausa a la música», «reinicia la canción», «quita la música», «otra canción»: what is said, with or without
         // «la música / la canción / el tema / esto» after it.
@@ -141,7 +149,6 @@ object Parser {
         return Command(Action.UNKNOWN)
     }
 
-    private var today: java.time.LocalDate = java.time.LocalDate.now()
 
     private fun media(k: MediaKey) = Command(Action.MEDIA, mapOf("key" to k.name))
 }

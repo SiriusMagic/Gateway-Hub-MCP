@@ -102,6 +102,7 @@ import com.zirakusa.gatewayhub.ui.HubColors
         Card {
             Text(stringResource(R.string.voice_title), color = HubColors.Text, fontSize = 17.sp)
             Text(stringResource(if (state.modelReady) R.string.voice_ready else R.string.voice_loading), color = HubColors.Muted, fontSize = 14.sp)
+            state.speechModels?.let { DictationSettings(it, state.listening) }
             if (!state.offlineVoiceReady) {
                 Text(stringResource(R.string.local_voice_missing), color = HubColors.Muted, fontSize = 14.sp)
                 Button(stringResource(R.string.local_voice_install), actions.installVoice)

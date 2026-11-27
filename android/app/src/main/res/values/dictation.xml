@@ -1,0 +1,16 @@
+<resources>
+    <string name="dictation_model">Dictado sin conexión</string>
+    <string name="dictation_vosk">Vosk</string>
+    <string name="dictation_whisper">Whisper Base</string>
+    <string name="dictation_small">Whisper Small</string>
+    <string name="dictation_delete">Eliminar %1$s</string>
+
+    <string name="dictation_compare">Comparar ambos</string>
+    <string name="dictation_compare_hint">Compara el mismo audio con ambos Whisper instalados. Luna ejecuta una vez usando Base, con respaldo de Vosk.</string>
+    <string name="dictation_download">Descargar %1$s (%2$d MB)</string>
+    <string name="dictation_processing">Transcribiendo con Whisper…</string>
+    <string name="dictation_empty">Sin texto</string>
+    <string name="dictation_vosk_result">Vosk · %1$s</string>
+    <string name="dictation_whisper_result">%1$s (%3$d ms desde fin de voz) · %2$s</string>
+    <string name="dictation_compare_result">%1$s (%3$d ms estimados desde fin de voz) · %2$s</string>
+</resources>

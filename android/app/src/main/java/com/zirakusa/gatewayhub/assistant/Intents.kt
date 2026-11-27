@@ -7,7 +7,7 @@ package com.zirakusa.gatewayhub.assistant
  */
 object Intents {
     private val wake = Regex("^(?:(?:hey|oye|ey|hola|ok)\\s+)?(?:luna|lucia|lucía)\\b[,.:!]*\\s*", RegexOption.IGNORE_CASE)
-    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|y ademas|y además|y entonces|luego|despues|después|tambien|también|ademas|además|y(?!\s+(?:m[aá]s|menos|media|medio|cuarto|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|\d+)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
+    private val joints = Regex("""\s*(?:;|(?<!\d),|,(?!\d)|\s(?:y luego|y despues|y después|y tambien|y también|y ademas|y además|y entonces|luego|despues|después|tambien|también|ademas|además|y(?!\s+(?:(?:el\s+)?ecualizador\b|m[aá]s|menos|media|medio|cuarto|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|\d+)\b)|e)\s)\s*""", RegexOption.IGNORE_CASE)
     private val nextAction = Regex("""\s+(?=(?:(?:necesito|quiero) que )?(?:calcul(?:a|ar|es)|suma|resta|multiplica|divide|llama(?:le|r)?|sube|baja|reproduce|pon|ponme|coloca|enciende|apaga|abre|anota|dime)\b)""", RegexOption.IGNORE_CASE)
     private val asksForAction = Regex("""^(?:necesito|quiero) que\s+(calcules|sumes|restes|multipliques|dividas|llames|subas|bajes|reproduzcas|pongas)\b""", RegexOption.IGNORE_CASE)
     private val laterAsk = Regex("""^(calcules|sumes|restes|multipliques|dividas|llames|subas|bajes|reproduzcas|pongas)\b""", RegexOption.IGNORE_CASE)

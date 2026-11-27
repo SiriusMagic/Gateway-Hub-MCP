@@ -166,3 +166,43 @@ test("the Filem app is files_: not linked → coded error, bad link refused, the
   const missing = await h.rpc("tools/call", { name: "files_nada", arguments: {} });
   assert.equal(missing.body.result.structuredContent.error.code, "UNKNOWN_TOOL");
 });
+
+test("diagnóstico por Hub reenvía el mismo ID y solo llama player_state", async () => {
+  const { fakeStone, MemoryStore } = await import("./helpers.ts");
+  const stone = fakeStone();
+  const h = hub(new MemoryStore(), stone.fetcher);
+  const id = crypto.randomUUID();
+  assert.equal((await h.api("POST", "/mcp-diagnostics/stone", { id }, null)).status, 401);
+  assert.equal((await h.api("POST", "/mcp-diagnostics/stone", { id })).body.error.code, "STONE_NOT_LINKED");
+  await h.api("POST", "/stone", { link: STONE_LINK });
+  const probe = await h.api("POST", "/mcp-diagnostics/stone", { id });
+  assert.deepEqual(probe.body, { id, ok: true });
+  assert.deepEqual(stone.calls.at(-1)?.body, { jsonrpc: "2.0", id, method: "tools/call", params: { name: "player_state", arguments: {} } });
+  const down = hub(h.store, fakeStone({ status: 503 }).fetcher);
+  assert.equal((await down.api("POST", "/mcp-diagnostics/stone", { id })).body.error.code, "STONE_OFFLINE");
+});
+
+test("informes privados excluyen texto y agrupan fallos sin duplicar reintentos", async () => {
+  const h = hub();
+  const report = { id: crypto.randomUUID(), app: "music_", tool: "player_play_by_title", stage: "respuesta", code: "RESULT_UNCONFIRMED", version: "0.3.0", ms: 5000 };
+  assert.equal((await h.api("POST", "/mcp-diagnostics", report, null)).status, 401);
+  assert.equal((await h.api("POST", "/mcp-diagnostics", { ...report, transcription: "texto privado" })).status, 400);
+  assert.equal((await h.api("POST", "/mcp-diagnostics", { ...report, code: "texto privado" })).status, 400);
+  for (const id of [report.id, report.id, crypto.randomUUID()]) {
+    assert.deepEqual((await h.api("POST", "/mcp-diagnostics", { ...report, id })).body, { id });
+  }
+  const group = (await h.api("GET", "/mcp-diagnostics")).body.failures;
+  assert.deepEqual(group, [{ app: report.app, tool: report.tool, stage: report.stage, code: report.code, count: 2, last: 0 }]);
+});
+
+test("diagnóstico familiar envía ping de solo lectura con ID al enlace guardado", async () => {
+  const { fakeStone, MemoryStore } = await import("./helpers.ts");
+  const app = fakeStone();
+  const h = hub(new MemoryStore(), app.fetcher);
+  const id = crypto.randomUUID();
+  const path = "/mcp-diagnostics/check/calc_";
+  assert.equal((await h.api("POST", path, { id })).body.error.code, "APP_NOT_LINKED");
+  await h.api("POST", "/apps/calc_", { link: STONE_LINK });
+  assert.deepEqual((await h.api("POST", path, { id })).body, { id, ok: true });
+  assert.deepEqual(app.calls.at(-1)?.body, { jsonrpc: "2.0", id, method: "ping", params: {} });
+});

@@ -20,7 +20,7 @@ class PhoneMcpRulesScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
     @Test fun noRulesInMcp() {
-        compose.setContent { HubTheme { PhoneMcpScreen(null, {}) } }
+        compose.setContent { HubTheme { PhoneMcpScreen(AssistantState(Brain(com.zirakusa.gatewayhub.FakeHands())), {}) } }
         compose.onNodeWithText("Apps de este teléfono").assertExists()
         compose.onNodeWithText("Reglas de sentimientos").assertDoesNotExist()
         compose.onNodeWithText("Ver las reglas de Lucía").assertDoesNotExist()

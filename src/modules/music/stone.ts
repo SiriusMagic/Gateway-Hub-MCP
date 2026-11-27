@@ -24,23 +24,28 @@ export function parseStoneLink(link: string, relayHost: string): StoneLink {
 
 /** One JSON-RPC call to Stone; the token travels in the header, never in the URL. */
 export async function stoneRpc(ctx: HubContext, link: StoneLink, method: string, params: unknown, timeoutMs: number) {
+  const traceId = ["tools/call", "ping"].includes(method) ? ctx.traceId : undefined;
+  const id = traceId ?? 1;
   let response: Response;
   try {
     response = await ctx.fetch(link.endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${link.token}` },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
-    throw new ToolError("STONE_UNREACHABLE", "Stone did not answer in time. Is Stone open with MCP mode on?");
+    throw new ToolError("STONE_UNREACHABLE", "Stone did not answer in time. Check Stone before repeating a command.");
   }
   if (response.status === 401 || response.status === 403)
     throw new ToolError("STONE_TOKEN", "Stone rejected the token saved in the hub (revoked, paused or expired). Link Stone again in /admin.");
   if (response.status === 503) throw new ToolError("STONE_OFFLINE", "Stone is not open on the phone, or MCP mode is off.");
   if (response.status === 429) throw new ToolError("RATE_LIMITED", "Stone is limiting requests. Wait a minute.");
   if (!response.ok) throw new ToolError("STONE_ERROR", `Stone answered HTTP ${response.status}.`);
-  const reply = await response.json() as { result?: unknown; error?: { message?: string } };
+  const reply = await response.json().catch(() => null) as { id?: unknown; result?: unknown; error?: { message?: string } } | null;
+  if (!reply || (traceId && reply.id !== id)) throw new ToolError("RESULT_UNCONFIRMED", "Stone's response could not be verified.");
+
+  if (traceId && !reply.error && reply.result == null) throw new ToolError("RESULT_UNCONFIRMED", "The response has no result.");
   if (reply.error) throw new ToolError("STONE_ERROR", reply.error.message ?? "Stone returned an error.");
   return reply.result;
 }

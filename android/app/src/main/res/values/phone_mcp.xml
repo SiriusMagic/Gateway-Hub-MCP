@@ -12,7 +12,7 @@
     <string name="mode_both_hint">Primero las reglas (rápidas); lo que no entienden pasa al modelo.</string>
     <string name="mode_needs_model">Descarga y elige un modelo en Avanzado; mientras tanto responde el asistente.</string>
     <string name="interpreter_title">Intérprete del modelo</string>
-    <string name="interpreter_feelings">Sentimientos</string>
+    <string name="interpreter_feelings">Reconocimiento de intenciones</string>
     <string name="interpreter_mcp">MCP</string>
     <string name="interpreter_auto">Automático</string>
     <string name="interpreter_feelings_hint">El modelo lo traduce a órdenes de Lucía y sus reglas las hacen (y preguntan «¿…?»). Lo más seguro. Recomendado.</string>
@@ -23,21 +23,21 @@
     <string name="phone_mcp_title">MCP</string>
     <string name="phone_mcp_apps">Apps de este teléfono</string>
     <string name="phone_mcp_ready">MCP local disponible</string>
-    <string name="phone_mcp_off">Activa «Permitir MCP local» arriba, en Arka › MCP.</string>
+    <string name="phone_mcp_off">Comprueba «Permitir MCP local» en Arka y en los ajustes de la app.</string>
     <string name="phone_mcp_signature">Firma incompatible para MCP local.</string>
     <string name="phone_mcp_declared">App compatible detectada. Disponibilidad local sin verificar.</string>
     <string name="phone_mcp_unavailable">La app no pudo responder. Ábrela y vuelve a intentarlo.</string>
-    <string name="phone_mcp_link_off">Esta versión de la app aún pide «Redireccionar a Hub»: actualízala para que Arka la controle.</string>
+    <string name="phone_mcp_link_off">Esta versión requiere «Redireccionar a Hub» para responder en el teléfono.</string>
     <string name="phone_mcp_stone_missing">Stone no está disponible en este teléfono.</string>
     <string name="phone_mcp_connect_external">Crear token</string>
     <string name="phone_mcp_control">Modo MCP de la familia</string>
-    <string name="phone_mcp_control_hint">Arka lo controla en todas tus apps: ninguna tiene ya su propia pantalla de Modo MCP.</string>
-    <string name="phone_mcp_enable">Activar MCP</string>
+    <string name="phone_mcp_control_hint">Puedes administrar la redirección desde Arka. Cada app tiene sus propios controles de Modo MCP en Ajustes.</string>
+    <string name="phone_mcp_enable">Redireccionar apps a Hub</string>
     <string name="phone_mcp_enable_hint">Enciende el enlace público de cada app (relay) para que tu hub y sus agentes lleguen a ella. Vincúlalas en Hub › Escáner › «Conectar todas».</string>
     <string name="phone_mcp_local">Permitir MCP local</string>
-    <string name="phone_mcp_local_hint">Lucía y las reglas de sentimiento usan las herramientas de tus apps en este teléfono, sin internet. Lo que borra o cambia pregunta antes.</string>
+    <string name="phone_mcp_local_hint">Lucía y el reconocimiento de intenciones usan las herramientas de tus apps en este teléfono, sin internet. Lo que borra o cambia pregunta antes.</string>
     <string name="phone_mcp_token_hint">Un token por IA (Claude, ChatGPT…), con sus apps, permisos y caducidad, en el hub.</string>
-    <string name="phone_mcp_app_remote">Enlace público</string>
+    <string name="phone_mcp_app_remote">Redireccionar a Hub</string>
     <plurals name="phone_mcp_switched">
         <item quantity="one">%1$d app cambiada.</item>
         <item quantity="many">%1$d apps cambiadas.</item>
@@ -52,9 +52,9 @@
     <string name="phone_mcp_rules_hide">Ocultar</string>
     <string name="phone_mcp_rule_asks">pregunta antes</string>
     <!-- «RS» (Regla de Sentimiento): its own page in the side menu. -->
-    <string name="rs_menu">RS</string>
-    <string name="rs_title">Regla de Sentimiento</string>
-    <string name="rs_intro">Todo lo que las reglas de Lucía entienden: la frase, lo que hace y si pregunta antes. Con el intérprete «Sentimientos», el modelo convierte lo que dices en una de estas reglas.</string>
+    <string name="rs_menu">Reconocimiento de intenciones</string>
+    <string name="rs_title">Reconocimiento de intenciones</string>
+    <string name="rs_intro">Todo lo que las reglas de Lucía entienden: la frase, lo que hace y si pregunta antes. Con el intérprete «Reconocimiento de intenciones», el modelo convierte lo que dices en una de estas reglas.</string>
     <string name="rs_interpreter">Intérprete del modelo ahora: %1$s</string>
     <string name="rs_search">Buscar una frase o lo que hace</string>
     <string name="rs_none">Ninguna regla coincide.</string>
@@ -69,14 +69,14 @@
         <item quantity="other">%1$d reglas</item>
     </plurals>
     <string name="rs_show">Ver reglas</string>
-    <!-- «Sentimientos» as an app in MCP › Apps de este teléfono. -->
+    <!-- «Reconocimiento de intenciones» as an app in MCP › Apps de este teléfono. -->
     <string name="sentimientos_by">Reglas de Lucía · dentro de Arka</string>
     <plurals name="sentimientos_status">
-        <item quantity="one">%1$d regla de sentimiento</item>
-        <item quantity="many">%1$d reglas de sentimiento</item>
-        <item quantity="other">%1$d reglas de sentimiento</item>
+        <item quantity="one">%1$d regla de intención</item>
+        <item quantity="many">%1$d reglas de intención</item>
+        <item quantity="other">%1$d reglas de intención</item>
     </plurals>
-    <string name="sentimientos_no_tools">Sentimientos no tiene herramientas MCP propias: traduce lo que dices a reglas de Lucía, que usan las herramientas de cada app (con «Permitir MCP local»).</string>
+    <string name="sentimientos_no_tools">Las reglas traducen tus órdenes a acciones. Para usar las herramientas en este teléfono, habilita «Permitir MCP local».</string>
     <string name="sentimientos_missing">Integración pendiente: publicar las reglas como herramientas MCP (por ejemplo, listar reglas y entender una frase) para que otro modelo pueda usarlas.</string>
     <string name="phone_mcp_tools">Herramientas</string>
     <string name="phone_mcp_known">Herramientas que conoce Lucía</string>

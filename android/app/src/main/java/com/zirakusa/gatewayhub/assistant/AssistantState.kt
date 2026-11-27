@@ -41,6 +41,16 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     var turns by mutableStateOf(emptyList<Turn>()); private set
     var typed by mutableStateOf("")
     var listening by mutableStateOf(false)
+    internal var speechModels: SpeechModels? = null
+    internal var dictationComparison by mutableStateOf<DictationComparison?>(null)
+    internal var lastTranscript by mutableStateOf<String?>(null)
+       private set
+    internal var lastMcpTurn by mutableStateOf<Turn?>(null)
+       private set
+    internal var diagnostics: McpDiagnostics? = null
+    internal var executingStone by mutableStateOf(false)
+        private set
+    internal var runStone: (() -> Turn, (Turn) -> Unit) -> Unit = { work, done -> done(work()) }
     var partial by mutableStateOf("")
     var level by mutableFloatStateOf(0f)
     var voiceAnswers by mutableStateOf(true)
@@ -73,7 +83,15 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     fun send(text: String, byVoice: Boolean) {
         val heard = text.trim()
         val assistant = local
-        if (heard.isBlank() || assistant?.busy == true || assistant?.pending != null) return
+        if (heard.isBlank() || executingStone || assistant?.busy == true || assistant?.pending != null) return
+        StoneOrder.choose(last, heard)?.let { choice ->
+            executingStone = true
+            runStone({ brain.handle(heard, byVoice, choice) }) { turn ->
+                executingStone = false
+                complete(turn)
+            }
+            return
+        }
         val nameReply = last?.takeIf { askingCallName }
         callNameUntil = 0L
         if (nameReply != null && brain.commandFor(heard).action == Action.UNKNOWN) {
@@ -87,6 +105,10 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
         val after = waiting.also { waiting = emptyList() }.takeIf {
             if (brain.askingToCall) Confirmation.callAnswer(heard) == true else brain.asking && Intents.yes(heard)
         }.orEmpty()
+        val plan = Intents.split(heard, brain::commandFor)
+        if (plan.any { StoneOrder.matches(brain.commandFor(it)) }) {
+            return runAll(plan, byVoice)
+        }
         val mode = modeNow()
         if (mode != AnswerMode.RULES && assistant != null && localTurns.route(assistant, heard, byVoice)) {
             brain.cancelOutgoingCall()
@@ -98,7 +120,6 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
             return
         }
         // «Llama a Luis y dime la hora»: each order in turn.
-        val plan = Intents.split(heard, brain::commandFor)
         if (plan.size > 1) return runAll(plan, byVoice)
         val command = brain.commandFor(plan[0]).takeIf { it.action != Action.UNKNOWN } ?: brain.commandFor(heard)
         if (mode == AnswerMode.BOTH && assistant != null && StoneRequests.matches(heard, command)) {
@@ -130,17 +151,31 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     private fun runAll(orders: List<String>, byVoice: Boolean, first: Turn? = null) {
         val replies = mutableListOf<Reply>()
         first?.let { complete(it, speakIt = false); replies += it.reply }
-        for ((i, order) in orders.withIndex()) {
-            val turn = brain.handle(order, byVoice)
-            complete(turn, speakIt = false)
-            replies += turn.reply
-            if (turn.reply.asksCallName) break
-            if (turn.reply.asksToCall || turn.reply.say in setOf(Say.CONFIRM, Say.NEED_CALL_PERMISSION)) {
-                waiting = orders.drop(i + 1)
-                break
-            }
+        fun speakResults() {
+            if (byVoice && voiceAnswers) speakAll(replies.filter { it.say != Say.COUNTING })
         }
-        if (byVoice && voiceAnswers) speakAll(replies.filter { it.say != Say.COUNTING })
+        fun next(index: Int) {
+            val order = orders.getOrNull(index) ?: return speakResults()
+            val command = brain.commandFor(order)
+            val done: (Turn) -> Unit = { turn ->
+                executingStone = false
+                complete(turn, speakIt = false)
+                replies += turn.reply
+                when {
+                    turn.reply.asksCallName -> speakResults()
+                    turn.reply.asksToCall || turn.reply.say in setOf(Say.CONFIRM, Say.NEED_CALL_PERMISSION) -> {
+                        waiting = orders.drop(index + 1)
+                        speakResults()
+                    }
+                    else -> next(index + 1)
+                }
+            }
+            if (StoneOrder.matches(command)) {
+                executingStone = true
+                runStone({ brain.handle(order, byVoice, command) }, done)
+            } else done(brain.handle(order, byVoice, command))
+        }
+        next(0)
     }
 
     internal fun retryContactPermission() {
@@ -163,6 +198,10 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
 
     private fun complete(turn: Turn, speakIt: Boolean) {
         turns = (turns + turn).takeLast(MAX)
+        turn.mcp?.let {
+            lastMcpTurn = turn
+            diagnostics?.record(it)
+        }
         if (turn.reply.asksCallName) callNameUntil = System.currentTimeMillis() + Brain.CONFIRM_MS
         pulse++
         if (speakIt && turn.byVoice && voiceAnswers) speak(turn.reply)
@@ -200,7 +239,15 @@ class AssistantState(private val brain: Brain, private val speak: (Reply) -> Uni
     }
 
     fun sendTyped() { send(typed, byVoice = false); typed = "" }
-    fun heard(text: String, final: Boolean) { partial = text; if (final) { listening = false; partial = ""; send(text, byVoice = true) } }
+    fun heard(text: String, final: Boolean) {
+        partial = text
+        if (final) {
+            listening = false
+            partial = ""
+            lastTranscript = text
+            send(text, byVoice = true)
+        }
+    }
 
     companion object { const val MAX = 40 }
 }

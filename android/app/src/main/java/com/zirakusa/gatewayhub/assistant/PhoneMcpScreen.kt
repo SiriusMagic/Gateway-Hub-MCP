@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,7 +36,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.zirakusa.gatewayhub.R
-import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.assistant.local.PhoneMcpApp
 import com.zirakusa.gatewayhub.assistant.local.PhoneMcpStatus
 import com.zirakusa.gatewayhub.data.PackageScanner
@@ -41,7 +43,25 @@ import com.zirakusa.gatewayhub.ui.HubCard
 import com.zirakusa.gatewayhub.ui.HubColors
 import kotlinx.coroutines.launch
 
-@Composable internal fun PhoneMcpScreen(local: LocalAssistant?, connectExternal: () -> Unit, openRs: () -> Unit = {}) {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable internal fun PhoneMcpScreen(state: AssistantState, connectExternal: () -> Unit, openRs: () -> Unit = {}) {
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    Column {
+        PrimaryTabRow(selectedTabIndex = tab) {
+            listOf(R.string.mcp_tab_general, R.string.mcp_tab_analytics, R.string.mcp_tab_diagnostics).forEachIndexed { index, label ->
+                Tab(selected = index == tab, onClick = { tab = index }, text = { Text(stringResource(label)) })
+            }
+        }
+        when (tab) {
+            0 -> GeneralMcp(state, connectExternal, openRs)
+            1 -> McpAnalytics(state.diagnostics)
+            else -> McpDiagnosis(state, connectExternal)
+        }
+    }
+}
+
+@Composable private fun GeneralMcp(state: AssistantState, connectExternal: () -> Unit, openRs: () -> Unit) {
+    val local = state.local
     var apps by remember(local) { mutableStateOf<List<PhoneMcpApp>?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refresh++ }

@@ -80,7 +80,7 @@ class AssistantTest {
 
     @Test fun phrasesItKnows() {
         assertEquals(Action.PLAY_MUSIC, p("Reproduce música").action); assertNull(p("reproduce música")["query"])
-        assertEquals("bad bunny", p("pon música de Bad Bunny")["query"]); assertEquals("soda stereo", p("Pon Soda Stereo")["query"])
+        assertEquals("Bad Bunny", p("pon música de Bad Bunny")["query"]); assertEquals("soda stereo", p("Pon Soda Stereo")["query"])
         assertEquals(Action.PLAY_RECOMMENDED, p("Pon mis recomendaciones del día").action); assertEquals(Action.PLAY_RECOMMENDED, p("ponme el mix del día").action)
         listOf("pon pausa", "pon pausa a la música", "ponle pausa", "pausa la canción", "para la música", "detén la canción", "quita la música", "apaga la música")
             .forEach { assertEquals(it, "PAUSE", p(it)["key"]) }

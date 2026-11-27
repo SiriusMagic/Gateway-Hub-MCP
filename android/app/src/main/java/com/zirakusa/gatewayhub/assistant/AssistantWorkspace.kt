@@ -91,7 +91,7 @@ internal enum class AssistantPage(val label: Int, val icon: ImageVector) {
             }
             when (state.page) {
                 AssistantPage.MODELS -> ModelPage(state)
-                AssistantPage.MCP -> PhoneMcpScreen(state.local, actions.manageHub) { state.page = AssistantPage.RS }
+                AssistantPage.MCP -> PhoneMcpScreen(state, actions.manageHub) { state.page = AssistantPage.RS }
                 AssistantPage.RS -> RsScreen(state.interpreter)
                 AssistantPage.SETTINGS -> LuciaSettings(state, actions)
                 AssistantPage.ADVANCED -> Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {

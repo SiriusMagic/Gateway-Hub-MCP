@@ -1,3 +1,5 @@
+import type { McpFailureGroup, McpReport } from "../admin/mcp-diagnostics.ts";
+
 // Contract every hub module follows. A module owns one prefix ("calc_") and every tool it lists
 // starts with it; the router (../router.ts) uses that prefix to send each call to its module.
 
@@ -49,12 +51,15 @@ export interface HubAdminStore {
   agentsSet(id: string, changes: Partial<Pick<Agent, "paused" | "lastUsed">>): Promise<void>;
   agentsDelete(id: string): Promise<boolean>;
   metricsRecord(agentId: string, tool: string, ok: boolean, ms: number): Promise<void>;
+  mcpReport(report: McpReport): Promise<void>;
+  mcpFailures(): Promise<McpFailureGroup[]>;
   metricsSummary(since: number): Promise<MetricsSummary>;
 }
 
 export interface HubEnv { STONE_RELAY_HOST: string; HUB_TOKEN?: string }
 
 export interface HubContext {
+  traceId?: string;
   store: HubStoreApi;
   env: HubEnv;
   /** Injected so tests can fake the network. */

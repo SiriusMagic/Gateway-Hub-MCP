@@ -22,6 +22,8 @@ import androidx.core.net.toUri
  * app when an older version doesn't know the order yet. It places outgoing calls after Lucía has asked for confirmation.
  */
 class AndroidHands(context: Context) : Hands {
+    private val tracedCalls = java.util.concurrent.ThreadPoolExecutor(0, 2, 10,
+        java.util.concurrent.TimeUnit.SECONDS, java.util.concurrent.SynchronousQueue())
     private val app = context.applicationContext
     private val pm = app.packageManager
 
@@ -223,11 +225,39 @@ class AndroidHands(context: Context) : Hands {
      * One MCP tool of a family app, on the phone: the app's link channel (signature-protected) runs it with the hub's own
      * token, through the same handler as the relay, so all its rules hold. No internet.
      */
-    override fun tool(app: FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject? {
+    override fun tool(app: FamilyApp, name: String, args: org.json.JSONObject) = callTool(app, name, args, null)
+
+    override fun tracedTool(app: FamilyApp, name: String, args: org.json.JSONObject, id: String) =
+        tracedCall { callTool(app, name, args, id) }
+
+    override fun mcpPing(app: FamilyApp, id: String) =
+        tracedCall { callTool(app, "", org.json.JSONObject(), id, method = "ping") } != null
+
+    private fun tracedCall(exchange: () -> org.json.JSONObject?): org.json.JSONObject? {
+        val task = try {
+            tracedCalls.submit<org.json.JSONObject?> { exchange() }
+        } catch (_: java.util.concurrent.RejectedExecutionException) {
+            throw Hands.ToolError("PROVIDER_BUSY", "Stone aún está atendiendo otra petición. Revisa su reproductor.")
+        }
+        return try {
+            task.get(5, java.util.concurrent.TimeUnit.SECONDS)
+        } catch (_: java.util.concurrent.TimeoutException) {
+            // IPC may keep running on Stone. Never retry a write merely because its reply took too long.
+            task.cancel(true)
+            null
+        } catch (failure: java.util.concurrent.ExecutionException) {
+            throw (failure.cause as? Exception ?: failure)
+        }
+    }
+
+    private fun callTool(app: FamilyApp, name: String, args: org.json.JSONObject, id: String?, method: String = "tools/call"): org.json.JSONObject? {
         val p = pkg(app) ?: return null
         if (!Prefs(this.app).localMcp) throw Hands.ToolOff()
-        val request = org.json.JSONObject().put("jsonrpc", "2.0").put("id", 1).put("method", "tools/call")
-            .put("params", org.json.JSONObject().put("name", name).put("arguments", args)).toString()
+        if (id != null && pm.resolveContentProvider("$p.hublink", 0) == null)
+            throw Hands.ToolError("PROVIDER_UNAVAILABLE", "")
+        val request = org.json.JSONObject().put("jsonrpc", "2.0").put("id", id ?: 1).put("method", method).apply {
+                if (method == "tools/call") put("params", org.json.JSONObject().put("name", name).put("arguments", args))
+            }.toString()
         val answer = try { this.app.contentResolver.call("content://$p.hublink".toUri(), "tool", null, Bundle().apply { putString("request", request) }) }
             catch (_: SecurityException) { throw Hands.ToolError("NO_PERMISSION", "Reinstala Arka después de la app.") }
             catch (_: IllegalArgumentException) { return null } ?: return null
@@ -236,7 +266,12 @@ class AndroidHands(context: Context) : Hands {
             "REDIRECT_OFF" -> throw Hands.ToolOff()
             else -> throw Hands.ToolError(answer.getString("error").orEmpty(), answer.getString("message").orEmpty())
         }
-        val result = org.json.JSONObject(answer.getString("response") ?: return null).optJSONObject("result") ?: return null
+        val envelope = org.json.JSONObject(answer.getString("response") ?: return null)
+        if (id != null && envelope.opt("id") != id) return null
+        if (id != null && envelope.optJSONObject("error")?.optInt("code") == -32602) {
+            throw Hands.ToolError("TOOL_UNAVAILABLE", "")
+        }
+        val result = envelope.optJSONObject("result") ?: return null
         val content = result.optJSONObject("structuredContent") ?: org.json.JSONObject()
         if (result.optBoolean("isError")) content.optJSONObject("error").let { e ->
             throw Hands.ToolError(e?.optString("code").orEmpty(), e?.optString("message").orEmpty())

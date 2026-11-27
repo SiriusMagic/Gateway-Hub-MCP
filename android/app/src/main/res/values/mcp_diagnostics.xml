@@ -1,0 +1,27 @@
+<resources>
+    <string name="mcp_tab_general">General</string>
+    <string name="mcp_tab_analytics">Analítica</string>
+    <string name="mcp_tab_diagnostics">Diagnóstico MCP</string>
+    <string name="mcp_probe_title">Probar conexión</string>
+    <string name="mcp_probe_local">MCP local</string>
+    <string name="mcp_probe_hub">Por Hub</string>
+    <string name="mcp_transcript">Última transcripción</string>
+    <string name="mcp_intent">Última intención de Stone</string>
+    <string name="mcp_result">Resultado MCP</string>
+    <string name="mcp_last_failure">Último fallo</string>
+    <string name="mcp_connect_hub">Configurar Hub</string>
+    <string name="mcp_open_app">Abrir %1$s</string>
+    <string name="mcp_open_target_retry">Abre la app y vuelve a probar la conexión.</string>
+    <string name="mcp_allow_in_target">Activa «Permitir MCP local» en los ajustes de la app.</string>
+    <string name="mcp_check_target">Revisa el Modo MCP de la app.</string>
+    <string name="mcp_comment">Añadir comentario</string>
+    <string name="mcp_comment_save">Guardar comentario en este teléfono</string>
+    <string name="mcp_auto_reports">Enviar informes de fallos automáticamente</string>
+    <string name="mcp_auto_details">Envía al Hub el ID de seguimiento, la herramienta, la etapa, el código, el tiempo y la versión de Luna.</string>
+    <string name="mcp_pending_reports">Informes pendientes: %1$d</string>
+    <string name="mcp_recent">Últimas acciones</string>
+    <string name="mcp_trace_line">%1$s · %2$s · %3$s · %4$d ms\nID %5$s</string>
+    <string name="mcp_report_groups">Fallos agrupados en el Hub · últimos 30 días</string>
+    <string name="mcp_no_failures">Sin informes de fallos.</string>
+    <string name="mcp_group_line">%1$s · %2$s · %3$s · %4$s · %5$d</string>
+</resources>

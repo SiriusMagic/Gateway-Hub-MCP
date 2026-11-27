@@ -1,6 +1,7 @@
 // MCP over JSON-RPC 2.0 (Streamable HTTP, JSON answers). Same small surface as Stone's server:
 // initialize, ping, tools/list, tools/call (+ empty resources/prompts lists some clients ask for).
 import { type HubContext, ToolError, type ToolResult } from "./modules/types.ts";
+import { TRACE_ID } from "./admin/mcp-diagnostics.ts";
 import { type Router } from "./router.ts";
 import { type Principal, allows } from "./agents.ts";
 
@@ -43,7 +44,10 @@ async function one(message: Message, router: Router, ctx: HubContext, version: s
       });
     case "ping": return ok({});
     case "tools/list": return ok({ tools: (await router.listTools(ctx)).filter((t) => allows(caller.principal, t)) });
-    case "tools/call": return ok(await call(params, router, ctx, caller));
+    case "tools/call": {
+      const traceId = typeof message.id === "string" && TRACE_ID.test(message.id) ? message.id : undefined;
+      return ok(await call(params, router, { ...ctx, traceId }, caller));
+    }
     case "resources/list": return ok({ resources: [] });
     case "resources/templates/list": return ok({ resourceTemplates: [] });
     case "prompts/list": return ok({ prompts: [] });

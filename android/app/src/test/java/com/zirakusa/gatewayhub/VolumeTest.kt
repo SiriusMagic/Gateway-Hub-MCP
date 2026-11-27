@@ -19,7 +19,7 @@ class VolumeTest {
             val c = p(it)
             assertEquals(it, Action.PLAY_MUSIC, c.action); assertEquals(it, "30", c["volume"]); assertNull(it, c["query"])
         }
-        p("pon música de Bad Bunny al 40 por ciento").let { assertEquals("bad bunny", it["query"]); assertEquals("40", it["volume"]) }
+        p("pon música de Bad Bunny al 40 por ciento").let { assertEquals("Bad Bunny", it["query"]); assertEquals("40", it["volume"]) }
         p("pon mis recomendaciones del día a todo volumen").let { assertEquals(Action.PLAY_RECOMMENDED, it.action); assertEquals("100", it["volume"]) }
         p("sigue la música con volumen a la mitad").let { assertEquals(Action.MEDIA, it.action); assertEquals("50", it["volume"]) }
         // Without a volume nothing changes.

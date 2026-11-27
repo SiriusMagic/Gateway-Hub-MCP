@@ -124,6 +124,7 @@ internal class PhoneMcp(private val context: Context) {
         val bundle = ask(app, "tool", Bundle().apply { putString("request", request.toString()) }) ?: throw PhoneMcpError(PhoneMcpStatus.DECLARED)
         when (bundle.getString("error")) {
             null -> Unit
+            "LOCAL_DISABLED" -> throw PhoneMcpError(PhoneMcpStatus.OFF)
             "REDIRECT_OFF" -> throw PhoneMcpError(PhoneMcpStatus.LINK_OFF)
             "NOT_SAME_DEVELOPER" -> throw PhoneMcpError(PhoneMcpStatus.SIGNATURE)
             else -> throw PhoneMcpError(PhoneMcpStatus.UNAVAILABLE)

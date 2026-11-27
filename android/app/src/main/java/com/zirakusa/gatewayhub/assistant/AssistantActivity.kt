@@ -24,6 +24,9 @@ import com.zirakusa.gatewayhub.assistant.local.LocalAssistant
 import com.zirakusa.gatewayhub.MainActivity
 import com.zirakusa.gatewayhub.R
 import com.zirakusa.gatewayhub.ui.HubTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -68,6 +71,9 @@ class AssistantActivity : ComponentActivity() {
         hands = AndroidHands(this)
         state = AssistantState(Brain(hands), { if (it.say != Say.COUNTING) speakReplies(listOf(it)) }, ::speakReplies)
         state.local = local
+        state.speechModels = SpeechModels(this, lifecycleScope)
+        state.diagnostics = McpDiagnostics(this, lifecycleScope, hands)
+        state.runStone = { work, done -> lifecycleScope.launch { done(withContext(Dispatchers.IO) { work() }) } }
         state.message = { getString(it) }
         state.offlineVoiceReady = voice.available
         // Music asked for but silent: Lucía says so instead of «Reproduciendo».
@@ -92,7 +98,8 @@ class AssistantActivity : ComponentActivity() {
         }
         ears = VoskEars(this, heard = { text, final -> runOnUiThread { if (state.listening) state.heard(text, final) } },
             level = { runOnUiThread { state.level = it } }, failed = { runOnUiThread { failed(it) } },
-            conversational = { state.modeNow() != AnswerMode.RULES })
+            conversational = { state.modeNow() != AnswerMode.RULES },
+            compared = { result -> runOnUiThread { if (state.listening) state.dictationComparison = result } })
         Vosk.model(this) { m -> runOnUiThread { state.modelReady = m != null } }   // warm up while the screen opens
         setContent {
             HubTheme {
@@ -128,7 +135,7 @@ class AssistantActivity : ComponentActivity() {
 
     private fun listen() {
         callPrompt = null
-        if (local.busy || local.pending != null || state.listening) return
+        if (local.busy || local.pending != null || state.listening || state.executingStone) return
         if (!Vosk.canListen(this)) return mic.launch(Manifest.permission.RECORD_AUDIO)
         voice.quiet()
         startRecording(confirmCall = state.askingToCall)
@@ -153,7 +160,10 @@ class AssistantActivity : ComponentActivity() {
     private fun startRecording(confirmCall: Boolean) {
         state.partial = ""
         state.listening = true
-        ears.start(confirmCall, contactName = state.askingCallName)
+        state.dictationComparison = null
+        val models = state.speechModels
+        ears.start(confirmCall, contactName = state.askingCallName, engines = models?.engines().orEmpty(),
+            mode = models?.selected ?: DictationMode.VOSK)
     }
 
     private fun stop() {

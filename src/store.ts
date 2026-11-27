@@ -3,6 +3,7 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Agent, CallStat, HubAdminStore, HubEnv, HubStoreApi, MetricsSummary, Note } from "./modules/types.ts";
 import { serve } from "./serve.ts";
+import type { McpFailureGroup, McpReport } from "./admin/mcp-diagnostics.ts";
 import { Limiter } from "./auth.ts";
 
 type Row = Record<string, string | number>;
@@ -30,6 +31,9 @@ export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubA
     this.sql.exec(`CREATE TABLE IF NOT EXISTS calls(at INTEGER NOT NULL, agent TEXT NOT NULL, tool TEXT NOT NULL,
       ok INTEGER NOT NULL, ms INTEGER NOT NULL)`);
     this.sql.exec("CREATE INDEX IF NOT EXISTS calls_at ON calls(at)");
+    this.sql.exec(`CREATE TABLE IF NOT EXISTS mcp_failures(id TEXT PRIMARY KEY, app TEXT NOT NULL, tool TEXT NOT NULL,
+      stage TEXT NOT NULL, code TEXT NOT NULL, version TEXT NOT NULL, ms INTEGER NOT NULL, at INTEGER NOT NULL)`);
+    this.sql.exec("CREATE INDEX IF NOT EXISTS mcp_failures_at ON mcp_failures(at)");
   }
 
   fetch(request: Request): Promise<Response> { return serve(request, this.env, this); }
@@ -90,6 +94,20 @@ export class HubStore extends DurableObject<HubEnv> implements HubStoreApi, HubA
   }
   async agentsDelete(id: string) {
     return this.sql.exec("DELETE FROM agents WHERE id = ?", id).rowsWritten > 0;
+  }
+
+  async mcpReport(report: McpReport) {
+    const now = Date.now();
+    this.sql.exec("INSERT OR IGNORE INTO mcp_failures VALUES (?, ?, ?, ?, ?, ?, ?, ?)", report.id, report.app, report.tool,
+      report.stage, report.code, report.version, report.ms, now);
+    this.sql.exec("DELETE FROM mcp_failures WHERE at < ?", now - 30 * 86_400_000);
+  }
+
+  async mcpFailures(): Promise<McpFailureGroup[]> {
+    const rows = this.sql.exec(`SELECT app, tool, stage, code, COUNT(*) AS count, MAX(at) AS last FROM mcp_failures
+      WHERE at >= ? GROUP BY app, tool, stage, code ORDER BY count DESC, last DESC LIMIT 50`, Date.now() - 30 * 86_400_000).toArray();
+    return rows.map((r) => ({ app: String(r.app), tool: String(r.tool), stage: String(r.stage), code: String(r.code),
+      count: Number(r.count), last: Number(r.last) }));
   }
 
   // ---- metrics: one row per tool call, kept 30 days ----

@@ -98,7 +98,7 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             }
         }
         val local = state.local
-        val busy = local?.busy == true
+        val busy = local?.busy == true || state.executingStone
         val showModelSetup = local?.models?.supported == true && !local.models.hasModel
         val showIntro = state.turns.isEmpty() || showModelSetup
         val introCount = if (showIntro) 1 else 0
@@ -116,9 +116,9 @@ class AssistantActions(val listen: () -> Unit = {}, val stop: () -> Unit = {}, v
             }
             items(state.turns) { t -> TurnBubbles(t) }
             if (busy) item {
-                Text(local.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,
+                Text(local?.draft.orEmpty().ifBlank { stringResource(R.string.local_working) }, color = HubColors.Text,
                     modifier = Modifier.clip(RoundedCornerShape(18.dp)).background(HubColors.Card).padding(14.dp))
-                if (local.canStop) TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
+                if (local?.canStop == true) TextButton(local::stop) { Text(stringResource(R.string.local_stop)) }
             }
         }
         if (state.partial.isNotBlank()) Text(state.partial, Modifier.padding(horizontal = 20.dp), color = HubColors.Gold, fontSize = 15.sp)

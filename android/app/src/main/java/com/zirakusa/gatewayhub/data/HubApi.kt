@@ -33,6 +33,19 @@ class HubApi(baseUrl: String, private val token: String, private val transport: 
     /** Read-only: the hub asks each remote app whether it is linked and online. */
     suspend fun scan(): List<RemoteStatus> = HubJson.scan(call("GET", "/scan"))
 
+    suspend fun probeMcp(id: String, app: String) {
+        val path = if (app == "music_") "/stone" else "/check/$app"
+        val reply = JSONObject(call("POST", "/mcp-diagnostics$path", JSONObject().put("id", id)))
+        if (reply.optString("id") != id || !reply.optBoolean("ok"))
+            throw HubException("RESULT_UNCONFIRMED", "El Hub no confirmó el resultado de Stone.")
+    }
+    suspend fun reportMcpFailure(report: JSONObject) {
+        val reply = JSONObject(call("POST", "/mcp-diagnostics", report))
+        if (reply.optString("id") != report.getString("id"))
+            throw HubException("RESULT_UNCONFIRMED", "El Hub no confirmó el informe.")
+    }
+    suspend fun mcpFailures(): JSONArray = JSONObject(call("GET", "/mcp-diagnostics")).getJSONArray("failures")
+
     private suspend fun call(method: String, path: String, body: JSONObject? = null): String = withContext(Dispatchers.IO) {
         val (status, text) = try { transport.send(method, "$base/api/admin$path", token, body?.toString()) }
             catch (e: Exception) { throw HubException("NETWORK", "No se pudo conectar con el hub. Revisa la dirección y tu conexión.") }

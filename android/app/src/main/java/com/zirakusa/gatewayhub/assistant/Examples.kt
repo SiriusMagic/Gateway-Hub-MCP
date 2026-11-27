@@ -7,7 +7,7 @@ package com.zirakusa.gatewayhub.assistant
 object Examples {
     /** What Lucía does herself (no app tool). */
     val actions = listOf(
-        "abre la cámara", "pon música de Soda Stereo", "pon mis recomendaciones", "pausa la música", "siguiente canción",
+        "abre la cámara", "pon New Americana al 50 %", "pon la canción despacito", "pon mis recomendaciones", "pausa la música", "siguiente canción",
         "sube el volumen", "volumen al 30 por ciento", "pon una alarma a las 7 y media", "pon un temporizador de 5 minutos",
         "llama a Luis", "manda un mensaje a Ana que llego en 10 minutos", "qué hora es", "qué día es", "qué tiempo hace",
         "qué tengo hoy", "buenos días", "anota comprar pan", "vamos a contar", "enciende la linterna", "apaga la linterna",
@@ -98,7 +98,6 @@ object Examples {
         "notes_update" to "agrega a la nota compras leche",
         "phone_calls" to "mis últimas llamadas",
         "phone_missed" to "tengo llamadas perdidas",
-        "player_play_song" to "pon la canción despacito",
         "player_queue" to "qué sigue",
         "player_queue_clear" to "vacía la cola",
         "player_queue_next" to "pon bohemian rhapsody a continuación",

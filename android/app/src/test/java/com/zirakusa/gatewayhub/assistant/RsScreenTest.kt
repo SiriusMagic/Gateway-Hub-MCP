@@ -19,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** «RS» (Regla de Sentimiento) in the side menu next to MCP, and «Sentimientos» as one more app in MCP. */
+/** «RS» (Reconocimiento de intenciones) in the side menu next to MCP, and «Sentimientos» as one more app in MCP. */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "es-w400dp-h860dp-xxhdpi")
@@ -41,8 +41,8 @@ class RsScreenTest {
 
     @Test fun rsPage() {
         compose.setContent { HubTheme { RsScreen(Interpreter.FEELINGS) } }
-        compose.onNodeWithText("Regla de Sentimiento").assertExists()
-        compose.onNodeWithText("Intérprete del modelo ahora: Sentimientos").assertExists()
+        compose.onNodeWithText("Reconocimiento de intenciones").assertExists()
+        compose.onNodeWithText("Intérprete del modelo ahora: Reconocimiento de intenciones").assertExists()
         compose.onRoot().captureRoboImage("build/screenshots/rs.png")
     }
 
@@ -58,9 +58,9 @@ class RsScreenTest {
 
     @Test fun sentimientosIsOneMoreAppInMcp() {
         var opened = 0
-        compose.setContent { HubTheme { PhoneMcpScreen(null, {}) { opened++ } } }
+        compose.setContent { HubTheme { PhoneMcpScreen(AssistantState(Brain(com.zirakusa.gatewayhub.FakeHands())), {}) { opened++ } } }
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("${Examples.rules.size} reglas de sentimiento"))
-        compose.onNodeWithText("Sentimientos").assertExists()
+        compose.onNodeWithText("Reconocimiento de intenciones").assertExists()
         compose.onNodeWithText("Abrir").performClick(); assertEquals(1, opened)                // «Abrir» → RS
         compose.onNodeWithText("Herramientas").performClick()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Integración pendiente", substring = true))

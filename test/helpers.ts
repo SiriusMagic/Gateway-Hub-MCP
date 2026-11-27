@@ -1,3 +1,4 @@
+import type { McpFailureGroup, McpReport } from "../src/admin/mcp-diagnostics.ts";
 import type { Agent, CallStat, HubAdminStore, HubStoreApi, MetricsSummary, Note } from "../src/modules/types.ts";
 import { Limiter } from "../src/auth.ts";
 import { serve } from "../src/serve.ts";
@@ -38,6 +39,18 @@ export class MemoryStore implements HubStoreApi, HubAdminStore {
   async agentsSet(id: string, c: Partial<Agent>) { const a = this.agents.get(id); if (a) Object.assign(a, c); }
   async agentsDelete(id: string) { return this.agents.delete(id); }
   async metricsRecord(agent: string, tool: string, ok: boolean, ms: number) { this.calls.push({ at: Date.now(), agent, tool, ok, ms }); }
+  reports = new Map<string, McpReport>();
+  async mcpReport(report: McpReport) { if (!this.reports.has(report.id)) this.reports.set(report.id, report); }
+  async mcpFailures(): Promise<McpFailureGroup[]> {
+    const counts = new Map<string, McpFailureGroup>();
+    for (const { app, tool, stage, code } of this.reports.values()) {
+      const key = [app, tool, stage, code].join("/");
+      const group = counts.get(key) ?? { app, tool, stage, code, count: 0, last: 0 };
+      group.count++;
+      counts.set(key, group);
+    }
+    return [...counts.values()];
+  }
   async metricsSummary(since: number): Promise<MetricsSummary> {
     const rows = this.calls.filter((c) => c.at >= since);
     const group = (key: (c: typeof rows[0]) => string): CallStat[] => {
@@ -65,7 +78,7 @@ export function fakeStone(options: { status?: number; token?: Record<string, unk
       ? { tools: [{ name: "player_state", description: "What is playing", inputSchema: { type: "object" } },
                   { name: "playlist_delete", description: "Delete a playlist", inputSchema: { type: "object" } }] }
       : { content: [{ type: "text", text: `ran ${body.params.name}` }], isError: false };
-    return new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, result }), { status: 200 });
+    return new Response(JSON.stringify({ jsonrpc: "2.0", id: body.id, result }), { status: 200 });
   }) as typeof fetch;
   return { calls, fetcher };
 }

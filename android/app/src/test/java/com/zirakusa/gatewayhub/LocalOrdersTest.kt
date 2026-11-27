@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
 class LocalOrdersTest {
     private val hands = FakeHands()
     private val brain = Brain(hands)
@@ -27,19 +28,23 @@ class LocalOrdersTest {
     }
 
     @Test fun calculationAndMusicBothRunWithVolumeFirst() {
-        val state = AssistantState(brain)
+        val fake = object : FakeHands() {
+            override fun tool(app: com.zirakusa.gatewayhub.assistant.FamilyApp, name: String, args: org.json.JSONObject): org.json.JSONObject {
+                assertEquals("player_play_by_title", name)
+                assertEquals(5, args.getInt("volumen"))
+                assertEquals("new americana", args.getString("titulo"))
+                return org.json.JSONObject("""{"status":"playing","track":{"title":"New Americana"},"steps":{"play":{"code":"OK"},"volume":{"code":"OK","actual":5}}}""")
+            }
+        }
+        val state = AssistantState(Brain(fake))
         val text = "entonces calcula 7*9*89 y menos 5 y pon música al 5% new americana"
         state.send(text, byVoice = false)
-        assertEquals(listOf("volume 5", "music new americana"), hands.done)
+        assertTrue(fake.done.isEmpty())
         val turn = requireNotNull(state.last)
         assertTrue(turn.ok)
         assertEquals(Reply(Say.CALCULATED, listOf("5602")), state.turns.first().reply)
-        assertEquals(5, turn.reply.volume)
-        assertEquals(Say.PLAYING_QUERY, turn.reply.say)
+        assertEquals("Reproduciendo «New Americana». Volumen al 5 %.", turn.reply.args.single())
         assertEquals(text, Hearing.pick("pon música al cinco por ciento", text))
-        state.late(Reply(Say.NOT_PLAYING, listOf("Stone")))
-        assertEquals(listOf("5602"), state.turns.first().reply.args)
-        assertEquals(5, state.last?.reply?.volume)
 
         assertEquals(listOf("0.5"), brain.handle("calcula 1,5 entre 3").reply.args)
         assertEquals(Say.MATH_ERROR, brain.handle("calcula 2/0").reply.say)

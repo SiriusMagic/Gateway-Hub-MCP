@@ -8,6 +8,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.provider.ContactsContract
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import org.json.JSONObject
 import org.vosk.Model
@@ -90,13 +91,18 @@ object Vosk {
  * at once, one limited to the assistant's words and one free; [Hearing] picks. [heard] gets the partial text and then
  * the final one (on the main thread of the caller's choosing).
  */
-class VoskEars(private val context: Context, private val heard: (String, Boolean) -> Unit, private val level: (Float) -> Unit,
-    private val failed: (Int) -> Unit, private val conversational: () -> Boolean = { false }) {
+internal class VoskEars(private val context: Context, private val heard: (String, Boolean) -> Unit, private val level: (Float) -> Unit,
+    private val failed: (Int) -> Unit, private val conversational: () -> Boolean = { false },
+    private val decoding: () -> Unit = {}, private val compared: (DictationComparison) -> Unit = {}) {
     // Each recording owns its callbacks, even when a new recording starts as the old one is closing.
-    private val current = AtomicReference<Any?>(null)
+    private class Recording(val engines: List<DictationEngine>, val mode: DictationMode) {
+        val cancelled = AtomicBoolean(false)
+    }
+    private val current = AtomicReference<Recording?>(null)
 
-    fun start(confirmCall: Boolean = false, contactName: Boolean = false) {
-        val recording = Any()
+    fun start(confirmCall: Boolean = false, contactName: Boolean = false,
+              engines: List<DictationEngine> = emptyList(), mode: DictationMode = DictationMode.VOSK) {
+        val recording = Recording(if (confirmCall || contactName) emptyList() else engines, mode)
         if (!current.compareAndSet(null, recording)) return
         val freeConversation = conversational()
         Vosk.model(context) { model ->
@@ -108,7 +114,7 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         }
     }
 
-    private fun listen(model: Model, recording: Any, freeConversation: Boolean, confirmCall: Boolean, contactName: Boolean) {
+    private fun listen(model: Model, recording: Recording, freeConversation: Boolean, confirmCall: Boolean, contactName: Boolean) {
         val mic = Vosk.microphone() ?: run {
             if (current.compareAndSet(recording, null)) failed(NO_MIC)
             return
@@ -118,17 +124,27 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         val limited = Recognizer(model, Vosk.RATE.toFloat(), grammar)
         val free = Recognizer(model, Vosk.RATE.toFloat())
         val buffer = ShortArray(Vosk.RATE / 10)
+        val pcm = if (recording.engines.isEmpty()) null else ShortArray(Vosk.RATE * 8)
+        var sampleCount = 0
+        var lastSound = 0L
         val gate = EnergyGate()
         val start = System.currentTimeMillis()
         var spoke = false
         var said: String? = null
         val freeSegments = mutableListOf<String>()
-        val answer = try {
+        val vosk = try {
             mic.startRecording()
             while (current.get() === recording && System.currentTimeMillis() - start < 8_000) {
                 val n = mic.read(buffer, 0, buffer.size)
                 if (n <= 0) continue
-                level((gate.rms(buffer, n) / 3000).toFloat().coerceIn(0f, 1f))
+                val rms = gate.rms(buffer, n)
+                level((rms / 3000).toFloat().coerceIn(0f, 1f))
+                if (pcm != null) {
+                    val copied = n.coerceAtMost(pcm.size - sampleCount)
+                    buffer.copyInto(pcm, sampleCount, endIndex = copied)
+                    sampleCount += copied
+                    if (gate.open(rms)) lastSound = SystemClock.elapsedRealtime()
+                }
                 if (free.acceptWaveForm(buffer, n)) freeSegments += Vosk.text(free.result)
                 val freePartial = if (freeConversation) Vosk.text(free.partialResult, "partial") else ""
                 if (limited.acceptWaveForm(buffer, n)) {
@@ -138,7 +154,8 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
                     val partial = freePartial.ifBlank { Vosk.text(limited.partialResult, "partial") }
                     if (partial.isNotBlank()) { spoke = true; heard(partial, false) }
                 }
-                if (!spoke && System.currentTimeMillis() - start > 4_000) break
+                if (lastSound != 0L && SystemClock.elapsedRealtime() - lastSound >= 700) break
+                if (!spoke && lastSound == 0L && System.currentTimeMillis() - start > 4_000) break
             }
             val a = said ?: Vosk.text(limited.finalResult)
             val b = (freeSegments + Vosk.text(free.finalResult)).filter(String::isNotBlank).joinToString(" ")
@@ -153,13 +170,27 @@ class VoskEars(private val context: Context, private val heard: (String, Boolean
         } finally {
             runCatching { mic.stop() }; mic.release(); limited.close(); free.close()
         }
+        val comparison = if ((spoke || lastSound != 0L || vosk.isNotBlank()) &&
+            current.get() === recording && pcm != null) {
+            decoding()
+            val endpointDelay = if (lastSound == 0L) 0 else SystemClock.elapsedRealtime() - lastSound
+            val samples = recording.engines.map { engine ->
+                val began = SystemClock.elapsedRealtime()
+                val text = engine.transcriber.transcribe(pcm, sampleCount, recording.cancelled)
+                VoiceSample(engine.model, text, endpointDelay + SystemClock.elapsedRealtime() - began)
+            }
+            DictationComparison(vosk, samples, recording.mode == DictationMode.COMPARE)
+        } else null
+        val chosen = comparison?.samples?.firstOrNull()?.text
+        val answer = if (chosen == null) vosk else Hearing.dictated(vosk, chosen, names)
         if (current.compareAndSet(recording, null)) {
             level(0f)
+            if (comparison != null) compared(comparison)
             heard(answer, true)
         }
     }
 
-    fun stop() { current.set(null) }
+    fun stop() { current.getAndSet(null)?.cancelled?.set(true) }
 
     companion object { const val NO_MODEL = 1001; const val NO_MIC = 1002 }
 }

@@ -30,7 +30,7 @@ class AllToolsTest {
 
     @Test fun stonePhrases() {
         mapOf(
-            "pon la canción despacito" to "player_play_song", "pon bohemian rhapsody a continuación" to "player_queue_next", "qué sigue" to "player_queue",
+            "pon bohemian rhapsody a continuación" to "player_queue_next", "qué sigue" to "player_queue",
             "vacía la cola" to "player_queue_clear", "ve al minuto 2" to "player_seek", "más rápido" to "player_set_speed", "dame 15 minutos más" to "player_sleep_timer_extend",
             "cancela el temporizador de música" to "player_sleep_timer_off", "quita esta canción de favoritos" to "player_unfavorite", "mis canciones favoritas" to "library_favorites",
             "mis artistas" to "library_browse", "busca música nueva" to "library_rescan", "ordena mis canciones por artista" to "library_sort",
@@ -127,11 +127,9 @@ class AllToolsTest {
             .put(JSONObject().put("id", "s2").put("title", "Persiana americana").put("artist", "Soda Stereo")))!!
         assertEquals("Pongo 2 canciones de «soda stereo», empezando por «De música ligera».", com.zirakusa.gatewayhub.assistant.MusicPick.say(artist, "soda stereo"))
         assertEquals(null, com.zirakusa.gatewayhub.assistant.MusicPick.pick("x", JSONArray()))
-        // Through Lucía: search, then play; with no tools (an old Stone) the standard order, as before.
-        val apps = Apps(); val turn = Brain(apps).handle("reproducir música despacito")
-        assertEquals("Suena «Despacito».", turn.reply.args[0]); assertTrue(turn.ok)
-        assertEquals("stone player_play_songs {\"songIds\":\"s9\"}", apps.asked.last())
-        assertTrue(apps.asked.any { it.startsWith("stone library_search") })
+        val apps = Apps(); val turn = Brain(apps).handle("reproducir música Despacito")
+        assertEquals("Reproduciendo «Despacito».", turn.reply.args[0]); assertTrue(turn.ok)
+        assertEquals(listOf("stone player_play_by_title {\"titulo\":\"Despacito\"}"), apps.asked)
     }
 
     /** Apps answering on the phone, as their link channels do; [asked] keeps every call. */
@@ -144,6 +142,7 @@ class AllToolsTest {
             return when (name) {
                 "playlist_list" -> JSONObject().put("playlists", JSONArray().put(JSONObject().put("id", "p1").put("name", "Gym")))
                 "player_state" -> JSONObject().put("playing", true).put("title", "De música ligera").put("songId", "s7")
+                "player_play_by_title" -> JSONObject("""{"status":"playing","track":{"title":"Despacito"},"steps":{"play":{"code":"OK"}}}""")
                 "library_search" -> JSONObject().put("results", JSONArray().put(JSONObject().put("id", "s9").put("title", "Despacito")))
                 "calendar_events" -> JSONObject().put("events", JSONArray().put(JSONObject().put("id", 3).put("title", "Reunión con Ana")))
                 "notes_search" -> JSONObject().put("notes", JSONArray().put(JSONObject().put("id", 5).put("title", "Compras")))
@@ -158,8 +157,8 @@ class AllToolsTest {
     @Test fun lookupsConfirmationsAndThePhoto() {
         val apps = Apps(); val brain = Brain(apps)
         // A song by its name: Stone's own search, its best result.
-        assertEquals("Poniendo «Despacito».", brain.handle("pon la canción despacito").reply.args[0])
-        assertEquals("stone player_play_song {\"songId\":\"s9\"}", apps.asked.last())
+        assertEquals("Reproduciendo «Despacito».", brain.handle("pon la canción Despacito").reply.args[0])
+        assertEquals("stone player_play_by_title {\"titulo\":\"Despacito\"}", apps.asked.last())
         // Two lookups: the song playing and the list.
         assertEquals("«De música ligera» añadida a la lista Gym.", brain.handle("agrega esta canción a la lista gym").reply.args[0])
         assertEquals("stone playlist_add_songs {\"songIds\":\"s7\",\"playlistId\":\"p1\"}", apps.asked.last())
