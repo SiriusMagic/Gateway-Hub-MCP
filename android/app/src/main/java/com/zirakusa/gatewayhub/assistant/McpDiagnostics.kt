@@ -52,7 +52,7 @@ internal class McpDiagnostics(context: Context, scope: CoroutineScope, private v
     }
 
     private fun loadFailure(): McpOrder? = runCatching {
-        val saved = JSONObject(prefs.getString("last_failure", "{}"))
+        val saved = JSONObject(prefs.getString("last_failure", null) ?: return null)
         McpOrder(saved.getString("id"), saved.getString("tool"), emptyMap(), saved.getString("stage"),
             saved.getString("code"), saved.getLong("ms"), app = saved.getString("app"))
     }.getOrNull()

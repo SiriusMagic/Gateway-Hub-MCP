@@ -113,7 +113,7 @@ import org.json.JSONObject
                             val target = if (failure.app == "music_") Catalog.byId("stone")
                                 else apps.firstOrNull { it.prefix == failure.app }?.let { Catalog.byPackage(it.packageName) }
                             val launch = target?.packages?.firstNotNullOfOrNull(context.packageManager::getLaunchIntentForPackage)
-                            if (launch != null && target != null) TextButton({ context.startActivity(launch) }) {
+                            if (launch != null) TextButton({ context.startActivity(launch) }) {
                                 Text(stringResource(R.string.mcp_open_app, target.name))
                             }
                         }

@@ -56,10 +56,10 @@ class RsScreenTest {
         compose.onRoot().captureRoboImage("build/screenshots/rs-abrir.png")
     }
 
-    @Test fun sentimientosIsOneMoreAppInMcp() {
+    @Test fun intentRecognitionAppearsInMcp() {
         var opened = 0
         compose.setContent { HubTheme { PhoneMcpScreen(AssistantState(Brain(com.zirakusa.gatewayhub.FakeHands())), {}) { opened++ } } }
-        compose.onNode(hasScrollAction()).performScrollToNode(hasText("${Examples.rules.size} reglas de sentimiento"))
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("${Examples.rules.size} reglas de intención"))
         compose.onNodeWithText("Reconocimiento de intenciones").assertExists()
         compose.onNodeWithText("Abrir").performClick(); assertEquals(1, opened)                // «Abrir» → RS
         compose.onNodeWithText("Herramientas").performClick()
